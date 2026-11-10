@@ -2139,7 +2139,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
           { id: "game-english", kind: "game", title: "Inglizcha so‘z", description: "Inglizcha so‘zning o‘zbekcha ma’nosini top.", emoji: "🔤", question: "“Cat” so‘zining ma’nosi nima?", options: ["It", "Mushuk", "Qush"], answer: "Mushuk" },
           { id: "game-reading", kind: "game", title: "So‘zni top", description: "Rasmga mos so‘zni tanla.", emoji: "🐱", question: "🐱 Bu nima?", options: ["Cat", "Sun", "Book"], answer: "Cat" }
         ];
-        const allActivities = [...builtInActivities, ...activityItems];
+        const allActivities = [...builtInActivities, ...activityItems.filter(item => item.kind !== 'video')];
         const learningVideos = [
           { subject: "Ingliz tili", title: "ABC Alphabet Song — Super Simple Songs", description: "Ingliz alifbosi va talaffuzini qo‘shiq orqali o‘rganish", emoji: "🇬🇧", url: "https://www.youtube.com/results?search_query=Super+Simple+Songs+ABC+Alphabet+Song+official", color: "from-sky-500 to-blue-600" },
           { subject: "Matematika", title: "Numberblocks & Alphablocks", description: "Rangli animatsiya orqali sanash, sonlar va oddiy matematik tushunchalar", emoji: "🔢", url: "https://www.youtube.com/watch?v=I4EtoQ7BXSw", color: "from-amber-400 to-orange-500" },
