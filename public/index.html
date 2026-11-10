@@ -650,6 +650,10 @@
       const [adminTitle, setAdminTitle] = useState('');
       const [adminDescription, setAdminDescription] = useState('');
       const [adminImageUrl, setAdminImageUrl] = useState('');
+      const [adminGameQuestion, setAdminGameQuestion] = useState('');
+      const [adminGameOptions, setAdminGameOptions] = useState('Olma,Anor,Banan');
+      const [adminGameAnswer, setAdminGameAnswer] = useState('Olma');
+      const [activityFeedback, setActivityFeedback] = useState({});
       const [adminMessage, setAdminMessage] = useState('');
       const [temporaryPassword, setTemporaryPassword] = useState('');
       const [adminBusy, setAdminBusy] = useState(false);
@@ -682,8 +686,8 @@
         if (!adminTitle.trim()) return setAdminMessage('Material nomini kiriting.');
         setAdminBusy(true); setAdminMessage(''); setTemporaryPassword('');
         try {
-          await adminRequest('/api/admin/content', 'POST', { kind: adminKind, title: adminTitle, description: adminDescription, imageUrl: adminImageUrl });
-          setAdminTitle(''); setAdminDescription(''); setAdminImageUrl('');
+          await adminRequest('/api/admin/content', 'POST', { kind: adminKind, title: adminTitle, description: adminDescription, imageUrl: adminImageUrl, contentData: adminKind === 'game' ? { question: adminGameQuestion, options: adminGameOptions.split(',').map(x=>x.trim()).filter(Boolean), answer: adminGameAnswer.trim() } : {} });
+          setAdminTitle(''); setAdminDescription(''); setAdminImageUrl(''); setAdminGameQuestion('');
           await refreshAdmin(); setAdminMessage('Yangi material muvaffaqiyatli qo‘shildi.');
         } catch (e) { setAdminMessage(e.message); } finally { setAdminBusy(false); }
       };
@@ -1956,6 +1960,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
               <input value={adminTitle} onChange={e=>setAdminTitle(e.target.value)} placeholder="Material nomi" className="rounded-xl bg-slate-800 border border-white/10 p-3 text-white"/>
               <input value={adminImageUrl} onChange={e=>setAdminImageUrl(e.target.value)} placeholder="Rasm URL (https://...)" className="rounded-xl bg-slate-800 border border-white/10 p-3 text-white md:col-span-2"/>
               <textarea value={adminDescription} onChange={e=>setAdminDescription(e.target.value)} placeholder="Qisqa izoh yoki o‘yin qoidasi" className="rounded-xl bg-slate-800 border border-white/10 p-3 text-white md:col-span-2 min-h-24"/>
+              {adminKind === 'game' && <><input value={adminGameQuestion} onChange={e=>setAdminGameQuestion(e.target.value)} placeholder="O‘yin savoli" className="rounded-xl bg-slate-800 border border-white/10 p-3 text-white md:col-span-2"/><input value={adminGameOptions} onChange={e=>setAdminGameOptions(e.target.value)} placeholder="Variantlar: Olma,Anor,Banan" className="rounded-xl bg-slate-800 border border-white/10 p-3 text-white"/><input value={adminGameAnswer} onChange={e=>setAdminGameAnswer(e.target.value)} placeholder="To‘g‘ri javob (variantlardan biri)" className="rounded-xl bg-slate-800 border border-white/10 p-3 text-white"/></>}
             </div>
             <button disabled={adminBusy} onClick={createAdminContent} className="rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 px-5 py-3 font-black text-slate-950 disabled:opacity-50">{adminBusy?'Saqlanmoqda...':'Materialni qo‘shish'}</button>
           </section>
@@ -1977,7 +1982,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
       const renderActivitiesScreen = () => (
         <div className="w-full min-h-full rounded-[28px] bg-gradient-to-br from-sky-100 via-white to-violet-100 p-5 md:p-8 space-y-5">
           <div><h2 className="text-2xl md:text-3xl font-black text-slate-900">📚 Yangi mashg‘ulotlar</h2><p className="text-slate-600 font-semibold">Ustoz qo‘shgan rasmlar, mashg‘ulotlar va o‘yinlar</p></div>
-          {activityItems.length===0?<div className="rounded-2xl bg-white p-6 text-slate-500 font-bold">Hozircha yangi material yo‘q. Tez orada yangilari qo‘shiladi!</div>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{activityItems.map(item=><article key={item.id} className="overflow-hidden rounded-2xl bg-white shadow-lg border border-slate-100">{item.image_url&&<img src={item.image_url} alt={item.title} className="w-full h-44 object-cover"/>}<div className="p-4"><div className="text-xs font-black text-indigo-500">{item.kind==='lesson'?'📘 MASHG‘ULOT':item.kind==='image'?'🖼️ RASM':'🎮 O‘YIN'}</div><h3 className="font-black text-lg text-slate-900 mt-1">{item.title}</h3><p className="text-sm text-slate-600 mt-2">{item.description}</p></div></article>)}</div>}
+          {activityItems.length===0?<div className="rounded-2xl bg-white p-6 text-slate-500 font-bold">Hozircha yangi material yo‘q. Tez orada yangilari qo‘shiladi!</div>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{activityItems.map(item=><article key={item.id} className="overflow-hidden rounded-2xl bg-white shadow-lg border border-slate-100">{item.image_url&&<img src={item.image_url} alt={item.title} className="w-full h-44 object-cover"/>}<div className="p-4"><div className="text-xs font-black text-indigo-500">{item.kind==='lesson'?'📘 MASHG‘ULOT':item.kind==='image'?'🖼️ RASM':'🎮 O‘YIN'}</div><h3 className="font-black text-lg text-slate-900 mt-1">{item.title}</h3><p className="text-sm text-slate-600 mt-2">{item.description}</p>{item.kind==='game'&&item.content_data?.options?.length>1&&<div className="mt-3 space-y-2"><p className="font-black text-slate-800">{item.content_data.question}</p><div className="grid grid-cols-2 gap-2">{item.content_data.options.map(option=><button key={option} onClick={()=>setActivityFeedback(prev=>({...prev,[item.id]:option===item.content_data.answer?'Barakalla! To‘g‘ri javob! 🎉':'Yana urinib ko‘r! 💡'}))} className="rounded-xl bg-indigo-50 text-indigo-800 p-2 text-sm font-black">{option}</button>)}</div>{activityFeedback[item.id]&&<p className="text-sm font-black text-emerald-700">{activityFeedback[item.id]}</p>}</div>}</div></article>)}</div>}
         </div>
       );
 
