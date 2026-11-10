@@ -562,10 +562,12 @@
       const [isVoiceRec, setIsVoiceRec] = useState(false);
 
       const liveVoiceRef = useRef(null);
+      const liveConnectingRef = useRef(false);
       const stopLiveTutor = () => {
         const live = liveVoiceRef.current;
         if (!live) { setIsVoiceRec(false); setIsAiSpeaking(false); return; }
         live.running = false;
+        liveConnectingRef.current = false;
         try { live.processor?.disconnect(); } catch {}
         try { live.source?.disconnect(); } catch {}
         try { live.stream?.getTracks()?.forEach(track => track.stop()); } catch {}
@@ -576,7 +578,8 @@
         setIsAiSpeaking(false);
       };
       const startLiveTutor = async () => {
-        if (liveVoiceRef.current?.running) return;
+        if (liveVoiceRef.current?.running || liveConnectingRef.current) return;
+        liveConnectingRef.current = true;
         setIsVoiceRec(true);
         setTutorReply("Gemini Live ulanmoqda. Mikrofonni yoqing va savolingizni ayting...");
         try {
@@ -625,7 +628,7 @@
                 }
               },
               onerror: error => { console.error("Gemini Live error:", error); setTutorReply("Ovozli AI bilan aloqa uzildi. Mikrofon tugmasini qayta bosing."); },
-              onclose: () => { if (liveVoiceRef.current === live) { live.running = false; setIsVoiceRec(false); } }
+              onclose: () => { if (liveVoiceRef.current === live) { live.running = false; liveConnectingRef.current = false; try { live.processor?.disconnect(); live.source?.disconnect(); live.stream?.getTracks()?.forEach(track => track.stop()); live.audioContext?.close(); } catch {} liveVoiceRef.current = null; setIsVoiceRec(false); setIsAiSpeaking(false); } }
             }
           });
           live.stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
@@ -656,9 +659,11 @@
           live.processor.connect(silentGain);
           silentGain.connect(audioContext.destination);
           live.running = true;
+          liveConnectingRef.current = false;
           setIsVoiceRec(true);
           setTutorReply("Tinglayapman! Savolingizni ayting. Tugatganingizdan keyin javob beraman.");
         } catch (error) {
+          liveConnectingRef.current = false;
           console.error("Bilimdon Kids Live start error:", error);
           stopLiveTutor();
           setTutorReply(error?.message || "Gemini Live ishga tushmadi. Mikrofon ruxsatini tekshiring.");
