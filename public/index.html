@@ -37,6 +37,7 @@ footer{text-align:center;padding:28px;color:#85859d;font-size:13px}
 <section id="app" class="hidden">
   <div class="hero"><div class="hero-copy"><span class="pill">✨ Bugun yangi bilimlar sari!</span><h1>Salom, <span id="helloName">Bilimdon</span>! 👋</h1><p class="muted">Qaysi fan bilan shug'ullanamiz?</p><span class="pill">🤖 AI ustozing seni kutmoqda</span></div><img class="mascot" src="/assets/bilimdon-mascot.svg" alt="Bilimdon Kids quvnoq 3D qahramoni" width="190" height="203" loading="eager"><button class="secondary" id="logout">Chiqish</button></div>
   <div class="stats"><div class="stat"><span class="muted">Mashqlar</span><b id="count">0</b></div><div class="stat"><span class="muted">O'rtacha natija</span><b id="average">—</b></div><div class="stat"><span class="muted">Yosh</span><b id="childAge">—</b></div></div>
+  <section class="panel" id="resultsPanel" style="margin:0 0 18px"><div class="top"><div><span class="pill">🏆 Natijalar</span><h2 style="margin:8px 0">So'nggi mashqlar</h2></div><span class="muted" id="resultCount">0 ta natija</span></div><div id="resultHistory" class="stack"><p class="muted">Hali natijalar yo'q. Birinchi mashqni bajar!</p></div></section>
   <div class="grid">
     <button class="subject" data-subject="math"><span class="emoji">🧮</span><h3>Matematika</h3><span class="muted">Hisobla va top!</span></button>
     <button class="subject" data-subject="reading"><span class="emoji">📚</span><h3>O'qish</h3><span class="muted">Matnni tushun!</span></button>
@@ -57,12 +58,32 @@ footer{text-align:center;padding:28px;color:#85859d;font-size:13px}
 <script>
 const $=id=>document.getElementById(id);
 let mode="login",profile=null,child=null,subject="math",items=[],idx=0,correct=0,progress=[];
-const lessons={
- math:[{q:"12 + 8 = ?",a:["18","20","22"],c:1,why:"12 ga 8 ni qo'shsak, 20 bo'ladi."},{q:"15 − 7 = ?",a:["7","8","9"],c:1,why:"15 dan 7 ni ayirsak, 8 qoladi."},{q:"5 × 3 = ?",a:["8","15","20"],c:1,why:"5 ni uch marta qo'shamiz: 5 + 5 + 5 = 15."}],
- reading:[{q:"'Bahor keldi. Daraxtlar gulladi.' Gapda qaysi fasl tasvirlangan?",a:["Qish","Bahor","Kuz"],c:1,why:"Matnda bahor fasli aytilgan."},{q:"Kitobni nima uchun o'qiymiz?",a:["Bilim olish uchun","Uni yashirish uchun","Yirtish uchun"],c:0,why:"Kitob bizga bilim va yangi fikrlar beradi."}],
- writing:[{q:"Qaysi so'z to'g'ri yozilgan?",a:["Maktab","Maktap","Makhtab"],c:0,why:"To'g'ri yozilishi: maktab."},{q:"Gap oxiriga odatda nima qo'yiladi?",a:["Vergul","Nuqta","Ikki nuqta"],c:1,why:"Darak gap oxiriga nuqta qo'yiladi."}],
- english:[{q:"'Apple' so'zining tarjimasi qaysi?",a:["Olma","Kitob","Maktab"],c:0,why:"Apple — olma."},{q:"'Good morning' nimani anglatadi?",a:["Xayrli tun","Xayrli tong","Rahmat"],c:1,why:"Good morning — xayrli tong."}]
-};
+function buildLessons(){
+ const age=Number(child?.age||7),max=age<=7?10:age<=9?20:50;
+ const math=[];
+ for(let n=0;n<4;n++){const a=2+Math.floor(Math.random()*max),b=1+Math.floor(Math.random()*Math.min(max,12)),op=n%3;let q,answer,why;if(op===0){q=a+" + "+b+" = ?";answer=a+b;why=a+" ga "+b+" ni qo'shsak, "+answer+" bo'ladi.";}else if(op===1){const high=Math.max(a,b),low=Math.min(a,b);q=high+" − "+low+" = ?";answer=high-low;why=high+" dan "+low+" ni ayirsak, "+answer+" qoladi.";}else{q=a+" × "+(1+Math.floor(Math.random()*5))+" = ?";const factor=Number(q.match(/× (\\d+)/)[1]);answer=a*factor;why=a+" ni "+factor+" ga ko'paytirsak, "+answer+" bo'ladi.";}const choices=new Set([answer,answer+1,Math.max(0,answer-1),answer+2]);const opts=[...choices].sort(()=>Math.random()-.5).slice(0,3);if(!opts.includes(answer))opts[0]=answer;math.push({q,a:opts.map(String),c:opts.indexOf(answer),why});}
+ return {
+  math,
+  reading:[
+   {q:"'Bahor keldi. Daraxtlar gulladi. Qushlar sayray boshladi.' Matnda qaysi fasl tasvirlangan?",a:["Qish","Bahor","Kuz"],c:1,why:"Daraxtlarning gullashi va qushlarning sayrashi bahor belgilaridir."},
+   {q:"'Dilshod kitobni diqqat bilan o'qidi va yangi so'zlarni daftariga yozdi.' Dilshod nima qildi?",a:["Rasm chizdi","Kitob o'qib, so'z yozdi","Futbol o'ynadi"],c:1,why:"Gapda Dilshod kitob o'qigani va yangi so'zlarni yozgani aytilgan."},
+   {q:"'Mushukcha yomg'irdan qochib, ayvon ostiga yashirindi.' Mushukcha qayerga yashirindi?",a:["Daraxtga","Ayvon ostiga","Uy tomiga"],c:1,why:"Mushukcha ayvon ostiga yashiringan."},
+   {q:"Matnni o'qiganda asosiy fikrni topish uchun nimaga e'tibor beramiz?",a:["Faqat uzun so'zlarga","Voqealar va muhim gaplarga","Faqat tinish belgilariga"],c:1,why:"Asosiy fikr voqea va muhim gaplar orqali anglashiladi."}
+  ],
+  writing:[
+   {q:"Qaysi so'z to'g'ri yozilgan?",a:["Maktab","Maktap","Makhtab"],c:0,why:"To'g'ri yozilishi: maktab."},
+   {q:"Darak gap oxiriga qaysi belgi qo'yiladi?",a:["So'roq belgisi","Nuqta","Undov belgisi"],c:1,why:"Darak gap oxiriga nuqta qo'yiladi."},
+   {q:"Qaysi gap bosh harf bilan to'g'ri boshlangan?",a:["bugun havo yaxshi.","Bugun havo yaxshi.","bugun Havo yaxshi."],c:1,why:"Har bir gap bosh harf bilan boshlanadi."},
+   {q:"'Kitob' so'zida nechta harf bor?",a:["4 ta","5 ta","6 ta"],c:1,why:"K-i-t-o-b — jami 5 ta harf."}
+  ],
+  english:[
+   {q:"'Apple' so'zining tarjimasi qaysi?",a:["Olma","Kitob","Maktab"],c:0,why:"Apple — olma."},
+   {q:"'Good morning' nimani anglatadi?",a:["Xayrli tun","Xayrli tong","Rahmat"],c:1,why:"Good morning — xayrli tong."},
+   {q:"'Thank you' iborasining tarjimasi qaysi?",a:["Iltimos","Kechirasiz","Rahmat"],c:2,why:"Thank you — rahmat."},
+   {q:"'Blue' qaysi rang?",a:["Qizil","Ko'k","Yashil"],c:1,why:"Blue — ko'k rang."}
+  ]
+ };
+}
 const labels={math:"Matematika",reading:"O'qish",writing:"Yozish",english:"Ingliz tili"};
 function setMode(next){mode=next;$("loginTab").classList.toggle("active",mode==="login");$("registerTab").classList.toggle("active",mode==="register");$("fullNameWrap").classList.toggle("hidden",mode!=="register");$("childFields").classList.toggle("hidden",mode!=="register");$("authSubmit").textContent=mode==="login"?"Kirish 🚀":"Hisob yaratish ✨";$("password").autocomplete=mode==="login"?"current-password":"new-password";}
 $("loginTab").onclick=()=>setMode("login");$("registerTab").onclick=()=>setMode("register");
@@ -71,8 +92,8 @@ function showApp(data){profile=data.parent;child=data.child||data.children?.[0];
 $("authForm").onsubmit=async e=>{e.preventDefault();$("authError").textContent="";$("authSubmit").disabled=true;try{const body={email:$("email").value,password:$("password").value};const data=mode==="register"?await api("/api/auth/register",{method:"POST",body:JSON.stringify({...body,fullName:$("fullName").value,childName:$("childName").value,age:Number($("age").value)})}):await api("/api/auth/login",{method:"POST",body:JSON.stringify(body)});showApp(data);}catch(err){$("authError").textContent=err.message;}finally{$("authSubmit").disabled=false;}};
 $("logout").onclick=async()=>{try{await api("/api/auth/logout",{method:"POST"});}finally{profile=child=null;$("app").classList.add("hidden");$("auth").classList.remove("hidden");}};
 async function restore(){try{const data=await api("/api/auth/me");showApp(data);}catch{}}
-async function loadProgress(){try{const d=await api("/api/progress/"+child.id);progress=d.progress;$("count").textContent=progress.length;const scores=progress.filter(x=>x.score!==null).map(x=>Number(x.score));$("average").textContent=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length)+"%":"—";}catch{}}
-function startLesson(s){subject=s;items=lessons[s];idx=0;correct=0;$("lesson").classList.remove("hidden");$("tutor").classList.add("hidden");document.querySelector(".grid").classList.add("hidden");$("subjectLabel").textContent=labels[s];$("lessonTitle").textContent=labels[s]+" mashqlari";renderQuestion();$("lesson").scrollIntoView({behavior:"smooth"});}
+async function loadProgress(){try{const d=await api("/api/progress/"+child.id);progress=d.progress;$("count").textContent=progress.length;const scores=progress.filter(x=>x.score!==null).map(x=>Number(x.score));$("average").textContent=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length)+"%":"—";$("resultCount").textContent=progress.length+" ta natija";const history=$("resultHistory");history.replaceChildren();if(!progress.length){const empty=document.createElement("p");empty.className="muted";empty.textContent="Hali natijalar yo'q. Birinchi mashqni bajar!";history.append(empty);return;}progress.slice(0,5).forEach(item=>{const row=document.createElement("div");row.className="top";row.style.cssText="padding:10px 12px;background:#f8f8fe;border-radius:14px;gap:12px";const title=document.createElement("strong");title.textContent=item.activity||labels[item.subject]||"Mashq";const score=document.createElement("span");score.className="pill";score.textContent=item.score===null?"Bajarildi":Math.round(Number(item.score))+"%";row.append(title,score);history.append(row);});}catch{}}
+function startLesson(s){subject=s;items=buildLessons()[s];idx=0;correct=0;$("lesson").classList.remove("hidden");$("tutor").classList.add("hidden");document.querySelector(".grid").classList.add("hidden");$("subjectLabel").textContent=labels[s];$("lessonTitle").textContent=labels[s]+" mashqlari";renderQuestion();$("lesson").scrollIntoView({behavior:"smooth"});}
 function renderQuestion(){const item=items[idx];$("question").textContent=item.q;$("lessonHint").textContent="Savol "+(idx+1)+" / "+items.length+" — to'g'ri javobni tanla."; $("answers").innerHTML="";$("feedback").textContent="";$("next").classList.add("hidden");item.a.forEach((a,i)=>{const b=document.createElement("button");b.className="answer";b.textContent=a;b.onclick=()=>answer(i);$("answers").append(b);});}
 async function answer(i){const item=items[idx];[...$("answers").children].forEach((b,n)=>{b.disabled=true;if(n===item.c)b.style.background="#dcfce7";else if(n===i)b.style.background="#fee2e2";});const ok=i===item.c;if(ok)correct++;$("feedback").textContent=(ok?"🎉 Barakalla! ":"Yaxshi urinish! ")+item.why;$("next").classList.remove("hidden");}
 $("next").onclick=async()=>{idx++;if(idx<items.length){renderQuestion();return;}const score=Math.round(correct/items.length*100);$("question").textContent="Mashq yakunlandi!";$("answers").innerHTML="";$("feedback").textContent="Natijang: "+correct+" / "+items.length+" ("+score+"%). Ajoyib harakat! 🌟";$("next").classList.add("hidden");try{await api("/api/progress",{method:"POST",body:JSON.stringify({childId:child.id,subject,activity:labels[subject]+" mashqi",score,details:{correct,total:items.length}})});await loadProgress();}catch(e){$("feedback").textContent+=" Natijani saqlashda xatolik: "+e.message;}};
