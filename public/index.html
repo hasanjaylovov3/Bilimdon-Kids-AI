@@ -40,6 +40,16 @@
     .animate-float {
       animation: floatSlow 3.4s ease-in-out infinite;
     }
+    @keyframes boyTeachingGesture {
+      0%, 100% { transform: rotate(-8deg); }
+      35% { transform: rotate(22deg); }
+      68% { transform: rotate(-2deg); }
+    }
+    .boy-teaching-arm {
+      transform-box: fill-box;
+      transform-origin: 15% 85%;
+      animation: boyTeachingGesture 0.9s ease-in-out infinite;
+    }
   </style>
   <script>
     // Haqiqiy PWA / Mobil va Kompyuter Ilovasi (Standalone App) Manifestini avtomatik ulash
@@ -385,9 +395,10 @@
             )}
 
             {pose === 'wave' && (
-              <g transform="translate(202, 168)">
+              <g transform="translate(202, 168)" className={isSpeaking ? 'boy-teaching-arm' : ''}>
                 <path d="M 8 64 L 26 26" stroke={pal.c1} strokeWidth="24" strokeLinecap="round" />
                 <circle cx="30" cy="18" r="15" fill={`url(#skin-${uid})`} />
+                <path d="M 22 8 Q 16 -3 12 -10 M 32 4 Q 34 -8 34 -13" fill="none" stroke={`url(#skin-${uid})`} strokeWidth="5" strokeLinecap="round" />
               </g>
             )}
 
@@ -1971,23 +1982,6 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                 >
                   🎤
                 </button>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {[
-                  '🎵 Inglizcha qo‘shiq aytaylik',
-                  '🧮 Menga qiziqarli misol ber',
-                  '📚 Qisqa ertak aytib ber',
-                  '👩‍🏫 Dastur muallifi kim?'
-                ].map((q) => (
-                  <button
-                    key={q}
-                    onClick={() => q.includes("🎵") ? handleSingEnglishSong() : handleSendToAiTutor(q)}
-                    className="text-xs font-bold bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-full transition"
-                  >
-                    {q}
-                  </button>
-                ))}
               </div>
 
               <div className="flex items-center gap-3 shrink-0">
