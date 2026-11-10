@@ -667,6 +667,8 @@
       const [adminMessage, setAdminMessage] = useState('');
       const [temporaryPassword, setTemporaryPassword] = useState('');
       const [adminBusy, setAdminBusy] = useState(false);
+      const [adminSearch, setAdminSearch] = useState('');
+      const [adminEditUser, setAdminEditUser] = useState(null);
 
 
       useEffect(() => {
@@ -706,6 +708,17 @@
         const d = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(d.error || 'Amal bajarilmadi');
         return d;
+      };
+      const saveAdminUser = async () => {
+        if (!adminEditUser) return;
+        try {
+          await adminRequest('/api/admin/users/' + adminEditUser.id, 'PATCH', {
+            fullName: adminEditUser.fullName, childName: adminEditUser.childName, age: Number(adminEditUser.age)
+          });
+          setAdminEditUser(null);
+          await refreshAdmin();
+          setAdminMessage('Foydalanuvchi profili yangilandi.');
+        } catch (error) { setAdminMessage(error.message); }
       };
       const createAdminContent = async () => {
         if (!adminTitle.trim()) return setAdminMessage('Material nomini kiriting.');
