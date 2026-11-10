@@ -18,19 +18,30 @@ const pool = process.env.DATABASE_URL ? new Pool({
 }) : null;
 const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash-lite";
 const TTS_MODEL = process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-lite-tts";
 async function generateTutorContent({ input, systemInstruction = tutorInstruction, temperature = 0.35, maxOutputTokens = 300 }) {
   if (!ai) throw new Error("GEMINI_API_KEY serverda sozlanmagan.");
-  return ai.interactions.create({
-    model: MODEL,
-    input,
-    system_instruction: systemInstruction,
-    generation_config: {
-      temperature,
-      max_output_tokens: maxOutputTokens
-    },
-    store: false
-  });
+  const models = [...new Set([MODEL, FALLBACK_MODEL])];
+  let lastError;
+  for (const model of models) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        return await ai.interactions.create({
+          model, input, system_instruction: systemInstruction,
+          generation_config: { temperature, max_output_tokens: maxOutputTokens }, store: false
+        });
+      } catch (error) {
+        lastError = error;
+        const message = String(error?.message || "");
+        const transient = /429|503|500|502|504|UNAVAILABLE|high demand|overloaded|RESOURCE_EXHAUSTED/i.test(message) || [429,500,502,503,504].includes(Number(error?.status || error?.code));
+        if (!transient) throw error;
+        if (attempt === 0 && model === MODEL) await new Promise(resolve => setTimeout(resolve, 350));
+        else break;
+      }
+    }
+  }
+  throw lastError || new Error("AI modellari vaqtincha javob bermayapti.");
 }
 const SESSION_DAYS = Math.min(30, Math.max(1, Number(process.env.SESSION_DAYS || 14)));
 
@@ -55,10 +66,11 @@ async function auth(req, res, next) {
     const token = req.cookies.bk_session;
     if (!token) return res.status(401).json({ error: "Avval tizimga kiring." });
     const result = await pool.query(
-      "SELECT p.id,p.email,p.full_name FROM sessions s JOIN parents p ON p.id=s.parent_id WHERE s.token_hash=$1 AND s.expires_at>NOW()",
+      "SELECT p.id,p.email,p.full_name,p.is_blocked FROM sessions s JOIN parents p ON p.id=s.parent_id WHERE s.token_hash=$1 AND s.expires_at>NOW()",
       [tokenHash(token)]
     );
     if (!result.rowCount) return res.status(401).json({ error: "Sessiya muddati tugagan. Qayta kiring." });
+    if (result.rows[0].is_blocked) return res.status(403).json({ error: "Hisob vaqtincha bloklangan. Administratorga murojaat qiling." });
     req.parent = result.rows[0];
     next();
   } catch (error) { next(error); }
@@ -121,21 +133,22 @@ app.post("/api/auth/login", requireDb, authLimiter, async (req, res, next) => {
   try {
     const email = clean(req.body.email).toLowerCase();
     const password = String(req.body.password || "");
-    const result = await pool.query("SELECT id,email,full_name,password_hash FROM parents WHERE email=$1", [email]);
+    const result = await pool.query("SELECT id,email,full_name,password_hash,is_blocked FROM parents WHERE email=$1", [email]);
     const parent = result.rows[0];
     if (!parent || !(await bcrypt.compare(password, parent.password_hash))) {
       return res.status(401).json({ error: "Email yoki parol noto'g'ri." });
     }
+    if (parent.is_blocked) return res.status(403).json({ error: "Hisob vaqtincha bloklangan. Administrator bilan bog‘laning." });
     await issueSession(parent.id, res);
     const children = await pool.query("SELECT id,display_name,age FROM children WHERE parent_id=$1 ORDER BY created_at", [parent.id]);
-    res.json({ parent: { id: parent.id, email: parent.email, full_name: parent.full_name }, children: children.rows });
+    res.json({ parent: { id: parent.id, email: parent.email, full_name: parent.full_name, is_admin: Boolean(process.env.ADMIN_EMAIL && parent.email === process.env.ADMIN_EMAIL.toLowerCase()) }, children: children.rows });
   } catch (error) { next(error); }
 });
 
 app.get("/api/auth/me", requireDb, auth, async (req, res, next) => {
   try {
     const children = await pool.query("SELECT id,display_name,age FROM children WHERE parent_id=$1 ORDER BY created_at", [req.parent.id]);
-    res.json({ parent: req.parent, children: children.rows });
+    res.json({ parent: { ...req.parent, is_admin: Boolean(process.env.ADMIN_EMAIL && req.parent.email === process.env.ADMIN_EMAIL.toLowerCase()) }, children: children.rows });
   } catch (error) { next(error); }
 });
 app.post("/api/auth/logout", requireDb, async (req, res, next) => {
@@ -282,6 +295,75 @@ app.post("/api/ai/tutor", requireDb, auth, aiLimiter, async (req, res, next) => 
     next(error);
   }
 });
+
+function requireAdmin(req, res, next) {
+  const adminEmail = clean(process.env.ADMIN_EMAIL).toLowerCase();
+  if (!adminEmail) return res.status(503).json({ error: "Admin panel uchun Render Environment’da ADMIN_EMAIL sozlanmagan." });
+  if (req.parent.email !== adminEmail) return res.status(403).json({ error: "Bu bo‘lim faqat administrator uchun." });
+  next();
+}
+app.get("/api/content", async (_req, res, next) => {
+  try {
+    if (!pool) return res.json({ items: [] });
+    const result = await pool.query("SELECT id,kind,title,description,image_url,content_data,created_at FROM learning_content WHERE is_published=TRUE ORDER BY created_at DESC");
+    res.json({ items: result.rows });
+  } catch (error) { next(error); }
+});
+app.get("/api/admin/overview", requireDb, auth, requireAdmin, async (_req, res, next) => {
+  try {
+    const [users, content, stats] = await Promise.all([
+      pool.query("SELECT p.id,p.email,p.full_name,p.is_blocked,p.created_at,COALESCE(json_agg(json_build_object('id',c.id,'name',c.display_name,'age',c.age)) FILTER (WHERE c.id IS NOT NULL),'[]'::json) AS children FROM parents p LEFT JOIN children c ON c.parent_id=p.id GROUP BY p.id ORDER BY p.created_at DESC"),
+      pool.query("SELECT id,kind,title,description,image_url,content_data,is_published,created_at FROM learning_content ORDER BY created_at DESC"),
+      pool.query("SELECT (SELECT COUNT(*)::int FROM parents) AS users,(SELECT COUNT(*)::int FROM children) AS children,(SELECT COUNT(*)::int FROM learning_content) AS content,(SELECT COUNT(*)::int FROM parents WHERE is_blocked=TRUE) AS blocked")
+    ]);
+    res.json({ users: users.rows, content: content.rows, stats: stats.rows[0] });
+  } catch (error) { next(error); }
+});
+app.patch("/api/admin/users/:id/block", requireDb, auth, requireAdmin, async (req, res, next) => {
+  try {
+    const blocked = Boolean(req.body?.blocked);
+    const result = await pool.query("UPDATE parents SET is_blocked=$1 WHERE id=$2 RETURNING id,is_blocked", [blocked, req.params.id]);
+    if (!result.rowCount) return res.status(404).json({ error: "Foydalanuvchi topilmadi." });
+    if (blocked) await pool.query("DELETE FROM sessions WHERE parent_id=$1", [req.params.id]);
+    res.json({ user: result.rows[0] });
+  } catch (error) { next(error); }
+});
+app.post("/api/admin/users/:id/reset-password", requireDb, auth, requireAdmin, async (req, res, next) => {
+  try {
+    const temporaryPassword = crypto.randomBytes(9).toString("base64url");
+    const hash = await bcrypt.hash(temporaryPassword, 12);
+    const result = await pool.query("UPDATE parents SET password_hash=$1 WHERE id=$2 RETURNING id,email", [hash, req.params.id]);
+    if (!result.rowCount) return res.status(404).json({ error: "Foydalanuvchi topilmadi." });
+    await pool.query("DELETE FROM sessions WHERE parent_id=$1", [req.params.id]);
+    res.json({ email: result.rows[0].email, temporaryPassword });
+  } catch (error) { next(error); }
+});
+app.post("/api/admin/content", requireDb, auth, requireAdmin, async (req, res, next) => {
+  try {
+    const kind = clean(req.body?.kind);
+    const title = clean(req.body?.title);
+    const description = clean(req.body?.description).slice(0, 1200);
+    const imageUrl = clean(req.body?.imageUrl);
+    const contentData = req.body?.contentData && typeof req.body.contentData === "object" ? req.body.contentData : {};
+    if (!["lesson","image","game"].includes(kind) || title.length < 2 || title.length > 100 ||
+        imageUrl.length > 1000 || (imageUrl && !imageUrl.startsWith("https://"))) {
+      return res.status(400).json({ error: "Tur, sarlavha yoki HTTPS rasm havolasini tekshiring." });
+    }
+    const result = await pool.query(
+      "INSERT INTO learning_content(kind,title,description,image_url,content_data,is_published) VALUES($1,$2,$3,$4,$5,TRUE) RETURNING id,kind,title,description,image_url,content_data,is_published,created_at",
+      [kind,title,description,imageUrl || null,JSON.stringify(contentData)]
+    );
+    res.status(201).json({ item: result.rows[0] });
+  } catch (error) { next(error); }
+});
+app.delete("/api/admin/content/:id", requireDb, auth, requireAdmin, async (req, res, next) => {
+  try {
+    const result = await pool.query("DELETE FROM learning_content WHERE id=$1 RETURNING id", [req.params.id]);
+    if (!result.rowCount) return res.status(404).json({ error: "Material topilmadi." });
+    res.json({ deleted: true });
+  } catch (error) { next(error); }
+});
+
 app.post("/api/progress", requireDb, auth, async (req, res, next) => {
   try {
     const { childId, subject, activity, score, details = {} } = req.body || {};
@@ -320,4 +402,11 @@ app.use((error, _req, res, _next) => {
   }
   res.status(500).json({ error: "Serverda xatolik yuz berdi. Iltimos, keyinroq urinib ko'ring." });
 });
-app.listen(PORT, () => console.log(`Bilimdon Kids API listening on ${PORT}`));
+async function startServer() {
+  if (pool) {
+    await pool.query("ALTER TABLE parents ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN NOT NULL DEFAULT FALSE");
+    await pool.query("CREATE TABLE IF NOT EXISTS learning_content (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), kind TEXT NOT NULL CHECK (kind IN ('lesson','image','game')), title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', image_url TEXT, content_data JSONB NOT NULL DEFAULT '{}'::jsonb, is_published BOOLEAN NOT NULL DEFAULT TRUE, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())");
+  }
+  app.listen(PORT, () => console.log("Bilimdon Kids API listening on " + PORT));
+}
+startServer().catch(error => { console.error("Database initialization failed:", error.message); process.exit(1); });
