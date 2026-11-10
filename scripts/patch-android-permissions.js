@@ -9,7 +9,6 @@ let manifest = fs.readFileSync(manifestPath, "utf8");
 const permissions = [
   "android.permission.INTERNET",
   "android.permission.RECORD_AUDIO",
-  "android.permission.CAMERA",
   "android.permission.MODIFY_AUDIO_SETTINGS"
 ];
 for (const permission of permissions) {
@@ -25,4 +24,4 @@ if (!manifest.includes('android:name="android.hardware.microphone"')) {
   manifest = manifest.replace(/<application\b/, '<uses-feature android:name="android.hardware.microphone" android:required="false" />\n    <application');
 }
 fs.writeFileSync(manifestPath, manifest);
-console.log("Android manifest: CAMERA, RECORD_AUDIO va audio sozlamalari ruxsatlari qo‘shildi.");
+console.log("Android manifest: RECORD_AUDIO va audio sozlamalari ruxsatlari qo‘shildi.");
