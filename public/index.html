@@ -47,7 +47,15 @@
       50% { transform: translateY(-8px); }
     }
     .animate-float { animation: floatSlow 3.4s ease-in-out infinite; }
-    .app-scroll-area { min-height:0; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; touch-action:pan-y; scrollbar-width:thin; }
+    .app-scroll-area { flex:1 1 0%; height:100%; min-height:0; min-width:0; overflow-x:hidden; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; touch-action:pan-y; scrollbar-width:thin; }
+    .app-main-area { flex:1 1 0%; height:0; min-height:0; min-width:0; }
+    #app-loading { min-height:100%; display:flex; align-items:center; justify-content:center; padding:24px; background:radial-gradient(circle at top,#1e40af 0%,#0f172a 65%); color:white; text-align:center; }
+    #app-loading .loading-logo { width:64px; height:64px; border-radius:18px; background:rgba(37,99,235,.95); border:2px solid #67e8f9; display:flex; align-items:center; justify-content:center; box-shadow:0 12px 28px rgba(0,0,0,.3); transform:rotate(-6deg); margin:0 auto 16px; }
+    #app-loading .loading-title { font-size:28px; line-height:.95; font-weight:900; letter-spacing:-.04em; }
+    #app-loading .loading-title span { display:block; color:#fcd34d; margin-top:5px; }
+    #app-loading .loading-tagline { margin-top:12px; color:#cbd5e1; font-size:12px; font-weight:800; }
+    #app-loading .loading-indicator { width:34px; height:4px; border-radius:99px; background:#22d3ee; margin:22px auto 0; animation:loadingPulse 1s ease-in-out infinite alternate; }
+    @keyframes loadingPulse { from { opacity:.35; transform:scaleX(.55); } to { opacity:1; transform:scaleX(1); } }
   </style>
   <script>
     // Haqiqiy PWA / Mobil va Kompyuter Ilovasi (Standalone App) Manifestini avtomatik ulash
@@ -81,7 +89,7 @@
   </script>
 </head>
 <body class="bg-slate-950 h-full text-slate-800 m-0 p-0">
-  <div id="root"></div>
+  <div id="root"><div id="app-loading" role="status" aria-label="Bilimdon Kids yuklanmoqda"><div><div class="loading-logo"><span style="font-size:34px">🎓</span></div><div class="loading-title">Bilimdon<span>Kids AI</span></div><div class="loading-tagline">O‘rgan, o‘yna, rivojlan!</div><div class="loading-indicator"></div></div></div></div>
 
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
@@ -1983,9 +1991,9 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
           </nav>}
 
           {/* HAQIQIY ILOVA EKRANI (To'liq ekranli Native App ko'rinishi, hech qanday ortiqcha web-preview satrlarisiz) */}
-          <div className="w-full min-h-0 flex-1 flex items-stretch justify-center p-0 sm:p-2 md:p-4 pt-16 pb-24">
-            <div className="w-full max-w-7xl mx-auto flex flex-col flex-1 min-h-0 items-stretch">
-              <div className="app-scroll-area w-full h-full flex-1 min-h-0 flex items-stretch overflow-x-hidden overflow-y-auto overscroll-y-contain touch-pan-y">
+          <div className="app-main-area w-full flex items-stretch justify-center p-0 sm:p-2 md:p-4 pt-16 pb-24">
+            <div className="w-full max-w-7xl mx-auto flex flex-col flex-1 min-h-0 min-w-0 items-stretch">
+              <div className="app-scroll-area w-full flex items-stretch overscroll-y-contain touch-pan-y">
               {activeScreen === 'login' && renderLoginScreen()}
               {activeScreen === 'dashboard' && renderDashboardScreen()}
               {activeScreen === 'math' && renderMathScreen()}
