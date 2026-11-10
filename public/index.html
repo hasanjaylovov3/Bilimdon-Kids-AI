@@ -201,6 +201,18 @@
         window.speechSynthesis.speak(utter);
       } catch (error) {
         console.error('Bilimdon Kids speech error:', error);
+        if ('speechSynthesis' in window) {
+          try {
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = lang; utter.rate = 0.96; utter.pitch = 1.04;
+            utter.onstart = () => onStart && onStart();
+            utter.onend = () => onEnd && onEnd();
+            utter.onerror = () => onEnd && onEnd();
+            window.speechSynthesis.speak(utter);
+            return;
+          } catch {}
+        }
         if (onEnd) onEnd();
       }
     };
@@ -632,6 +644,63 @@
       const [showAuthorModal, setShowAuthorModal] = useState(false);
       const [deferredPrompt, setDeferredPrompt] = useState(null);
       const [isFullscreen, setIsFullscreen] = useState(false);
+      const [adminOverview, setAdminOverview] = useState({ users: [], content: [], stats: {} });
+      const [activityItems, setActivityItems] = useState([]);
+      const [adminKind, setAdminKind] = useState('lesson');
+      const [adminTitle, setAdminTitle] = useState('');
+      const [adminDescription, setAdminDescription] = useState('');
+      const [adminImageUrl, setAdminImageUrl] = useState('');
+      const [adminMessage, setAdminMessage] = useState('');
+      const [temporaryPassword, setTemporaryPassword] = useState('');
+      const [adminBusy, setAdminBusy] = useState(false);
+
+
+      useEffect(() => {
+        if (activeScreen === 'admin' && authUser?.is_admin) {
+          fetch('/api/admin/overview', { credentials: 'same-origin' })
+            .then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.error || 'Admin ma’lumotlari olinmadi'); return d; })
+            .then(setAdminOverview).catch(e => setAdminMessage(e.message));
+        }
+        if (activeScreen === 'activities') {
+          fetch('/api/content').then(r => r.json()).then(d => setActivityItems(d.items || [])).catch(() => setActivityItems([]));
+        }
+      }, [activeScreen, authUser?.is_admin]);
+
+      const refreshAdmin = async () => {
+        const r = await fetch('/api/admin/overview', { credentials: 'same-origin' });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Admin ma’lumotlari olinmadi');
+        setAdminOverview(d);
+      };
+      const adminRequest = async (url, method = 'GET', body) => {
+        const r = await fetch(url, { method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.error || 'Amal bajarilmadi');
+        return d;
+      };
+      const createAdminContent = async () => {
+        if (!adminTitle.trim()) return setAdminMessage('Material nomini kiriting.');
+        setAdminBusy(true); setAdminMessage(''); setTemporaryPassword('');
+        try {
+          await adminRequest('/api/admin/content', 'POST', { kind: adminKind, title: adminTitle, description: adminDescription, imageUrl: adminImageUrl });
+          setAdminTitle(''); setAdminDescription(''); setAdminImageUrl('');
+          await refreshAdmin(); setAdminMessage('Yangi material muvaffaqiyatli qo‘shildi.');
+        } catch (e) { setAdminMessage(e.message); } finally { setAdminBusy(false); }
+      };
+      const toggleUserBlock = async (user) => {
+        try { await adminRequest('/api/admin/users/' + user.id + '/block', 'PATCH', { blocked: !user.is_blocked }); await refreshAdmin(); }
+        catch (e) { setAdminMessage(e.message); }
+      };
+      const resetUserPassword = async (user) => {
+        if (!window.confirm(user.email + ' uchun vaqtinchalik parol yaratilsinmi?')) return;
+        try { const d = await adminRequest('/api/admin/users/' + user.id + '/reset-password', 'POST', {}); setTemporaryPassword(d.email + ' — ' + d.temporaryPassword); setAdminMessage('Vaqtinchalik parol faqat bir marta ko‘rsatiladi.'); }
+        catch (e) { setAdminMessage(e.message); }
+      };
+      const deleteAdminContent = async (item) => {
+        if (!window.confirm('“' + item.title + '” o‘chirilsinmi?')) return;
+        try { await adminRequest('/api/admin/content/' + item.id, 'DELETE'); await refreshAdmin(); }
+        catch (e) { setAdminMessage(e.message); }
+      };
 
       useEffect(() => {
         const handler = (e) => {
@@ -1248,29 +1317,6 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
       // ==========================================
       const renderDashboardScreen = () => (
         <div className="relative w-full rounded-[34px] overflow-hidden shadow-2xl border-4 border-white/80 bg-gradient-to-br from-[#f5d0fe] via-[#fed7aa] to-[#fde68a] p-6 md:p-8 min-h-[540px] flex flex-col justify-between">
-          <div className="relative z-10 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-3 bg-[#5b4666]/85 backdrop-blur-md text-white pl-2 pr-5 py-1.5 rounded-full shadow-lg border border-white/30">
-              <div className="flex items-center gap-2 pr-3 border-r border-white/25">
-                <div className="w-11 h-11 rounded-xl bg-blue-600/90 border-2 border-cyan-300 shadow flex items-center justify-center"><span className="text-2xl">🎓</span></div>
-                <div className="leading-none">
-                  <div className="text-lg md:text-xl font-black text-white">Bilimdon</div>
-                  <div className="text-lg md:text-xl font-black text-amber-300 -mt-0.5">Kids</div>
-                </div>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-400 to-blue-600 border-2 border-white flex items-center justify-center font-black text-base">👦🏻</div>
-              <span className="font-black text-lg">{childName}</span>
-              <div className="flex items-center gap-1.5 pl-3 border-l border-white/25 text-amber-300 font-black">
-                <span>⭐</span>
-                <span>{stars} ball</span>
-              </div>
-            </div>
-            <button
-              onClick={() => goScreen('settings')}
-              title="Sozlamalar"
-              className="w-11 h-11 rounded-full bg-[#5c4d68] text-white flex items-center justify-center border-2 border-white/35 shadow-lg hover:rotate-45 transition"
-            >⚙️</button>
-          </div>
-
           <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center my-6">
             <div className="lg:col-span-4 flex flex-col items-center">
               <div className="bg-white/95 text-slate-800 px-5 py-3.5 rounded-3xl rounded-bl-none shadow-xl border-2 border-white mb-2 max-w-xs">
@@ -1349,101 +1395,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
             </div>
           </div>
 
-          <div className="relative z-10 bg-white/95 backdrop-blur-xl rounded-3xl p-2 shadow-xl border-2 border-white grid grid-cols-5 gap-2">
-            {[
-              { id: 'dashboard', label: 'Bosh sahifa', icon: '🏠' },
-              { id: 'results', label: 'Natijalar', icon: '🏆' },
-              { id: 'aitutor', label: 'AI Ustoz', icon: '✨' },
-              { id: 'gifts', label: 'Sovg‘alar', icon: '🎁' },
-              { id: 'login', label: 'Profil', icon: '👤' }
-            ].map((tab) => {
-              const active = activeScreen === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => goScreen(tab.id)}
-                  className={`flex flex-col items-center justify-center py-2.5 rounded-2xl font-extrabold text-xs sm:text-sm transition ${
-                    active ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  <span className="text-lg mb-0.5">{tab.icon}</span>
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      );
 
-      // ==========================================
-      // 3-EKRAN: MATEMATIKA
-      // ==========================================
-      const renderMathScreen = () => {
-        const cur = MATH_QUESTIONS[mathIdx];
-        return (
-          <div className="relative w-full rounded-[34px] overflow-hidden shadow-2xl border-4 border-white/80 bg-gradient-to-br from-[#1d4ed8] via-[#38bdf8] to-[#bfdbfe] p-6 md:p-8 min-h-[500px] flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => goScreen('dashboard')}
-                  className="w-11 h-11 rounded-full bg-white/25 hover:bg-white/40 text-white flex items-center justify-center border-2 border-white/60 shadow font-black"
-                >
-                  ←
-                </button>
-                <div className="flex items-center gap-2 text-white font-black text-2xl drop-shadow">
-                  <span className="text-2xl">🧮</span>
-                  <span>Matematika</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#1e3a8a]/80 text-amber-300 font-black border-2 border-white/40 shadow">
-                <span>⭐</span>
-                <span>10</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center my-auto py-4">
-              <div className="lg:col-span-5 flex items-end justify-center gap-2">
-                <MiniRobot3D size="sm" />
-                <Boy3DCharacter outfit="blue" pose="point" size="lg" />
-              </div>
-
-              <div className="lg:col-span-7 flex flex-col items-center space-y-5">
-                <div className="bg-white text-slate-800 px-6 py-3 rounded-2xl shadow-lg font-extrabold text-base border-2 border-blue-100">
-                  {mathFeedback}
-                </div>
-
-                <div className="w-full max-w-md bg-white/95 rounded-[28px] py-8 px-6 text-center shadow-2xl border-4 border-blue-200">
-                  <div className="text-5xl md:text-6xl font-black text-[#1e3a8a] tracking-wider">
-                    {cur.q}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-4 gap-3 w-full max-w-md">
-                  {cur.options.map((opt) => {
-                    const isSelected = selectedMath === opt;
-                    return (
-                      <button
-                        key={opt}
-                        onClick={() => handleMathOption(opt)}
-                        className={`relative py-4 rounded-2xl font-black text-2xl shadow-xl border-2 transition transform active:scale-95 ${
-                          isSelected
-                            ? 'bg-gradient-to-b from-emerald-400 to-emerald-600 text-white border-white scale-105'
-                            : 'bg-white hover:bg-blue-50 text-slate-800 border-blue-100'
-                        }`}
-                      >
-                        {opt}
-                        {isSelected && (
-                          <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-emerald-500 border-2 border-white text-white flex items-center justify-center text-xs">
-                            ✓
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
         );
       };
 
@@ -1921,6 +1873,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {authUser?.is_admin && <button onClick={() => { setAdminMessage(''); goScreen('admin'); }} className="rounded-2xl p-5 bg-gradient-to-r from-violet-500 to-fuchsia-600 text-white text-left shadow-xl"><div className="text-2xl mb-2">🛡️</div><div className="font-black text-lg">Admin panel</div><div className="text-xs font-bold opacity-90">Foydalanuvchilar va materiallar</div></button>}
             <button onClick={() => setShowAuthorModal(true)} className="rounded-2xl p-5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-left shadow-xl">
               <div className="text-2xl mb-2">🎓</div><div className="font-black text-lg">Dastur Haqida</div><div className="text-xs font-bold opacity-90">Loyiha va muallif haqida ma’lumot</div>
             </button>
@@ -1986,12 +1939,63 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
         </div>
       );
 
+
+      const renderAdminScreen = () => (
+        <div className="w-full min-h-full rounded-[28px] bg-slate-950 text-white p-4 md:p-7 space-y-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3"><div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-2xl">🛡️</div><div><h2 className="text-2xl md:text-3xl font-black">Bilimdon KIDS Admin</h2><p className="text-slate-400 text-xs">Boshqaruv markazi</p></div></div>
+            <button onClick={() => goScreen('settings')} className="rounded-xl bg-white/10 px-3 py-2 font-bold">✕</button>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {[['Foydalanuvchilar',adminOverview.stats.users || 0,'👨‍👩‍👧'],['Bolalar',adminOverview.stats.children || 0,'🧒'],['Materiallar',adminOverview.stats.content || 0,'📚'],['Bloklangan',adminOverview.stats.blocked || 0,'⛔']].map(([label,value,icon]) => <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-4"><div className="text-2xl">{icon}</div><div className="text-2xl font-black mt-2">{value}</div><div className="text-xs text-slate-400 font-bold">{label}</div></div>)}
+          </div>
+          <section className="rounded-2xl border border-white/10 bg-white/5 p-4 md:p-5 space-y-3">
+            <h3 className="text-lg font-black text-cyan-300">➕ Mashg‘ulot, rasm yoki o‘yin qo‘shish</h3>
+            <div className="grid md:grid-cols-2 gap-3">
+              <select value={adminKind} onChange={e=>setAdminKind(e.target.value)} className="rounded-xl bg-slate-800 border border-white/10 p-3 text-white"><option value="lesson">📘 Mashg‘ulot</option><option value="image">🖼️ Rasm</option><option value="game">🎮 O‘yin</option></select>
+              <input value={adminTitle} onChange={e=>setAdminTitle(e.target.value)} placeholder="Material nomi" className="rounded-xl bg-slate-800 border border-white/10 p-3 text-white"/>
+              <input value={adminImageUrl} onChange={e=>setAdminImageUrl(e.target.value)} placeholder="Rasm URL (https://...)" className="rounded-xl bg-slate-800 border border-white/10 p-3 text-white md:col-span-2"/>
+              <textarea value={adminDescription} onChange={e=>setAdminDescription(e.target.value)} placeholder="Qisqa izoh yoki o‘yin qoidasi" className="rounded-xl bg-slate-800 border border-white/10 p-3 text-white md:col-span-2 min-h-24"/>
+            </div>
+            <button disabled={adminBusy} onClick={createAdminContent} className="rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 px-5 py-3 font-black text-slate-950 disabled:opacity-50">{adminBusy?'Saqlanmoqda...':'Materialni qo‘shish'}</button>
+          </section>
+          {adminMessage && <div className="rounded-xl bg-cyan-400/10 border border-cyan-300/30 p-3 text-sm text-cyan-100">{adminMessage}</div>}
+          {temporaryPassword && <div className="rounded-xl bg-amber-400/10 border border-amber-300/40 p-4"><b className="text-amber-200">Bir martalik vaqtinchalik parol:</b><div className="font-mono break-all mt-2">{temporaryPassword}</div><button onClick={()=>navigator.clipboard?.writeText(temporaryPassword)} className="mt-2 text-xs underline">Nusxalash</button></div>}
+          <section className="space-y-3">
+            <h3 className="text-lg font-black">👥 Foydalanuvchilar</h3>
+            {adminOverview.users.map(user=><div key={user.id} className="rounded-2xl border border-white/10 bg-white/5 p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="min-w-0"><div className="font-black">{user.full_name}</div><div className="text-sm text-slate-300 break-all">{user.email}</div><div className="text-xs text-slate-400 mt-1">{(user.children||[]).map(c=>c.name+' ('+c.age+' yosh)').join(', ') || 'Bola profili yo‘q'}</div><span className={'inline-block mt-2 rounded-full px-2 py-1 text-[10px] font-black '+(user.is_blocked?'bg-rose-500/20 text-rose-300':'bg-emerald-500/20 text-emerald-300')}>{user.is_blocked?'BLOKLANGAN':'FAOL'}</span></div>
+              <div className="flex flex-wrap gap-2 shrink-0"><button onClick={()=>toggleUserBlock(user)} className="rounded-lg bg-white/10 px-3 py-2 text-xs font-bold">{user.is_blocked?'Tiklash':'Bloklash'}</button><button onClick={()=>resetUserPassword(user)} className="rounded-lg bg-amber-400/20 text-amber-200 px-3 py-2 text-xs font-bold">Parolni tiklash</button></div>
+            </div>)}
+          </section>
+          <section className="space-y-3"><h3 className="text-lg font-black">📦 Qo‘shilgan materiallar</h3>
+            {adminOverview.content.map(item=><div key={item.id} className="rounded-xl border border-white/10 bg-white/5 p-3 flex items-center justify-between gap-3"><div className="min-w-0"><b>{item.kind==='lesson'?'📘':item.kind==='image'?'🖼️':'🎮'} {item.title}</b><p className="text-xs text-slate-400 truncate">{item.description}</p></div><button onClick={()=>deleteAdminContent(item)} className="rounded-lg bg-rose-500/20 text-rose-300 px-3 py-2 text-xs font-bold">O‘chirish</button></div>)}
+          </section>
+        </div>
+      );
+
+      const renderActivitiesScreen = () => (
+        <div className="w-full min-h-full rounded-[28px] bg-gradient-to-br from-sky-100 via-white to-violet-100 p-5 md:p-8 space-y-5">
+          <div><h2 className="text-2xl md:text-3xl font-black text-slate-900">📚 Yangi mashg‘ulotlar</h2><p className="text-slate-600 font-semibold">Ustoz qo‘shgan rasmlar, mashg‘ulotlar va o‘yinlar</p></div>
+          {activityItems.length===0?<div className="rounded-2xl bg-white p-6 text-slate-500 font-bold">Hozircha yangi material yo‘q. Tez orada yangilari qo‘shiladi!</div>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{activityItems.map(item=><article key={item.id} className="overflow-hidden rounded-2xl bg-white shadow-lg border border-slate-100">{item.image_url&&<img src={item.image_url} alt={item.title} className="w-full h-44 object-cover"/>}<div className="p-4"><div className="text-xs font-black text-indigo-500">{item.kind==='lesson'?'📘 MASHG‘ULOT':item.kind==='image'?'🖼️ RASM':'🎮 O‘YIN'}</div><h3 className="font-black text-lg text-slate-900 mt-1">{item.title}</h3><p className="text-sm text-slate-600 mt-2">{item.description}</p></div></article>)}</div>}
+        </div>
+      );
+
+
       return (
-        <div className="min-h-screen w-screen bg-slate-950 text-slate-800 flex flex-col justify-between overflow-x-hidden relative">
+        <div className="h-[100dvh] w-screen bg-slate-950 text-slate-800 flex flex-col overflow-hidden relative">
+          {activeScreen !== 'login' && <header className="fixed top-0 inset-x-0 z-40 h-16 px-4 md:px-8 bg-slate-950/95 backdrop-blur-xl border-b border-white/10 flex items-center justify-between text-white">
+            <div className="flex items-center gap-2"><img src="/assets/bilimdon-mascot.svg" alt="Bilimdon KIDS" className="w-10 h-10 object-contain"/><div className="leading-tight"><div className="font-black text-lg">Bilimdon <span className="text-cyan-300">KIDS</span></div><div className="text-[10px] text-slate-400 font-bold">O‘rgan • O‘yna • Rivojlan</div></div></div>
+            <div className="flex items-center gap-3"><span className="font-black text-sm max-w-32 truncate">{childName}</span><button onClick={()=>goScreen('settings')} className="w-10 h-10 rounded-xl bg-white/10 border border-white/10" aria-label="Sozlamalar">⚙️</button></div>
+          </header>}
+          {activeScreen !== 'login' && <nav className="fixed bottom-0 inset-x-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 px-2 py-2 grid grid-cols-5 gap-1">
+            {[{id:'dashboard',label:'Bosh menyu',icon:'🏠'},{id:'activities',label:'Mashg‘ulot',icon:'📚'},{id:'aitutor',label:'AI Ustoz',icon:'✨'},{id:'results',label:'Natijalar',icon:'🏆'},{id:'settings',label:'Sozlama',icon:'⚙️'}].map(tab=><button key={tab.id} onClick={()=>goScreen(tab.id)} className={'rounded-xl py-1.5 flex flex-col items-center gap-0.5 text-[10px] sm:text-xs font-black '+(activeScreen===tab.id?'bg-cyan-400/15 text-cyan-300':'text-slate-300')}><span className="text-lg">{tab.icon}</span><span>{tab.label}</span></button>)}
+          </nav>}
+
           {/* HAQIQIY ILOVA EKRANI (To'liq ekranli Native App ko'rinishi, hech qanday ortiqcha web-preview satrlarisiz) */}
-          <div className="w-full min-h-screen flex-1 flex items-stretch justify-center p-0 sm:p-2 md:p-4">
+          <div className="w-full min-h-0 flex-1 flex items-stretch justify-center p-0 sm:p-2 md:p-4 pt-16 pb-24">
             <div className="w-full max-w-7xl mx-auto flex flex-col items-stretch">
-              <div className="w-full flex-1 flex items-stretch">
+              <div className="w-full flex-1 min-h-0 flex items-stretch overflow-y-auto overscroll-contain">
               {activeScreen === 'login' && renderLoginScreen()}
               {activeScreen === 'dashboard' && renderDashboardScreen()}
               {activeScreen === 'math' && renderMathScreen()}
@@ -2002,12 +2006,14 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
               {activeScreen === 'aitutor' && renderAiTutorScreen()}
               {activeScreen === 'gifts' && renderGiftsScreen()}
               {activeScreen === 'settings' && renderSettingsScreen()}
+              {activeScreen === 'admin' && authUser?.is_admin && renderAdminScreen()}
+              {activeScreen === 'activities' && renderActivitiesScreen()}
               </div>
             </div>
           </div>
 
           {/* SUZIB YURUVCHI HAQIQIY ILOVA BOSHQARUV TUGMASI (Floating App Dock) */}
-          <div className="fixed bottom-4 right-4 z-40 flex items-center gap-2">
+          <div className="fixed bottom-20 right-4 z-30 flex items-center gap-2">
             {activeScreen !== 'dashboard' && activeScreen !== 'login' && (
               <button
                 onClick={() => goScreen('dashboard')}
