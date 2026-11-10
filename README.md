@@ -34,3 +34,11 @@ PWA shell dastlabki bosqichda mavjud. Capacitor Android loyihasi va APK CI build
 
 ## Hozirgi holat
 Birinchi bosqichda backend, Gemini API, ota-ona autentifikatsiyasi, bola profili, progress saqlash va asosiy fan mashqlari joylandi. Dastlabki yuklangan 3D HTML ilovadagi barcha animatsiyalar va interaktiv ekranlarni to'liq ko'chirish/ulash hali bajarilmagan; ular keyingi integratsiya bosqichida saqlanib ulanadi.
+
+## Kamera, mikrofon va avatar animatsiyasi
+
+- Android APK manifestida kamera va mikrofon ruxsatlari build vaqtida avtomatik qo‘shiladi.
+- Ilk ishga tushishda foydalanuvchiga kamera/mikrofon ruxsati so‘raladi; ruxsatlarni keyin Sozlamalar bo‘limidan qayta so‘rash mumkin.
+- Bolakay yuzni qurilmaning o‘zida kuzatadi; kamera tasviri serverga uzatilmaydi.
+- AI ovozi ijro etilayotgan vaqtda avatar og‘zi animatsiyalanadi, ko‘zlar tabiiy ravishda pirpiraydi.
+- Ruxsatlar Android tizimi tomonidan tasdiqlanadi. Rad etilgan ruxsatni ilova majburan yoqa olmaydi; uni telefon sozlamalaridan yoqish kerak.
