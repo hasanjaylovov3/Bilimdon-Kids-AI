@@ -545,6 +545,7 @@
       const [aiStatusLoading, setAiStatusLoading] = useState(false);
 
       const [stars, setStars] = useState(1250);
+      const starRank = stars >= 2000 ? '🏆 Ustoz' : stars >= 1000 ? '🌟 Bilimdon' : stars >= 500 ? '🚀 Izlanuvchi' : '🌱 Boshlovchi';
       const [selectedVideo, setSelectedVideo] = useState(null);
       const [muted, setMuted] = useState(false);
 
@@ -1441,7 +1442,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
           <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center my-6">
             <div className="lg:col-span-4 flex flex-col items-center">
               <div className="bg-white/95 text-slate-800 px-5 py-3.5 rounded-3xl rounded-bl-none shadow-xl border-2 border-white mb-2 max-w-xs">
-                <p className="font-black text-base md:text-lg">Salom, {childName}! 👋</p>
+                <p className="font-black text-base md:text-lg">Salom, {childName}! 👋</p><p className="text-xs font-black text-amber-700 mt-1">⭐ {stars} yulduz · {starRank}</p>
                 <p className="font-bold text-slate-600 text-sm">Bugun nimalarni o‘rganamiz?</p>
               </div>
               <Boy3DCharacter outfit="blue" pose="wave" size="lg" />
@@ -1826,9 +1827,9 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                 <Boy3DCharacter outfit="blue" pose="wave" size="sm" />
               </div>
               <h3 className="text-2xl font-black text-slate-800">{childName}</h3>
-              <p className="text-sm font-bold text-slate-500">7 yosh</p>
+              <p className="text-sm font-bold text-slate-500">⭐ {stars} ta yulduz</p>
               <div className="inline-flex items-center gap-2 px-5 py-2 rounded-2xl bg-gradient-to-r from-amber-300 to-yellow-400 text-amber-950 font-black text-sm shadow">
-                <span>⭐ Level 3</span>
+                <span>{starRank}</span>
               </div>
             </div>
 
@@ -2207,7 +2208,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
         <div className="h-[100dvh] w-screen bg-slate-950 text-slate-800 flex flex-col overflow-hidden relative">
           {activeScreen !== 'login' && <header className="fixed top-0 inset-x-0 z-40 h-16 px-4 md:px-8 bg-slate-950/95 backdrop-blur-xl border-b border-white/10 flex items-center justify-between text-white">
             <div className="flex items-center gap-2.5 min-w-0"><div className="w-10 h-10 rounded-xl bg-blue-600/90 border-2 border-cyan-300 shadow-lg flex items-center justify-center shrink-0 -rotate-6"><span className="text-2xl">🎓</span></div><div className="leading-[0.9]"><div className="font-black text-[17px] tracking-tight text-white" style={{WebkitTextStroke:'0.35px #1e3a8a'}}>Bilimdon</div><div className="font-black text-[17px] tracking-tight text-amber-300" style={{WebkitTextStroke:'0.35px #78350f'}}>Kids AI</div><div className="text-[8px] text-slate-300 font-extrabold mt-1">O‘rgan, o‘yna, rivojlan!</div></div></div>
-            <div className="flex items-center gap-3"><span className="font-black text-sm max-w-32 truncate">{childName}</span><button onClick={()=>goScreen('settings')} className="w-10 h-10 rounded-xl bg-white/10 border border-white/10" aria-label="Sozlamalar">⚙️</button></div>
+            <div className="flex items-center gap-2 min-w-0"><div className="min-w-0 text-right leading-tight"><span className="block font-black text-sm max-w-32 truncate">{childName}</span><span className="block text-[10px] font-extrabold text-amber-300 whitespace-nowrap">⭐ {stars} · {starRank}</span></div><button onClick={()=>goScreen('settings')} className="w-10 h-10 rounded-xl bg-white/10 border border-white/10" aria-label="Sozlamalar">⚙️</button></div>
           </header>}
           {activeScreen !== 'login' && <nav className="fixed bottom-0 inset-x-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 px-2 py-2 grid grid-cols-5 gap-1">
             {[{id:'dashboard',label:'Bosh menyu',icon:'🏠'},{id:'activities',label:'Mashg‘ulot',icon:'📚'},{id:'aitutor',label:'AI Ustoz',icon:'✨'},{id:'results',label:'Natijalar',icon:'🏆'},{id:'settings',label:'Sozlama',icon:'⚙️'}].map(tab=><button key={tab.id} onClick={()=>goScreen(tab.id)} className={'rounded-xl py-1.5 flex flex-col items-center gap-0.5 text-[10px] sm:text-xs font-black '+(activeScreen===tab.id?'bg-cyan-400/15 text-cyan-300':'text-slate-300')}><span className="text-lg">{tab.icon}</span><span>{tab.label}</span></button>)}
