@@ -17,6 +17,7 @@ const pool = process.env.DATABASE_URL ? new Pool({
   ssl: isProd ? { rejectUnauthorized: false } : undefined
 }) : null;
 const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
+const liveAi = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, httpOptions: { apiVersion: "v1alpha" } }) : null;
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash-lite";
 const LIVE_MODEL = process.env.GEMINI_LIVE_MODEL || "gemini-3.1-flash-live-preview";
@@ -221,10 +222,10 @@ Tibbiy, moliyaviy yoki xavfli ko‘rsatmalar bermagin. O‘zingni sun’iy intel
 
 app.get("/api/live-token", aiLimiter, async (_req, res, next) => {
   try {
-    if (!ai) return res.status(503).json({ error: "AI Ustoz xizmati sozlanmagan." });
+    if (!liveAi) return res.status(503).json({ error: "AI Ustoz xizmati sozlanmagan." });
     const expireTime = new Date(Date.now() + 30 * 60 * 1000).toISOString();
     const newSessionExpireTime = new Date(Date.now() + 60 * 1000).toISOString();
-    const token = await ai.authTokens.create({
+    const token = await liveAi.authTokens.create({
       config: {
         uses: 1,
         expireTime,
