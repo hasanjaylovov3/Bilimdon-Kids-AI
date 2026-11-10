@@ -221,7 +221,7 @@ Tibbiy, moliyaviy yoki xavfli ko‘rsatmalar bermagin. O‘zingni sun’iy intel
 
 app.get("/api/live-token", aiLimiter, async (_req, res, next) => {
   try {
-    if (!ai) return res.status(503).json({ error: "Gemini API kaliti sozlanmagan." });
+    if (!ai) return res.status(503).json({ error: "AI Ustoz xizmati sozlanmagan." });
     const expireTime = new Date(Date.now() + 30 * 60 * 1000).toISOString();
     const newSessionExpireTime = new Date(Date.now() + 60 * 1000).toISOString();
     const token = await ai.authTokens.create({
@@ -236,7 +236,9 @@ app.get("/api/live-token", aiLimiter, async (_req, res, next) => {
             inputAudioTranscription: {},
             outputAudioTranscription: {},
             realtimeInputConfig: { automaticActivityDetection: { disabled: true } },
-            systemInstruction: tutorInstruction
+            systemInstruction: tutorInstruction,
+            sessionResumption: {},
+            thinkingConfig: { thinkingLevel: "minimal" }
           }
         }
       }
@@ -244,7 +246,7 @@ app.get("/api/live-token", aiLimiter, async (_req, res, next) => {
     res.set("Cache-Control", "no-store");
     res.json({ token: token.name, model: LIVE_MODEL });
   } catch (error) {
-    console.error("Gemini Live token error:", error?.message || error);
+    console.error("AI Live token error:", error?.message || error);
     next(error);
   }
 });
@@ -268,7 +270,7 @@ app.post("/api/ai/guest-tutor", aiLimiter, async (req, res, next) => {
   } catch (error) {
     const message = String(error?.message || "");
     if (/429|quota|resource_exhausted/i.test(message)) return res.status(429).json({ error: "AI savollari limiti vaqtincha tugadi. Birozdan keyin urinib ko‘ring." });
-    console.error("Gemini tutor interaction error:", message);
+    console.error("AI tutor interaction error:", message);
     next(error);
   }
 });
@@ -296,7 +298,7 @@ app.post("/api/ai/tutor", requireDb, auth, aiLimiter, async (req, res, next) => 
       maxOutputTokens: 220
     });
     const answer = clean(response.output_text);
-    if (!answer) throw new Error("Gemini bo‘sh javob qaytardi.");
+    if (!answer) throw new Error("AI Ustoz bo‘sh javob qaytardi.");
     await pool.query(
       "INSERT INTO ai_conversations(child_id,role,message) VALUES($1,'user',$2),($1,'model',$3)",
       [childId, message, answer]
