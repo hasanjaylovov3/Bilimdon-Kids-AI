@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 340" role="img" aria-labelledby="title desc">
+  <title id="title">Bilimdon Kids do'stona qahramoni</title>
+  <desc id="desc">Ko'k kiyimli, jilmayib turgan quvnoq bolakay qahramon.</desc>
+  <defs>
+    <radialGradient id="skin" cx="38%" cy="28%" r="72%"><stop stop-color="#fff0df"/><stop offset=".48" stop-color="#f7c5a5"/><stop offset="1" stop-color="#d98260"/></radialGradient>
+    <linearGradient id="hoodie" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#65a8ff"/><stop offset=".55" stop-color="#356be8"/><stop offset="1" stop-color="#253caa"/></linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#87502d"/><stop offset=".55" stop-color="#48230f"/><stop offset="1" stop-color="#241006"/></linearGradient>
+    <radialGradient id="eye"><stop stop-color="#a66a31"/><stop offset=".7" stop-color="#3c1b0a"/><stop offset="1" stop-color="#160902"/></radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feGaussianBlur stdDeviation="9"/></filter>
+  </defs>
+  <ellipse cx="160" cy="315" rx="92" ry="14" fill="#263b9a" opacity=".18" filter="url(#shadow)"/>
+  <g>
+    <path d="M70 310c4-73 34-108 90-108s86 35 90 108z" fill="url(#hoodie)"/>
+    <path d="M126 206l34 30 34-30" fill="none" stroke="#dbeafe" stroke-width="7" stroke-linecap="round"/>
+    <path d="M145 235h30l-7 49h-16z" fill="#1e40af" opacity=".45"/>
+    <path d="M149 239l11 12 11-12" fill="none" stroke="#fef08a" stroke-width="4" stroke-linecap="round"/>
+    <path d="M82 232c-24 2-37-15-35-38 1-13 8-22 17-25 11-3 19 7 19 18z" fill="url(#skin)"/>
+    <path d="M238 232c24 2 37-15 35-38-1-13-8-22-17-25-11-3-19 7-19 18z" fill="url(#skin)"/>
+    <path d="M119 180h82v43c-15 17-67 17-82 0z" fill="url(#skin)"/>
+    <ellipse cx="160" cy="126" rx="86" ry="91" fill="url(#skin)"/>
+    <ellipse cx="94" cy="151" rx="16" ry="11" fill="#f58c91" opacity=".25"/>
+    <ellipse cx="226" cy="151" rx="16" ry="11" fill="#f58c91" opacity=".25"/>
+    <path d="M76 116c-5-54 30-91 82-91 50 0 83 33 84 83-17-13-31-32-37-51-17 20-48 31-79 29-12 0-27-4-39-11-1 15-5 29-11 41z" fill="url(#hair)"/>
+    <path d="M89 88c18-34 48-49 81-48-29 9-44 25-55 44" fill="none" stroke="#b87542" stroke-width="8" stroke-linecap="round" opacity=".4"/>
+    <path d="M111 119q20-13 39 0" fill="none" stroke="#48230f" stroke-width="6" stroke-linecap="round"/>
+    <path d="M170 119q20-13 39 0" fill="none" stroke="#48230f" stroke-width="6" stroke-linecap="round"/>
+    <ellipse cx="130" cy="143" rx="17" ry="20" fill="#fff"/>
+    <ellipse cx="190" cy="143" rx="17" ry="20" fill="#fff"/>
+    <circle cx="133" cy="145" r="12" fill="url(#eye)"/><circle cx="187" cy="145" r="12" fill="url(#eye)"/>
+    <circle cx="137" cy="139" r="4.5" fill="#fff"/><circle cx="191" cy="139" r="4.5" fill="#fff"/>
+    <path d="M153 165q7 6 14 0" fill="none" stroke="#d58b68" stroke-width="5" stroke-linecap="round"/>
+    <path d="M132 180q28 31 56 0" fill="#8f2637"/>
+    <path d="M139 182q21 11 42 0" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+    <path d="M75 238q-30-17-22-48" fill="none" stroke="#356be8" stroke-width="20" stroke-linecap="round"/>
+    <path d="M54 190q-9-19 5-27 11-5 17 8 9-16 19-6 8 9-5 22l-17 17z" fill="url(#skin)" stroke="#d98260" stroke-width="2"/>
+    <path d="M245 239q24 4 33-17" fill="none" stroke="#2446bb" stroke-width="18" stroke-linecap="round"/>
+    <circle cx="280" cy="215" r="12" fill="url(#skin)"/>
+    <path d="M112 285q48 20 96 0" fill="none" stroke="#9cc7ff" stroke-width="5" stroke-linecap="round" opacity=".65"/>
+  </g>
+</svg>
