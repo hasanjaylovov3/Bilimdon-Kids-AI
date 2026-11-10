@@ -318,6 +318,10 @@ app.get("/api/progress/:childId", requireDb, auth, async (req, res, next) => {
 
 app.use((error, _req, res, _next) => {
   console.error("API error:", error?.message || error);
+  const status = Number(error?.status || error?.code || 0);
+  if (status === 503 || /503|UNAVAILABLE|high demand|overloaded/i.test(String(error?.message || ""))) {
+    return res.status(503).json({ error: "AI serveri vaqtincha band. Bir necha soniyadan keyin yana urinib ko‘ring." });
+  }
   res.status(500).json({ error: "Serverda xatolik yuz berdi. Iltimos, keyinroq urinib ko'ring." });
 });
 app.listen(PORT, () => console.log(`Bilimdon Kids API listening on ${PORT}`));
