@@ -26,7 +26,6 @@ async function generateTutorContent({ input, systemInstruction = tutorInstructio
     input,
     system_instruction: systemInstruction,
     generation_config: {
-      thinking_level: "minimal",
       temperature,
       max_output_tokens: maxOutputTokens
     },
