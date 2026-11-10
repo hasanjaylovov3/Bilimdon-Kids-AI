@@ -36,6 +36,12 @@ jobs:
       - name: Add Android camera and microphone permissions
         run: node scripts/patch-android-permissions.js
 
+      - name: Verify Android media permission declarations
+        run: |
+          grep -q 'android.permission.RECORD_AUDIO' android/app/src/main/AndroidManifest.xml
+          grep -q 'android.permission.CAMERA' android/app/src/main/AndroidManifest.xml
+          grep -q 'android.permission.MODIFY_AUDIO_SETTINGS' android/app/src/main/AndroidManifest.xml
+
       - name: Sync Android project
         run: npx cap sync android
 
