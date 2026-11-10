@@ -40,16 +40,6 @@
     .animate-float {
       animation: floatSlow 3.4s ease-in-out infinite;
     }
-    @keyframes boyTeachingGesture {
-      0%, 100% { transform: rotate(-8deg); }
-      35% { transform: rotate(22deg); }
-      68% { transform: rotate(-2deg); }
-    }
-    .boy-teaching-arm {
-      transform-box: fill-box;
-      transform-origin: 15% 85%;
-      animation: boyTeachingGesture 0.9s ease-in-out infinite;
-    }
   </style>
   <script>
     // Haqiqiy PWA / Mobil va Kompyuter Ilovasi (Standalone App) Manifestini avtomatik ulash
@@ -395,7 +385,7 @@
             )}
 
             {pose === 'wave' && (
-              <g transform="translate(202, 168)" className={isSpeaking ? 'boy-teaching-arm' : ''}>
+              <g transform="translate(202, 168)">
                 <path d="M 8 64 L 26 26" stroke={pal.c1} strokeWidth="24" strokeLinecap="round" />
                 <circle cx="30" cy="18" r="15" fill={`url(#skin-${uid})`} />
                 <path d="M 22 8 Q 16 -3 12 -10 M 32 4 Q 34 -8 34 -13" fill="none" stroke={`url(#skin-${uid})`} strokeWidth="5" strokeLinecap="round" />
@@ -1915,18 +1905,18 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-3 flex-1 min-h-0 py-1 overflow-hidden">
-            <div className="order-1 lg:order-1 lg:col-span-5 flex justify-center items-center min-h-0 h-20 sm:h-24 lg:h-auto overflow-hidden">
+          <div className="grid grid-cols-1 grid-rows-[auto_minmax(0,1fr)] lg:grid-rows-1 lg:grid-cols-12 gap-2 lg:gap-3 flex-1 min-h-0 py-1 overflow-hidden">
+            <div className="order-1 lg:order-1 lg:col-span-5 flex justify-center items-center min-h-0 h-40 sm:h-48 lg:h-auto overflow-visible">
               <Boy3DCharacter
                 outfit="lab"
                 pose="wave"
-                size="sm"
+                size="lg"
                 isSpeaking={isAiSpeaking || isAiLoading}
               />
             </div>
 
-            <div className="order-2 lg:order-2 lg:col-span-7 flex flex-col gap-2 min-h-0 flex-1 overflow-hidden">
-              <div ref={chatScrollRef} className="flex-1 min-h-0 max-h-none overflow-y-auto overscroll-contain rounded-2xl bg-indigo-950/45 border border-indigo-400/25 p-2.5 space-y-2 scroll-smooth">
+            <div className="order-2 lg:order-2 lg:col-span-7 flex flex-col gap-2 min-h-0 min-w-0 overflow-hidden">
+              <div ref={chatScrollRef} className="h-[clamp(88px,18vh,132px)] lg:flex-1 lg:h-auto min-h-0 max-h-full overflow-y-auto overscroll-contain rounded-2xl bg-indigo-950/45 border border-indigo-400/25 p-2.5 space-y-2 scroll-smooth shrink-0">
                 {chatMessages.map((message) => (
                   <div key={message.id} className={"flex " + (message.role === "user" ? "justify-end" : "justify-start")}>
                     <div className={"max-w-[92%] whitespace-pre-wrap break-words [overflow-wrap:anywhere] rounded-2xl px-4 py-3 shadow-lg text-sm md:text-base leading-relaxed " + (message.role === "user" ? "bg-indigo-600 text-white rounded-br-md" : "bg-white text-slate-900 rounded-bl-md font-extrabold")}>
@@ -1984,7 +1974,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                 </button>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0 pb-0.5">
+              <div className="flex items-center gap-2 shrink-0 pb-0.5 bg-[#171642] rounded-xl border border-cyan-300/30 p-1.5">
                 <div className="flex-1 min-w-0 flex items-center bg-indigo-950/90 border-2 border-indigo-400/50 rounded-full px-3 sm:px-4 py-2.5">
                   <input
                     type="text"
