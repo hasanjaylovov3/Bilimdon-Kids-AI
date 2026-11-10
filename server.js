@@ -18,22 +18,20 @@ const pool = process.env.DATABASE_URL ? new Pool({
 }) : null;
 const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
-const FALLBACK_MODELS = (process.env.GEMINI_FALLBACK_MODELS || "gemini-2.5-flash,gemini-2.0-flash").split(",").map(value => value.trim()).filter(Boolean);
-async function generateTutorContent(args) {
-  const models = [MODEL].concat(FALLBACK_MODELS.filter(model => model !== MODEL));
-  let lastError;
-  for (const model of models) {
-    try { return await ai.models.generateContent(Object.assign({}, args, { model })); }
-    catch (error) {
-      lastError = error;
-      const status = Number(error && (error.status || error.code || error.httpStatusCode) || 0);
-      const message = String(error && error.message || "");
-      const transient = [429, 500, 502, 503].includes(status) || /429|500|502|503|UNAVAILABLE|high demand|overloaded|temporar/i.test(message);
-      if (!transient || model === models[models.length - 1]) throw error;
-      console.warn("Gemini model " + model + " unavailable; trying fallback model.");
-    }
-  }
-  throw lastError;
+const TTS_MODEL = process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-lite-tts";
+async function generateTutorContent({ input, systemInstruction = tutorInstruction, temperature = 0.35, maxOutputTokens = 300 }) {
+  if (!ai) throw new Error("GEMINI_API_KEY serverda sozlanmagan.");
+  return ai.interactions.create({
+    model: MODEL,
+    input,
+    system_instruction: systemInstruction,
+    generation_config: {
+      thinking_level: "minimal",
+      temperature,
+      max_output_tokens: maxOutputTokens
+    },
+    store: false
+  });
 }
 const SESSION_DAYS = Math.min(30, Math.max(1, Number(process.env.SESSION_DAYS || 14)));
 
@@ -165,115 +163,114 @@ app.post("/api/ai/speech", aiLimiter, async (req, res, next) => {
   try {
     if (!ai) return res.status(503).json({ error: "Ovozli AI hozircha sozlanmagan." });
     const text = clean(req.body?.text);
-    if (!text || text.length > 1800) {
-      return res.status(400).json({ error: "Ovozga aylantiriladigan matn 1–1800 belgi bo‘lishi kerak." });
+    if (!text || text.length > 1200) {
+      return res.status(400).json({ error: "Ovozga aylantiriladigan matn 1–1200 belgi bo‘lishi kerak." });
     }
-    const response = await ai.models.generateContent({
-      model: process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-tts",
-      contents: [{
-        parts: [{
-          text: "Read the following text aloud in fluent Northern Uzbek (Uzbek, Latin script). Speak like a warm, cheerful, kind teacher talking to a young child. Use natural Uzbek pronunciation, clear articulation, a gentle lively pace, and friendly intonation. Read only the exact Uzbek text; do not translate it, explain it, or add any words.\n\nTEXT TO READ:\n" + text
+    const interaction = await ai.interactions.create({
+      model: TTS_MODEL,
+      input: [{
+        type: "user_input",
+        content: [{
+          type: "text",
+          text,
+          annotations: [{
+            type: "speech_metadata",
+            style: "Fluent natural Northern Uzbek, warm friendly teacher, clear articulation, lively but unhurried pace, no breathy ending, finish cleanly"
+          }]
         }]
       }],
-      config: {
-        responseModalities: ["AUDIO"],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: "Leda" }
-          }
-        }
-      }
+      response_format: { type: "audio" },
+      generation_config: { speech_config: [{ voice: "Leda" }] },
+      store: false
     });
-    const audioPart = response.candidates?.[0]?.content?.parts?.find(part => part.inlineData?.data);
-    if (!audioPart?.inlineData?.data) {
-      return res.status(502).json({ error: "Gemini o‘zbekcha ovoz qaytara olmadi. Qayta urinib ko‘ring." });
+    const audioData = interaction.output_audio?.data;
+    if (!audioData) return res.status(502).json({ error: "Gemini ovoz qaytara olmadi. Qayta urinib ko‘ring." });
+    const wav = Buffer.from(audioData, "base64");
+    if (wav.length < 48 || wav.toString("ascii", 0, 4) !== "RIFF") {
+      return res.status(502).json({ error: "Gemini audio formati noto‘g‘ri qaytdi." });
     }
-    const pcm = Buffer.from(audioPart.inlineData.data, "base64");
-    const sampleRate = 24000;
-    // Fade out the final 180 ms to suppress the short TTS end-click/noise.
-    const fadeSamples = Math.min(Math.floor(sampleRate * 0.18), Math.floor(pcm.length / 2));
-    const totalSamples = Math.floor(pcm.length / 2);
-    for (let i = 0; i < fadeSamples; i++) {
-      const sampleIndex = totalSamples - fadeSamples + i;
-      const gain = Math.cos((i / Math.max(1, fadeSamples - 1)) * Math.PI / 2);
-      const offset = sampleIndex * 2;
-      pcm.writeInt16LE(Math.round(pcm.readInt16LE(offset) * gain), offset);
+    // WAV ichidagi oxirgi 140 ms shovqinli qismni olib tashlab, 70 ms yumshoq yakunlaymiz.
+    const dataMarker = wav.indexOf("data", 12, "ascii");
+    if (dataMarker > 0) {
+      const dataStart = dataMarker + 8;
+      const sampleRate = wav.readUInt32LE(24);
+      const channels = wav.readUInt16LE(22);
+      const bytesPerSample = wav.readUInt16LE(34) / 8;
+      const frameBytes = channels * bytesPerSample;
+      const dataLength = wav.readUInt32LE(dataMarker + 4);
+      const originalEnd = Math.min(wav.length, dataStart + dataLength);
+      const trimFrames = Math.floor(sampleRate * 0.14);
+      const trimBytes = Math.min(Math.max(0, originalEnd - dataStart - frameBytes * 8), trimFrames * frameBytes);
+      const cleanEnd = originalEnd - trimBytes;
+      const fadeBytes = Math.min(cleanEnd - dataStart, Math.floor(sampleRate * 0.07) * frameBytes);
+      for (let offset = cleanEnd - fadeBytes; offset + 1 < cleanEnd; offset += 2) {
+        const progress = (offset - (cleanEnd - fadeBytes)) / Math.max(1, fadeBytes - 2);
+        const gain = Math.cos(progress * Math.PI / 2);
+        wav.writeInt16LE(Math.round(wav.readInt16LE(offset) * gain), offset);
+      }
+      const cleanWav = Buffer.concat([wav.subarray(0, cleanEnd)]);
+      cleanWav.writeUInt32LE(cleanWav.length - 8, 4);
+      cleanWav.writeUInt32LE(cleanEnd - dataStart, dataMarker + 4);
+      res.set("Content-Type", "audio/wav");
+      res.set("Cache-Control", "no-store");
+      return res.json({ audio: cleanWav.toString("base64"), mimeType: "audio/wav" });
     }
-    const wavHeader = Buffer.alloc(44);
-    wavHeader.write("RIFF", 0);
-    wavHeader.writeUInt32LE(36 + pcm.length, 4);
-    wavHeader.write("WAVE", 8);
-    wavHeader.write("fmt ", 12);
-    wavHeader.writeUInt32LE(16, 16);
-    wavHeader.writeUInt16LE(1, 20);
-    wavHeader.writeUInt16LE(1, 22);
-    wavHeader.writeUInt32LE(sampleRate, 24);
-    wavHeader.writeUInt32LE(sampleRate * 2, 28);
-    wavHeader.writeUInt16LE(2, 32);
-    wavHeader.writeUInt16LE(16, 34);
-    wavHeader.write("data", 36);
-    wavHeader.writeUInt32LE(pcm.length, 40);
-    const wav = Buffer.concat([wavHeader, pcm]);
-    res.json({ audio: wav.toString("base64"), mimeType: "audio/wav" });
+    res.json({ audio: audioData, mimeType: "audio/wav" });
   } catch (error) {
     const message = String(error?.message || "");
-    if (/429|quota|resource_exhausted/i.test(message)) {
-      return res.status(429).json({ error: "Ovoz yaratish limiti vaqtincha tugadi. Birozdan keyin yana urinib ko‘r." });
-    }
-    console.error("Gemini Uzbek TTS error:", message);
+    if (/429|quota|resource_exhausted/i.test(message)) return res.status(429).json({ error: "Ovoz yaratish limiti vaqtincha tugadi. Birozdan keyin yana urinib ko‘ring." });
+    console.error("Gemini TTS interaction error:", message);
     next(error);
   }
 });
-
 app.post("/api/ai/guest-tutor", aiLimiter, async (req, res, next) => {
   try {
-    if (!ai) return res.status(503).json({ error: "AI hozircha sozlanmagan. Gemini API kalitini Render Environment bo'limida tekshiring." });
+    if (!ai) return res.status(503).json({ error: "AI kaliti serverda sozlanmagan. Administrator Render Environment sozlamasini tekshirishi kerak." });
     const prompt = clean(req.body?.promptText);
     const childName = clean(req.body?.childName).slice(0, 40) || "Do‘stim";
     const childAge = Math.min(12, Math.max(5, Number(req.body?.childAge) || 7));
-    if (!prompt || prompt.length > 2000) return res.status(400).json({ error: "Savol 1–2000 belgi oralig'ida bo'lishi kerak." });
+    if (!prompt || prompt.length > 2000) return res.status(400).json({ error: "Savol 1–2000 belgi oralig‘ida bo‘lishi kerak." });
     const response = await generateTutorContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      config: {
-        systemInstruction: tutorInstruction + ` Sen hozir ${childName} ismli ${childAge} yoshli bola bilan suhbatlashyapsan. Doimo adabiy, ravon va grammatik jihatdan to‘g‘ri o‘zbek tilida gapir. Iliq, quvnoq, mehribon ustoz ohangidan foydalan; murakkab atamalarni sodda misollar bilan tushuntir. Javoblaring tabiiy og‘zaki nutqqa mos, talaffuz qilishga qulay bo‘lsin. Odatda 2–4 qisqa gap yoz, bitta savol bilan bolani fikrlashga unda. Emoji me’yorida ishlat.`,
-        temperature: 0.35,
-        maxOutputTokens: 420
-      }
+      input: `O‘quvchi: ${childName}, yoshi: ${childAge}. Savoli: ${prompt}`,
+      systemInstruction: tutorInstruction,
+      temperature: 0.35,
+      maxOutputTokens: 300
     });
-    const answer = clean(response.text);
-    if (!answer) return res.status(502).json({ error: "AI bo'sh javob qaytardi. Yana urinib ko'ring." });
+    const answer = clean(response.output_text);
+    if (!answer) return res.status(502).json({ error: "AI bo‘sh javob qaytardi. Yana urinib ko‘ring." });
     res.json({ answer });
   } catch (error) {
     const message = String(error?.message || "");
-    if (/429|quota|resource_exhausted/i.test(message)) return res.status(429).json({ error: "AI savollari limiti vaqtincha tugadi. Birozdan keyin urinib ko'ring." });
+    if (/429|quota|resource_exhausted/i.test(message)) return res.status(429).json({ error: "AI savollari limiti vaqtincha tugadi. Birozdan keyin urinib ko‘ring." });
+    console.error("Gemini tutor interaction error:", message);
     next(error);
   }
 });
-
 app.post("/api/ai/tutor", requireDb, auth, aiLimiter, async (req, res, next) => {
   try {
-    if (!ai) return res.status(503).json({ error: "AI hozircha sozlanmagan. Administrator Gemini kalitini serverga qo'shishi kerak." });
+    if (!ai) return res.status(503).json({ error: "AI kaliti serverda sozlanmagan. Administrator Gemini kalitini tekshirishi kerak." });
     const childId = clean(req.body.childId);
     const message = clean(req.body.message);
     const subject = clean(req.body.subject);
     if (!/^[0-9a-f-]{36}$/i.test(childId) || !AI_SUBJECTS.has(subject) || !message || message.length > 2000) {
-      return res.status(400).json({ error: "Savol yoki fan ma'lumoti noto'g'ri." });
+      return res.status(400).json({ error: "Savol yoki fan ma’lumoti noto‘g‘ri." });
     }
     const owned = await pool.query("SELECT display_name,age FROM children WHERE id=$1 AND parent_id=$2", [childId, req.parent.id]);
-    if (!owned.rowCount) return res.status(404).json({ error: "O'quvchi profili topilmadi." });
+    if (!owned.rowCount) return res.status(404).json({ error: "O‘quvchi profili topilmadi." });
     const child = owned.rows[0];
     const history = await pool.query(
-      "SELECT role,message FROM ai_conversations WHERE child_id=$1 ORDER BY created_at DESC LIMIT 8",
+      "SELECT role,message FROM ai_conversations WHERE child_id=$1 ORDER BY created_at DESC LIMIT 6",
       [childId]
     );
-    const contents = history.rows.reverse().map(row => ({ role: row.role, parts: [{ text: row.message }] }));
-    contents.push({ role: "user", parts: [{ text: `Fan: ${subject}. O'quvchi: ${child.display_name}, yoshi: ${child.age}. Savol: ${message}` }] });
+    const transcript = history.rows.reverse().map(row => (row.role === "user" ? "Bola: " : "Ustoz: ") + row.message).join("\n");
     const response = await generateTutorContent({
-      contents,
-      config: { systemInstruction: tutorInstruction + " Faqat o‘zbek lotin yozuvida, ona tilidek tabiiy va xatosiz javob ber. Javobni yuborishdan oldin grammatikasini tekshir. Bola boshqa tilni mashq qilishni aniq so‘rasa, faqat mashq misollarini o‘sha tilda ber, izohni o‘zbekcha qil.", temperature: 0.35, maxOutputTokens: 420 }
+      input: `O‘quvchi: ${child.display_name}, yoshi: ${child.age}. Fan: ${subject}.\n${transcript ? "Oldingi suhbat:\n" + transcript + "\n" : ""}Bolaning yangi savoli: ${message}`,
+      systemInstruction: tutorInstruction,
+      temperature: 0.35,
+      maxOutputTokens: 300
     });
-    const answer = clean(response.text);
-    if (!answer) throw new Error("Gemini bo'sh javob qaytardi.");
+    const answer = clean(response.output_text);
+    if (!answer) throw new Error("Gemini bo‘sh javob qaytardi.");
     await pool.query(
       "INSERT INTO ai_conversations(child_id,role,message) VALUES($1,'user',$2),($1,'model',$3)",
       [childId, message, answer]
@@ -281,11 +278,11 @@ app.post("/api/ai/tutor", requireDb, auth, aiLimiter, async (req, res, next) => 
     res.json({ answer });
   } catch (error) {
     const message = String(error?.message || "");
-    if (/429|quota|resource_exhausted/i.test(message)) return res.status(429).json({ error: "AI savollari limiti vaqtincha tugadi. Birozdan keyin yana urinib ko'ring." });
+    if (/429|quota|resource_exhausted/i.test(message)) return res.status(429).json({ error: "AI savollari limiti vaqtincha tugadi. Birozdan keyin urinib ko‘ring." });
+    console.error("Gemini tutor interaction error:", message);
     next(error);
   }
 });
-
 app.post("/api/progress", requireDb, auth, async (req, res, next) => {
   try {
     const { childId, subject, activity, score, details = {} } = req.body || {};
@@ -318,9 +315,9 @@ app.get("/api/progress/:childId", requireDb, auth, async (req, res, next) => {
 
 app.use((error, _req, res, _next) => {
   console.error("API error:", error?.message || error);
-  const status = Number(error?.status || error?.code || 0);
-  if (status === 503 || /503|UNAVAILABLE|high demand|overloaded/i.test(String(error?.message || ""))) {
-    return res.status(503).json({ error: "AI serveri vaqtincha band. Bir necha soniyadan keyin yana urinib ko‘ring." });
+  const status = Number(error?.status || error?.code || error?.error?.code || 0);
+  if (status === 503 || status === 404 || /503|404|NOT_FOUND|UNAVAILABLE|high demand|overloaded/i.test(String(error?.message || ""))) {
+    return res.status(503).json({ error: "AI modeli hozircha javob bermayapti. Server modeli sozlamasi tekshirilishi kerak." });
   }
   res.status(500).json({ error: "Serverda xatolik yuz berdi. Iltimos, keyinroq urinib ko'ring." });
 });
