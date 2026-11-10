@@ -1,0 +1,24 @@
+name: Validate Bilimdon Kids
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm install --ignore-scripts
+      - name: Check server syntax
+        run: node --check server.js
+      - name: Check required files
+        run: test -s public/index.html && test -s db/schema.sql && test -s .env.example
