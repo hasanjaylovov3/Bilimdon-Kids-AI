@@ -900,20 +900,21 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
         if (!text || isAiLoading) return;
         setChatInput('');
         setIsAiLoading(true);
+        setTutorReply('O‘ylayapman... 🤔');
         playSound('click', muted);
-
-        const reply = await askGeminiKidsTutor(text, customApiKey, childName);
-        setTutorReply(reply);
-        setIsAiLoading(false);
-        playSound('success', muted);
-
-        speakText(
-          reply,
-          'uz-UZ',
-          muted,
-          () => setIsAiSpeaking(true),
-          () => setIsAiSpeaking(false)
-        );
+        try {
+          const reply = await askGeminiKidsTutor(text, '', childName);
+          setTutorReply(reply);
+          playSound('success', muted);
+          speakText(reply, 'uz-UZ', muted,
+            () => setIsAiSpeaking(true),
+            () => setIsAiSpeaking(false)
+          );
+        } catch (error) {
+          setTutorReply(error?.message || "AI ustoz bilan bog‘lanib bo‘lmadi. Birozdan keyin yana urinib ko‘ring.");
+        } finally {
+          setIsAiLoading(false);
+        }
       };
 
       const handleVoiceMic = () => {
@@ -2097,62 +2098,20 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
             </div>
           )}
 
-          {/* GEMINI API KEY MODALI */}
+          {/* GEMINI API KEY — SERVER TOMONIDA XAVFSIZ SAQLANADI */}
           {showApiModal && (
             <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4">
-              <div className="bg-slate-900 text-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-2 border-amber-400/40 space-y-4">
+              <div className="bg-slate-900 text-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-2 border-emerald-400/40 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-black text-lg text-amber-300">🔑 Google Gemini API Key</h3>
-                  <button
-                    onClick={() => setShowApiModal(false)}
-                    className="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20"
-                  >
-                    ✕
-                  </button>
+                  <h3 className="font-black text-lg text-emerald-300">🔐 AI Ustoz sozlamasi</h3>
+                  <button onClick={() => setShowApiModal(false)} className="px-2.5 py-1 rounded-xl bg-white/10">✕</button>
                 </div>
-
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  <b>aistudio.google.com/apikey</b> sahifasidan olingan bepul Gemini API kalitingizni kiriting:
+                <p className="text-sm text-slate-200 leading-relaxed">
+                  Gemini API kaliti serverda saqlanadi va brauzerga chiqarilmaydi. Kalitni Render → Environment bo‘limida boshqarish mumkin.
                 </p>
-
-                <input
-                  type="password"
-                  value={apiKeyDraft}
-                  onChange={(e) => setApiKeyDraft(e.target.value)}
-                  placeholder="AIzaSy..."
-                  className="w-full bg-slate-800 border-2 border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold text-amber-300 outline-none focus:border-amber-400"
-                />
-
-                {apiSaved && (
-                  <div className="text-xs font-extrabold text-emerald-400">
-                    ✅ API kalit muvaffaqiyatli saqlandi!
-                  </div>
-                )}
-
-                <div className="flex justify-end gap-2">
-                  <button
-                    onClick={() => setShowApiModal(false)}
-                    className="px-4 py-2.5 rounded-xl bg-white/10 text-xs font-bold"
-                  >
-                    Yopish
-                  </button>
-                  <button
-                    onClick={() => {
-                      setCustomApiKey(apiKeyDraft.trim());
-                      try {
-                        localStorage.setItem('BILIMDON_KIDS_GEMINI_KEY', apiKeyDraft.trim());
-                      } catch {}
-                      setApiSaved(true);
-                      setTimeout(() => {
-                        setApiSaved(false);
-                        setShowApiModal(false);
-                      }, 900);
-                    }}
-                    className="px-5 py-2.5 rounded-xl bg-amber-400 text-slate-950 font-black text-xs"
-                  >
-                    Saqlash va Qo‘llash
-                  </button>
-                </div>
+                <button onClick={() => setShowApiModal(false)} className="w-full px-4 py-3 rounded-xl bg-emerald-400 text-slate-950 font-black">
+                  Tushunarli ✨
+                </button>
               </div>
             </div>
           )}
