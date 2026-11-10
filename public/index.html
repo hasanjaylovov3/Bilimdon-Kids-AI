@@ -2156,8 +2156,15 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
         const adminVideos = activityItems.filter(item => item.kind === "video").map(item => {
           const data = item.content_data || item.contentData || {};
           const rawUrl = data.videoUrl || item.video_url || "";
-          const match = rawUrl.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?.*v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
-          return { subject: "Admin qo‘shgan video", title: item.title, description: item.description || "Ta’limiy video", emoji: "🎬", videoId: data.videoId || (match && match[1]), color: "from-fuchsia-500 to-violet-600" };
+          let videoId = data.videoId || "";
+          if (!videoId && rawUrl) {
+            try {
+              const parsedUrl = new URL(rawUrl);
+              videoId = parsedUrl.searchParams.get("v") || parsedUrl.pathname.split("/").filter(Boolean).pop() || "";
+            } catch {}
+          }
+          if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) videoId = "";
+          return { subject: "Admin qo‘shgan video", title: item.title, description: item.description || "Ta’limiy video", emoji: "🎬", videoId, color: "from-fuchsia-500 to-violet-600" };
         }).filter(video => video.videoId);
         const learningVideos = [...builtInVideos, ...adminVideos];
         return (
