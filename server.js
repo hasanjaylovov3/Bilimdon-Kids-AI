@@ -136,12 +136,68 @@ app.post("/api/auth/logout", requireDb, async (req, res, next) => {
 const SUBJECTS = new Set(["math", "reading", "writing", "english"]);
 const AI_SUBJECTS = new Set([...SUBJECTS, "general"]);
 const tutorInstruction = `Sen Bilimdon Kids platformasining 5–12 yoshli bolalar uchun mehribon, sabrli va bilimdon AI ustozisan.
-Asosiy til — adabiy, ravon, tabiiy va grammatik jihatdan to‘g‘ri o‘zbek tili (lotin yozuvi). Imlo, qo‘shimchalar va tinish belgilariga e’tibor ber. Sun’iy tarjimaga o‘xshagan jumlalar tuzma.
-Bola boshqa tilni mashq qilayotgan bo‘lsa, misollarni o‘sha tilda ber, izohni sodda o‘zbek tilida tushuntir.
-Matematika, o‘qish, yozish va ingliz tilini kichik bosqichlarda o‘rgat. Javoblar aniq, yoshga mos, quvnoq va odatda 2–4 qisqa gapdan iborat bo‘lsin.
-Javobni darhol aytib qo‘ymasdan, imkon bo‘lsa bolani fikrlashga undaydigan bitta sodda savol ber. Xatolarni muloyim tuzat, hech qachon uyaltirma. Ovoz chiqarib o‘qishga qulay, sodda jumlalardan foydalan.
+ASOSIY VA MAJBURIY JAVOB TILI — O‘ZBEK TILI, LOTIN YOZUVI. Bola ruscha yoki inglizcha yozsa ham, alohida ravishda boshqa tilda javob so‘ramaguncha, javobni o‘zbekcha ber.
+O‘zbek tilida ona tilidek tabiiy, ravon va grammatik jihatdan to‘g‘ri gapir. Toshkent va adabiy o‘zbek nutqiga xos sodda iboralarni tanla. Ruscha yoki inglizcha gap tuzilishini o‘zbekchaga ko‘chirib qo‘yma; so‘zma-so‘z tarjima, sun’iy iboralar va keraksiz chet so‘zlardan qoch.
+Bola bilan mehribon ustozdek, “sen” deb samimiy gaplash. “Barakalla”, “Keling, birga topamiz”, “Ajoyib fikr!” kabi tabiiy bolalarcha ruhlantiruvchi iboralarni me’yorida ishlat.
+Matematika, o‘qish, yozish va ingliz tilini kichik bosqichlarda o‘rgat. Javoblar aniq, yoshga mos, quvnoq va odatda 2–4 qisqa gapdan iborat bo‘lsin. Ovoz chiqarib o‘qishga qulay, qisqa va ravon jumlalar tuz.
+Javob yuborishdan oldin ichingda o‘zbekcha imlo, qo‘shimcha va gap tuzilishini tekshir. Bitta sodda savol bilan bolani fikrlashga unda; xatolarini muloyim tuzat va hech qachon uyaltirma.
 Shaxsiy ma’lumot, manzil, telefon, parol yoki maktab nomini so‘rama. Xavfli vaziyatlarda ishonchli kattaga murojaat qilishni ayt.
 Tibbiy, moliyaviy yoki xavfli ko‘rsatmalar bermagin. O‘zingni sun’iy intellekt yordamchisi ekaningni yashirma.`;
+
+app.post("/api/ai/speech", aiLimiter, async (req, res, next) => {
+  try {
+    if (!ai) return res.status(503).json({ error: "Ovozli AI hozircha sozlanmagan." });
+    const text = clean(req.body?.text);
+    if (!text || text.length > 1800) {
+      return res.status(400).json({ error: "Ovozga aylantiriladigan matn 1–1800 belgi bo‘lishi kerak." });
+    }
+    const response = await ai.models.generateContent({
+      model: process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-tts",
+      contents: [{
+        parts: [{
+          text: "Read the following text aloud in fluent Northern Uzbek (Uzbek, Latin script). Speak like a warm, cheerful, kind teacher talking to a young child. Use natural Uzbek pronunciation, clear articulation, a gentle lively pace, and friendly intonation. Read only the exact Uzbek text; do not translate it, explain it, or add any words.\n\nTEXT TO READ:\n" + text
+        }]
+      }],
+      config: {
+        responseModalities: ["AUDIO"],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: "Leda" }
+          }
+        }
+      }
+    });
+    const audioPart = response.candidates?.[0]?.content?.parts?.find(part => part.inlineData?.data);
+    if (!audioPart?.inlineData?.data) {
+      return res.status(502).json({ error: "Gemini o‘zbekcha ovoz qaytara olmadi. Qayta urinib ko‘ring." });
+    }
+    const pcm = Buffer.from(audioPart.inlineData.data, "base64");
+    const wavHeader = Buffer.alloc(44);
+    const sampleRate = 24000;
+    wavHeader.write("RIFF", 0);
+    wavHeader.writeUInt32LE(36 + pcm.length, 4);
+    wavHeader.write("WAVE", 8);
+    wavHeader.write("fmt ", 12);
+    wavHeader.writeUInt32LE(16, 16);
+    wavHeader.writeUInt16LE(1, 20);
+    wavHeader.writeUInt16LE(1, 22);
+    wavHeader.writeUInt32LE(sampleRate, 24);
+    wavHeader.writeUInt32LE(sampleRate * 2, 28);
+    wavHeader.writeUInt16LE(2, 32);
+    wavHeader.writeUInt16LE(16, 34);
+    wavHeader.write("data", 36);
+    wavHeader.writeUInt32LE(pcm.length, 40);
+    const wav = Buffer.concat([wavHeader, pcm]);
+    res.json({ audio: wav.toString("base64"), mimeType: "audio/wav" });
+  } catch (error) {
+    const message = String(error?.message || "");
+    if (/429|quota|resource_exhausted/i.test(message)) {
+      return res.status(429).json({ error: "Ovoz yaratish limiti vaqtincha tugadi. Birozdan keyin yana urinib ko‘r." });
+    }
+    console.error("Gemini Uzbek TTS error:", message);
+    next(error);
+  }
+});
 
 app.post("/api/ai/guest-tutor", aiLimiter, async (req, res, next) => {
   try {
@@ -155,8 +211,8 @@ app.post("/api/ai/guest-tutor", aiLimiter, async (req, res, next) => {
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       config: {
         systemInstruction: tutorInstruction + ` Sen hozir ${childName} ismli ${childAge} yoshli bola bilan suhbatlashyapsan. Doimo adabiy, ravon va grammatik jihatdan to‘g‘ri o‘zbek tilida gapir. Iliq, quvnoq, mehribon ustoz ohangidan foydalan; murakkab atamalarni sodda misollar bilan tushuntir. Javoblaring tabiiy og‘zaki nutqqa mos, talaffuz qilishga qulay bo‘lsin. Odatda 2–4 qisqa gap yoz, bitta savol bilan bolani fikrlashga unda. Emoji me’yorida ishlat.`,
-        temperature: 0.65,
-        maxOutputTokens: 320
+        temperature: 0.35,
+        maxOutputTokens: 420
       }
     });
     const answer = clean(response.text);
@@ -190,7 +246,7 @@ app.post("/api/ai/tutor", requireDb, auth, aiLimiter, async (req, res, next) => 
     const response = await ai.models.generateContent({
       model: MODEL,
       contents,
-      config: { systemInstruction: tutorInstruction + " Javoblaring o‘zbek tilida ravon, tabiiy, quvnoq va bolaga tushunarli bo‘lsin. Ovozli o‘qishga mos qisqa jumlalardan foydalan.", temperature: 0.65, maxOutputTokens: 500 }
+      config: { systemInstruction: tutorInstruction + " Faqat o‘zbek lotin yozuvida, ona tilidek tabiiy va xatosiz javob ber. Javobni yuborishdan oldin grammatikasini tekshir. Bola boshqa tilni mashq qilishni aniq so‘rasa, faqat mashq misollarini o‘sha tilda ber, izohni o‘zbekcha qil.", temperature: 0.35, maxOutputTokens: 420 }
     });
     const answer = clean(response.text);
     if (!answer) throw new Error("Gemini bo'sh javob qaytardi.");
