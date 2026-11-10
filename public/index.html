@@ -612,11 +612,11 @@
           const audioContext = new AudioContext({ sampleRate: 16000 });
           await audioContext.resume();
           const client = new GoogleGenAI({ apiKey: tokenData.token, httpOptions: { apiVersion: "v1alpha" } });
-          const live = { running: false, audioContext, session: null, stream: null, source: null, processor: null, nextAudioTime: audioContext.currentTime, playingCount: 0, turnComplete: false };
+          const live = { running: false, audioContext, session: null, stream: null, source: null, processor: null, nextAudioTime: audioContext.currentTime, playingCount: 0, turnComplete: false, chatMessageId: null };
           liveVoiceRef.current = live;
           live.session = await client.live.connect({
             model: tokenData.model,
-            config: { responseModalities: ["AUDIO"], inputAudioTranscription: {}, outputAudioTranscription: {}, realtimeInputConfig: { automaticActivityDetection: { disabled: true } }, systemInstruction: "Sen Bilimdon Kids AI platformasining mehribon o‘zbek tilida gapiradigan AI Ustozisan. 5–12 yoshli bolaga qisqa, aniq va quvnoq javob ber. Har bir savolga faqat bir marta javob qaytar. Javobni tez boshlagin va ortiqcha izoh bermagin.", sessionResumption: {}, thinkingConfig: { thinkingLevel: "minimal" } },
+            config: { responseModalities: ["AUDIO"], inputAudioTranscription: {}, outputAudioTranscription: {}, realtimeInputConfig: { automaticActivityDetection: { disabled: true } }, systemInstruction: "Sen Bilimdon Kids AI platformasining mehribon o‘zbek tilida gapiradigan AI Ustozisan. 5–12 yoshli bolaga qisqa, aniq va quvnoq javob ber. Har bir savolga faqat bir marta javob qaytar. Javobni tez boshlagin va ortiqcha izoh bermagin. Bola qo‘shiq so‘rasa, darhol 4–8 qatordan iborat, mutlaqo original, sodda inglizcha bolalar qo‘shig‘ini kuy bilan kuyla; mavjud mashhur qo‘shiqlarning matnini ko‘chirma yoki taqlid qilma.", sessionResumption: {}, thinkingConfig: { thinkingLevel: "minimal" } },
             callbacks: {
               onopen: () => console.info("BILIMDON KIDS AI ovozli tizimi ulandi"),
               onmessage: message => {
@@ -627,6 +627,7 @@
                   if (!live.outputTranscript) setTutorReply('');
                   live.outputTranscript = (live.outputTranscript || '') + outputText;
                   setTutorReply(live.outputTranscript);
+                  if (live.chatMessageId) setChatMessages(prev => prev.map(item => item.id === live.chatMessageId ? { ...item, text: live.outputTranscript } : item));
                 }
                 const parts = message?.serverContent?.modelTurn?.parts;
                 if (Array.isArray(parts)) for (const part of parts) {
@@ -654,7 +655,7 @@
                     source.start(startAt);
                   } catch (audioError) { console.error("AI ovoz ijrosi:", audioError); }
                 }
-                if (message?.serverContent?.turnComplete) { live.turnComplete = true; live.outputTranscript = ''; if (!live.playingCount) { live.onSpeechEnd?.(); live.onSpeechEnd = null; live.speechStarted = false; } }
+                if (message?.serverContent?.turnComplete) { live.turnComplete = true; live.chatMessageId = null; setIsAiLoading(false); live.outputTranscript = ''; if (!live.playingCount) { live.onSpeechEnd?.(); live.onSpeechEnd = null; live.speechStarted = false; } }
               },
               onerror: error => { console.error("AI ovozli aloqa xatosi:", error); setTutorReply("Ovozli AI bilan aloqa uzildi. Mikrofon tugmasini qayta bosing."); },
               onclose: () => { if (liveVoiceRef.current === live) { live.running = false; liveConnectingRef.current = false; try { live.processor?.disconnect(); live.source?.disconnect(); live.stream?.getTracks()?.forEach(track => track.stop()); live.audioContext?.close(); } catch {} liveVoiceRef.current = null; setIsVoiceRec(false); setIsAiSpeaking(false); } }
@@ -1191,9 +1192,45 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
         }
       };
 
+      const handleSingEnglishSong = async () => {
+        if (isAiLoading) return;
+        const messageId = Date.now();
+        const userMessageId = `user-song-${messageId}`;
+        const assistantMessageId = `assistant-song-${messageId}`;
+        setChatInput('');
+        setTutorReply('');
+        setIsAiLoading(true);
+        setChatMessages(prev => [...prev,
+          { id: userMessageId, role: 'user', text: '🎵 Please sing an English song!' },
+          { id: assistantMessageId, role: 'assistant', text: '🎶 Getting ready to sing...' }
+        ]);
+        try {
+          if (!liveVoiceRef.current?.running) await startLiveTutor();
+          const live = liveVoiceRef.current;
+          if (!live?.session) throw new Error("AI Ustozning ovozli xizmati ulanmagan. Mikrofon ruxsatini tekshiring.");
+          live.outputTranscript = '';
+          live.chatMessageId = assistantMessageId;
+          live.onSpeechStart = () => setIsAiSpeaking(true);
+          live.onSpeechEnd = () => setIsAiSpeaking(false);
+          live.speechStarted = false;
+          live.session.sendClientContent({
+            turns: [{ role: 'user', parts: [{ text: "Please sing a short, cheerful, completely original English children's song for a 5–12 year old child. Sing melodically with your voice, do not merely speak. Use simple English words and a catchy chorus, about 4–8 lines. Do not quote, imitate, or reuse lyrics from any existing copyrighted song. Start singing right away." }] }],
+            turnComplete: true
+          });
+        } catch (error) {
+          const message = error?.message || "Qo‘shiqni boshlashda xatolik yuz berdi.";
+          setChatMessages(prev => prev.map(item => item.id === assistantMessageId ? { ...item, text: message } : item));
+          setIsAiLoading(false);
+        }
+      };
+
       const handleSendToAiTutor = async (overrideText) => {
         const text = (overrideText ?? chatInput).trim();
         if (!text || isAiLoading) return;
+        if (/inglizcha qo['‘’]?shiq|qo['‘’]?shiq ayt|sing (me )?a song/i.test(text) || text.includes('🎵')) {
+          handleSingEnglishSong();
+          return;
+        }
         const messageId = Date.now();
         const userMessageId = `user-${messageId}`;
         const assistantMessageId = `assistant-${messageId}`;
@@ -1867,8 +1904,8 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-0 py-3">
-            <div className="lg:col-span-5 flex justify-center items-center min-h-0">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1 min-h-0 py-2">
+            <div className="order-2 lg:order-1 lg:col-span-5 flex justify-center items-center min-h-0">
               <Boy3DCharacter
                 outfit="lab"
                 pose="wave"
@@ -1877,8 +1914,8 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
               />
             </div>
 
-            <div className="lg:col-span-7 flex flex-col gap-3 min-h-0">
-              <div ref={chatScrollRef} className="flex-1 min-h-[170px] max-h-[42vh] lg:max-h-[52vh] overflow-y-auto overscroll-contain rounded-2xl bg-indigo-950/45 border border-indigo-400/25 p-3 space-y-3 scroll-smooth">
+            <div className="order-1 lg:order-2 lg:col-span-7 flex flex-col gap-3 min-h-0">
+              <div ref={chatScrollRef} className="flex-1 min-h-[170px] max-h-[46vh] lg:max-h-[56vh] overflow-y-auto overscroll-contain rounded-2xl bg-indigo-950/45 border border-indigo-400/25 p-3 space-y-3 scroll-smooth">
                 {chatMessages.map((message) => (
                   <div key={message.id} className={"flex " + (message.role === "user" ? "justify-end" : "justify-start")}>
                     <div className={"max-w-[92%] whitespace-pre-wrap break-words [overflow-wrap:anywhere] rounded-2xl px-4 py-3 shadow-lg text-sm md:text-base leading-relaxed " + (message.role === "user" ? "bg-indigo-600 text-white rounded-br-md" : "bg-white text-slate-900 rounded-bl-md font-extrabold")}>
@@ -1945,7 +1982,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                 ].map((q) => (
                   <button
                     key={q}
-                    onClick={() => handleSendToAiTutor(q)}
+                    onClick={() => q.includes("🎵") ? handleSingEnglishSong() : handleSendToAiTutor(q)}
                     className="text-xs font-bold bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-full transition"
                   >
                     {q}
