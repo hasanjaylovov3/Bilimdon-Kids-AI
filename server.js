@@ -43,6 +43,40 @@ async function generateTutorContent({ input, systemInstruction = tutorInstructio
   }
   throw lastError || new Error("AI modellari vaqtincha javob bermayapti.");
 }
+
+async function generateTutorSpeech(input) {
+  if (!ai) throw new Error("GEMINI_API_KEY serverda sozlanmagan.");
+  const models = [...new Set([TTS_MODEL, "gemini-3.8-flash-tts"])];
+  let lastError;
+  for (const model of models) {
+    try {
+      return await ai.interactions.create({
+        model,
+        input: [{
+          type: "user_input",
+          content: [{
+            type: "text",
+            text: input,
+            annotations: [{
+              type: "speech_metadata",
+              style: "Fluent natural Northern Uzbek, warm friendly teacher, clear articulation, lively but unhurried pace, no breathy ending, finish cleanly"
+            }]
+          }]
+        }],
+        response_format: { type: "audio" },
+        generation_config: { speech_config: [{ voice: "Leda" }] },
+        store: false
+      });
+    } catch (error) {
+      lastError = error;
+      const message = String(error?.message || "");
+      const transient = /429|503|500|502|504|UNAVAILABLE|high demand|overloaded|RESOURCE_EXHAUSTED/i.test(message) || [429,500,502,503,504].includes(Number(error?.status || error?.code));
+      if (!transient) throw error;
+    }
+  }
+  throw lastError || new Error("Ovoz modellari vaqtincha javob bermayapti.");
+}
+
 const SESSION_DAYS = Math.min(30, Math.max(1, Number(process.env.SESSION_DAYS || 14)));
 
 app.disable("x-powered-by");
@@ -178,23 +212,7 @@ app.post("/api/ai/speech", aiLimiter, async (req, res, next) => {
     if (!text || text.length > 1200) {
       return res.status(400).json({ error: "Ovozga aylantiriladigan matn 1–1200 belgi bo‘lishi kerak." });
     }
-    const interaction = await ai.interactions.create({
-      model: TTS_MODEL,
-      input: [{
-        type: "user_input",
-        content: [{
-          type: "text",
-          text,
-          annotations: [{
-            type: "speech_metadata",
-            style: "Fluent natural Northern Uzbek, warm friendly teacher, clear articulation, lively but unhurried pace, no breathy ending, finish cleanly"
-          }]
-        }]
-      }],
-      response_format: { type: "audio" },
-      generation_config: { speech_config: [{ voice: "Leda" }] },
-      store: false
-    });
+    const interaction = await generateTutorSpeech(text);
     const audioData = interaction.output_audio?.data;
     if (!audioData) return res.status(502).json({ error: "Gemini ovoz qaytara olmadi. Qayta urinib ko‘ring." });
     const wav = Buffer.from(audioData, "base64");
