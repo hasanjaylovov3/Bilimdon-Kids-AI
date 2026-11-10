@@ -609,6 +609,16 @@
       const [selectedChildId, setSelectedChildId] = useState('');
       const [authError, setAuthError] = useState('');
       const [authLoading, setAuthLoading] = useState(false);
+      const [showProfileModal, setShowProfileModal] = useState(false);
+      const [profileFullName, setProfileFullName] = useState('');
+      const [profileChildName, setProfileChildName] = useState('');
+      const [profileAge, setProfileAge] = useState('7');
+      const [profileCurrentPassword, setProfileCurrentPassword] = useState('');
+      const [profileNewPassword, setProfileNewPassword] = useState('');
+      const [profileMessage, setProfileMessage] = useState('');
+      const [profileBusy, setProfileBusy] = useState(false);
+      const [aiStatus, setAiStatus] = useState(null);
+      const [aiStatusLoading, setAiStatusLoading] = useState(false);
 
       const [stars, setStars] = useState(1250);
       const [muted, setMuted] = useState(false);
@@ -670,6 +680,21 @@
         }
       }, [activeScreen, authUser?.is_admin]);
 
+      const refreshAiStatus = async () => {
+        setAiStatusLoading(true);
+        try { const response = await fetch('/api/ai/status', { cache: 'no-store' }); const data = await response.json(); if (!response.ok) throw new Error(data.error || 'AI holatini tekshirib bo‘lmadi.'); setAiStatus(data); }
+        catch (error) { setAiStatus({ configured: false, error: error.message }); }
+        finally { setAiStatusLoading(false); }
+      };
+      const openAiSettings = () => { setShowApiModal(true); refreshAiStatus(); };
+      const saveProfile = async () => {
+        if (profileBusy) return; setProfileBusy(true); setProfileMessage('');
+        try {
+          const response = await fetch('/api/profile', { method: 'PATCH', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fullName: profileFullName, childName: profileChildName, age: Number(profileAge), childId: selectedChildId, currentPassword: profileCurrentPassword, newPassword: profileNewPassword }) });
+          const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.error || 'Profilni saqlab bo‘lmadi.');
+          setAuthUser(data.parent); setChildName(data.child.display_name); setProfileFullName(data.parent.full_name); setProfileChildName(data.child.display_name); setProfileAge(String(data.child.age)); setProfileCurrentPassword(''); setProfileNewPassword(''); setProfileMessage('Profil ma’lumotlari muvaffaqiyatli saqlandi.');
+        } catch (error) { setProfileMessage(error.message); } finally { setProfileBusy(false); }
+      };
       const refreshAdmin = async () => {
         const r = await fetch('/api/admin/overview', { credentials: 'same-origin' });
         const d = await r.json();
@@ -1876,14 +1901,15 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {authUser?.is_admin && <button onClick={() => { setAdminMessage(''); goScreen('admin'); }} className="rounded-2xl p-5 bg-gradient-to-r from-violet-500 to-fuchsia-600 text-white text-left shadow-xl"><div className="text-2xl mb-2">🛡️</div><div className="font-black text-lg">Admin panel</div><div className="text-xs font-bold opacity-90">Foydalanuvchilar va materiallar</div></button>}
+            <button onClick={() => { setProfileFullName(authUser?.full_name || ''); setProfileChildName(childName); setProfileMessage(''); setProfileCurrentPassword(''); setProfileNewPassword(''); setShowProfileModal(true); }} className="rounded-2xl p-5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-left shadow-xl"><div className="text-2xl mb-2">👤</div><div className="font-black text-lg">Profil ma’lumotlari</div><div className="text-xs font-bold opacity-90">Ism, bola ma’lumoti va parolni o‘zgartirish</div></button>
             <button onClick={() => setShowAuthorModal(true)} className="rounded-2xl p-5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-left shadow-xl">
               <div className="text-2xl mb-2">🎓</div><div className="font-black text-lg">Dastur Haqida</div><div className="text-xs font-bold opacity-90">Loyiha va muallif haqida ma’lumot</div>
             </button>
             <button onClick={() => goScreen('gifts')} className="rounded-2xl p-5 bg-gradient-to-r from-amber-400 to-orange-500 text-amber-950 text-left shadow-xl">
               <div className="text-2xl mb-2">👑</div><div className="font-black text-lg">Premium</div><div className="text-xs font-bold opacity-90">Premium va sovg‘alar bo‘limi</div>
             </button>
-            <button onClick={() => setShowApiModal(true)} className="rounded-2xl p-5 bg-white/10 hover:bg-white/15 border border-white/15 text-left">
-              <div className="text-2xl mb-2">🔑</div><div className="font-black text-lg">AI sozlamalari</div><div className="text-xs text-indigo-200 font-bold">Serverdagi Gemini ulanishi haqida</div>
+            <button onClick={openAiSettings} className="rounded-2xl p-5 bg-white/10 hover:bg-white/15 border border-white/15 text-left">
+              <div className="text-2xl mb-2">⚡</div><div className="font-black text-lg">AI sozlamalari</div><div className="text-xs text-indigo-200 font-bold">AI va ovoz ulanish holati, tezkor rejim</div>
             </button>
             <button onClick={() => setMuted(!muted)} className="rounded-2xl p-5 bg-white/10 hover:bg-white/15 border border-white/15 text-left">
               <div className="text-2xl mb-2">{muted ? '🔇' : '🔊'}</div><div className="font-black text-lg">Ovoz {muted ? 'o‘chiq' : 'yoqiq'}</div><div className="text-xs text-indigo-200 font-bold">Ovozli javoblarni yoqish yoki o‘chirish</div>
@@ -1988,7 +2014,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
       return (
         <div className="h-[100dvh] w-screen bg-slate-950 text-slate-800 flex flex-col overflow-hidden relative">
           {activeScreen !== 'login' && <header className="fixed top-0 inset-x-0 z-40 h-16 px-4 md:px-8 bg-slate-950/95 backdrop-blur-xl border-b border-white/10 flex items-center justify-between text-white">
-            <div className="flex items-center gap-2"><img src="/assets/bilimdon-mascot.svg" alt="Bilimdon KIDS" className="w-10 h-10 object-contain"/><div className="leading-tight"><div className="font-black text-lg">Bilimdon <span className="text-cyan-300">KIDS</span></div><div className="text-[10px] text-slate-400 font-bold">O‘rgan • O‘yna • Rivojlan</div></div></div>
+            <div className="flex items-center gap-2.5 min-w-0"><div className="w-10 h-10 rounded-xl bg-blue-600/90 border-2 border-cyan-300 shadow-lg flex items-center justify-center shrink-0 -rotate-6"><span className="text-2xl">🎓</span></div><div className="leading-[0.9]"><div className="font-black text-[17px] tracking-tight text-white" style={{WebkitTextStroke:'0.35px #1e3a8a'}}>Bilimdon</div><div className="font-black text-[17px] tracking-tight text-amber-300" style={{WebkitTextStroke:'0.35px #78350f'}}>Kids</div><div className="text-[8px] text-slate-300 font-extrabold mt-1">O‘rgan, o‘yna, rivojlan!</div></div></div>
             <div className="flex items-center gap-3"><span className="font-black text-sm max-w-32 truncate">{childName}</span><button onClick={()=>goScreen('settings')} className="w-10 h-10 rounded-xl bg-white/10 border border-white/10" aria-label="Sozlamalar">⚙️</button></div>
           </header>}
           {activeScreen !== 'login' && <nav className="fixed bottom-0 inset-x-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 px-2 py-2 grid grid-cols-5 gap-1">
