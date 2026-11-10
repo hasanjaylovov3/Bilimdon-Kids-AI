@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#6558e8"><meta name="description" content="Bilimdon Kids — bolalar uchun quvnoq AI ta'lim platformasi">
+<link rel="manifest" href="/manifest.json"><title>Bilimdon Kids — O'rgan, o'yna, rivojlan!</title>
+<style>
+:root{font-family:Nunito,"Trebuchet MS",system-ui,sans-serif;color:#20213a;background:#f5f4ff;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 10% 0,#e6e2ff 0,transparent 36%),#f7f7fc}
+button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
+.wrap{max-width:1120px;margin:auto;padding:22px}.brand{display:flex;align-items:center;gap:12px;font-weight:1000;font-size:24px;color:#5145c7}.logo{width:48px;height:48px;border-radius:16px;background:linear-gradient(140deg,#7b70ff,#4c9cff);display:grid;place-items:center;color:white;font-size:26px;box-shadow:0 8px 20px #6c63d544}
+.panel{background:#fff;border:1px solid #ecebfa;border-radius:26px;padding:24px;box-shadow:0 12px 35px #312d6410}
+.hero{display:flex;justify-content:space-between;align-items:center;gap:18px;margin:25px 0}.hero h1{font-size:clamp(28px,5vw,44px);line-height:1.08;margin:0 0 10px;color:#29264e}.muted{color:#777895}.pill{display:inline-flex;background:#f0efff;color:#584fc7;border-radius:30px;padding:7px 12px;font-weight:800;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.subject{border:1px solid #ecebfa;border-radius:22px;padding:20px;background:white;text-align:left;transition:.2s;min-height:160px}.subject:hover{transform:translateY(-3px);box-shadow:0 12px 26px #39307815}.subject .emoji{font-size:35px}.subject h3{margin:12px 0 4px}.primary{background:linear-gradient(120deg,#6558e8,#4f8bea);color:white;padding:13px 19px;border-radius:15px;font-weight:900;box-shadow:0 7px 16px #6558e833}.secondary{background:#f0efff;color:#5148bf;padding:11px 15px;border-radius:14px;font-weight:850}.field{width:100%;border:1px solid #e4e3f0;border-radius:13px;padding:12px 14px;background:#fcfcff;outline:none}.field:focus{border-color:#8177ef;box-shadow:0 0 0 3px #8177ef20}.stack{display:grid;gap:12px}.auth{max-width:460px;margin:6vh auto}.tabs{display:flex;gap:8px;background:#f3f2fb;padding:5px;border-radius:14px}.tabs button{flex:1;padding:10px;border-radius:11px;background:transparent;font-weight:900;color:#777}.tabs button.active{background:white;color:#5148bf;box-shadow:0 2px 8px #25204a12}
+.top{display:flex;justify-content:space-between;align-items:center;gap:14px}.hidden{display:none!important}.lesson{margin-top:20px}.lesson h2{margin-top:0}.question{font-size:25px;font-weight:950;margin:18px 0}.answers{display:flex;flex-wrap:wrap;gap:10px}.answer{background:#f0efff;color:#5148bf;border:2px solid transparent;padding:13px 18px;border-radius:14px;font-weight:900}.answer:hover{border-color:#8177ef}.chat{height:300px;overflow:auto;background:#f8f8fe;border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px}.bubble{max-width:88%;padding:12px 15px;border-radius:17px;line-height:1.45}.user{align-self:flex-end;background:#6558e8;color:white;border-bottom-right-radius:5px}.bot{align-self:flex-start;background:white;border:1px solid #ecebfa;border-bottom-left-radius:5px}.row{display:flex;gap:9px}.row .field{flex:1}.stats{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.stat{background:#fff;border:1px solid #ecebfa;border-radius:16px;padding:13px 17px;min-width:120px}.stat b{display:block;font-size:22px;color:#5148bf}
+footer{text-align:center;padding:28px;color:#85859d;font-size:13px}
+@media(max-width:760px){.grid{grid-template-columns:repeat(2,1fr)}.hero{align-items:flex-start;flex-direction:column}.wrap{padding:15px}.panel{padding:19px}}@media(max-width:380px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body><main class="wrap">
+<header class="top"><div class="brand"><div class="logo">🎓</div>Bilimdon Kids</div><span class="pill">O'rgan • O'yna • Rivojlan</span></header>
+<section id="auth" class="panel auth">
+  <div class="brand" style="justify-content:center;margin-bottom:12px"><div class="logo">🌟</div>Bilimdon Kids</div>
+  <h2 style="text-align:center;margin:8px 0">Bilimlar olamiga xush kelibsiz!</h2><p class="muted" style="text-align:center">Ota-ona hisobiga kiring yoki yangi hisob yarating.</p>
+  <div class="tabs"><button id="loginTab" class="active">Kirish</button><button id="registerTab">Ro'yxatdan o'tish</button></div>
+  <form id="authForm" class="stack" style="margin-top:16px">
+    <div id="fullNameWrap" class="hidden"><label>Ota-ona ismi</label><input class="field" id="fullName" minlength="2" autocomplete="name"></div>
+    <div><label>Email</label><input class="field" id="email" type="email" required autocomplete="email"></div>
+    <div><label>Parol</label><input class="field" id="password" type="password" required minlength="10" autocomplete="current-password" placeholder="Kamida 10 belgi"></div>
+    <div id="childFields" class="hidden stack"><div><label>Bola ismi</label><input class="field" id="childName"></div><div><label>Bola yoshi</label><select class="field" id="age"><option value="7">7 yosh</option><option value="8">8 yosh</option><option value="9">9 yosh</option><option value="10">10 yosh</option><option value="6">6 yosh</option><option value="11">11 yosh</option><option value="12">12 yosh</option></select></div></div>
+    <button class="primary" id="authSubmit">Kirish 🚀</button><p id="authError" class="muted" role="alert"></p>
+  </form>
+  <p class="muted" style="font-size:12px;text-align:center">Bola profili ota-ona hisobiga bog'lanadi. Parolingiz xavfsiz xeshlanadi.</p>
+</section>
+<section id="app" class="hidden">
+  <div class="hero"><div><span class="pill">✨ Bugun yangi bilimlar sari!</span><h1>Salom, <span id="helloName">Bilimdon</span>! 👋</h1><p class="muted">Qaysi fan bilan shug'ullanamiz?</p></div><button class="secondary" id="logout">Chiqish</button></div>
+  <div class="stats"><div class="stat"><span class="muted">Mashqlar</span><b id="count">0</b></div><div class="stat"><span class="muted">O'rtacha natija</span><b id="average">—</b></div><div class="stat"><span class="muted">Yosh</span><b id="childAge">—</b></div></div>
+  <div class="grid">
+    <button class="subject" data-subject="math"><span class="emoji">🧮</span><h3>Matematika</h3><span class="muted">Hisobla va top!</span></button>
+    <button class="subject" data-subject="reading"><span class="emoji">📚</span><h3>O'qish</h3><span class="muted">Matnni tushun!</span></button>
+    <button class="subject" data-subject="writing"><span class="emoji">✍️</span><h3>Yozish</h3><span class="muted">So'zlarni mashq qil!</span></button>
+    <button class="subject" data-subject="english"><span class="emoji">🇬🇧</span><h3>Ingliz tili</h3><span class="muted">New words!</span></button>
+  </div>
+  <section class="panel lesson hidden" id="lesson"><div class="top"><span class="pill" id="subjectLabel">Fan</span><button class="secondary" id="back">← Bosh sahifa</button></div><h2 id="lessonTitle">Mashq</h2><p class="muted" id="lessonHint">Javobni tanlang.</p><div class="question" id="question"></div><div class="answers" id="answers"></div><p id="feedback" aria-live="polite"></p><button class="primary hidden" id="next">Keyingi mashq →</button></section>
+  <section class="panel lesson" id="tutor"><div class="top"><div><span class="pill">🤖 Gemini AI ustoz</span><h2 style="margin:8px 0">Savoling bormi?</h2></div></div><p class="muted">Matematika, o'qish, yozish yoki ingliz tili bo'yicha yordam so'ra.</p><div class="chat" id="chat"><div class="bubble bot">Salom, bilimdon! 😊 Men sening AI ustozingman. Bugun nimani o'rganamiz?</div></div><form id="chatForm" class="row" style="margin-top:12px"><input id="chatInput" class="field" maxlength="2000" placeholder="Savolingni shu yerga yoz..." required><button class="primary">Yuborish</button></form></section>
+</section>
+<footer>Bilimdon Kids · Bolalar uchun mehribon AI ta'lim platformasi</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let mode="login",profile=null,child=null,subject="math",items=[],idx=0,correct=0,progress=[];
+const lessons={
+ math:[{q:"12 + 8 = ?",a:["18","20","22"],c:1,why:"12 ga 8 ni qo'shsak, 20 bo'ladi."},{q:"15 − 7 = ?",a:["7","8","9"],c:1,why:"15 dan 7 ni ayirsak, 8 qoladi."},{q:"5 × 3 = ?",a:["8","15","20"],c:1,why:"5 ni uch marta qo'shamiz: 5 + 5 + 5 = 15."}],
+ reading:[{q:"'Bahor keldi. Daraxtlar gulladi.' Gapda qaysi fasl tasvirlangan?",a:["Qish","Bahor","Kuz"],c:1,why:"Matnda bahor fasli aytilgan."},{q:"Kitobni nima uchun o'qiymiz?",a:["Bilim olish uchun","Uni yashirish uchun","Yirtish uchun"],c:0,why:"Kitob bizga bilim va yangi fikrlar beradi."}],
+ writing:[{q:"Qaysi so'z to'g'ri yozilgan?",a:["Maktab","Maktap","Makhtab"],c:0,why:"To'g'ri yozilishi: maktab."},{q:"Gap oxiriga odatda nima qo'yiladi?",a:["Vergul","Nuqta","Ikki nuqta"],c:1,why:"Darak gap oxiriga nuqta qo'yiladi."}],
+ english:[{q:"'Apple' so'zining tarjimasi qaysi?",a:["Olma","Kitob","Maktab"],c:0,why:"Apple — olma."},{q:"'Good morning' nimani anglatadi?",a:["Xayrli tun","Xayrli tong","Rahmat"],c:1,why:"Good morning — xayrli tong."}]
+};
+const labels={math:"Matematika",reading:"O'qish",writing:"Yozish",english:"Ingliz tili"};
+function setMode(next){mode=next;$("loginTab").classList.toggle("active",mode==="login");$("registerTab").classList.toggle("active",mode==="register");$("fullNameWrap").classList.toggle("hidden",mode!=="register");$("childFields").classList.toggle("hidden",mode!=="register");$("authSubmit").textContent=mode==="login"?"Kirish 🚀":"Hisob yaratish ✨";$("password").autocomplete=mode==="login"?"current-password":"new-password";}
+$("loginTab").onclick=()=>setMode("login");$("registerTab").onclick=()=>setMode("register");
+async function api(url,options={}){const r=await fetch(url,{...options,credentials:"same-origin",headers:{"Content-Type":"application/json",...(options.headers||{})}});const data=r.status===204?{}:await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||"Xatolik yuz berdi.");return data;}
+function showApp(data){profile=data.parent;child=data.child||data.children?.[0];if(!child){$("authError").textContent="Bola profili topilmadi.";return;}$("auth").classList.add("hidden");$("app").classList.remove("hidden");$("helloName").textContent=child.display_name;$("childAge").textContent=child.age+" yosh";loadProgress();}
+$("authForm").onsubmit=async e=>{e.preventDefault();$("authError").textContent="";$("authSubmit").disabled=true;try{const body={email:$("email").value,password:$("password").value};const data=mode==="register"?await api("/api/auth/register",{method:"POST",body:JSON.stringify({...body,fullName:$("fullName").value,childName:$("childName").value,age:Number($("age").value)})}):await api("/api/auth/login",{method:"POST",body:JSON.stringify(body)});showApp(data);}catch(err){$("authError").textContent=err.message;}finally{$("authSubmit").disabled=false;}};
+$("logout").onclick=async()=>{try{await api("/api/auth/logout",{method:"POST"});}finally{profile=child=null;$("app").classList.add("hidden");$("auth").classList.remove("hidden");}};
+async function restore(){try{const data=await api("/api/auth/me");showApp(data);}catch{}}
+async function loadProgress(){try{const d=await api("/api/progress/"+child.id);progress=d.progress;$("count").textContent=progress.length;const scores=progress.filter(x=>x.score!==null).map(x=>Number(x.score));$("average").textContent=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length)+"%":"—";}catch{}}
+function startLesson(s){subject=s;items=lessons[s];idx=0;correct=0;$("lesson").classList.remove("hidden");$("tutor").classList.add("hidden");document.querySelector(".grid").classList.add("hidden");$("subjectLabel").textContent=labels[s];$("lessonTitle").textContent=labels[s]+" mashqlari";renderQuestion();$("lesson").scrollIntoView({behavior:"smooth"});}
+function renderQuestion(){const item=items[idx];$("question").textContent=item.q;$("lessonHint").textContent="Savol "+(idx+1)+" / "+items.length+" — to'g'ri javobni tanla."; $("answers").innerHTML="";$("feedback").textContent="";$("next").classList.add("hidden");item.a.forEach((a,i)=>{const b=document.createElement("button");b.className="answer";b.textContent=a;b.onclick=()=>answer(i);$("answers").append(b);});}
+async function answer(i){const item=items[idx];[...$("answers").children].forEach((b,n)=>{b.disabled=true;if(n===item.c)b.style.background="#dcfce7";else if(n===i)b.style.background="#fee2e2";});const ok=i===item.c;if(ok)correct++;$("feedback").textContent=(ok?"🎉 Barakalla! ":"Yaxshi urinish! ")+item.why;$("next").classList.remove("hidden");}
+$("next").onclick=async()=>{idx++;if(idx<items.length){renderQuestion();return;}const score=Math.round(correct/items.length*100);$("question").textContent="Mashq yakunlandi!";$("answers").innerHTML="";$("feedback").textContent="Natijang: "+correct+" / "+items.length+" ("+score+"%). Ajoyib harakat! 🌟";$("next").classList.add("hidden");try{await api("/api/progress",{method:"POST",body:JSON.stringify({childId:child.id,subject,activity:labels[subject]+" mashqi",score,details:{correct,total:items.length}})});await loadProgress();}catch(e){$("feedback").textContent+=" Natijani saqlashda xatolik: "+e.message;}};
+$("back").onclick=()=>{$("lesson").classList.add("hidden");$("tutor").classList.remove("hidden");document.querySelector(".grid").classList.remove("hidden");};
+document.querySelectorAll("[data-subject]").forEach(b=>b.onclick=()=>startLesson(b.dataset.subject));
+function bubble(text,who){const d=document.createElement("div");d.className="bubble "+who;d.textContent=text;$("chat").append(d);$("chat").scrollTop=$("chat").scrollHeight;}
+$("chatForm").onsubmit=async e=>{e.preventDefault();const message=$("chatInput").value.trim();if(!message)return;$("chatInput").value="";bubble(message,"user");const wait=document.createElement("div");wait.className="bubble bot";wait.textContent="O'ylayapman... 🤔";$("chat").append(wait);try{const data=await api("/api/ai/tutor",{method:"POST",body:JSON.stringify({childId:child.id,subject,message})});wait.textContent=data.answer;}catch(err){wait.textContent=err.message;}};
+restore();
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));
+</script></body></html>
