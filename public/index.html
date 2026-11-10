@@ -1,117 +1,2266 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="uz">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#6558e8"><meta name="description" content="Bilimdon Kids — bolalar uchun quvnoq AI ta'lim platformasi">
-<link rel="manifest" href="/manifest.json"><title>Bilimdon Kids — O'rgan, o'yna, rivojlan!</title>
-<style>
-:root{font-family:Nunito,"Trebuchet MS",system-ui,sans-serif;color:#20213a;background:#f5f4ff;font-synthesis:none}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 10% 0,#e6e2ff 0,transparent 36%),#f7f7fc}
-button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
-.wrap{max-width:1120px;margin:auto;padding:22px}.brand{display:flex;align-items:center;gap:12px;font-weight:1000;font-size:24px;color:#5145c7}.logo{width:48px;height:48px;border-radius:16px;background:linear-gradient(140deg,#7b70ff,#4c9cff);display:grid;place-items:center;color:white;font-size:26px;box-shadow:0 8px 20px #6c63d544}
-.panel{background:#fff;border:1px solid #ecebfa;border-radius:26px;padding:24px;box-shadow:0 12px 35px #312d6410}
-.hero{display:flex;justify-content:space-between;align-items:center;gap:18px;margin:25px 0}.hero h1{font-size:clamp(28px,5vw,44px);line-height:1.08;margin:0 0 10px;color:#29264e}.muted{color:#777895}.pill{display:inline-flex;background:#f0efff;color:#584fc7;border-radius:30px;padding:7px 12px;font-weight:800;font-size:13px}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.subject{border:1px solid #ecebfa;border-radius:22px;padding:20px;background:white;text-align:left;transition:.2s;min-height:160px}.subject:hover{transform:translateY(-3px);box-shadow:0 12px 26px #39307815}.subject .emoji{font-size:35px}.subject h3{margin:12px 0 4px}.primary{background:linear-gradient(120deg,#6558e8,#4f8bea);color:white;padding:13px 19px;border-radius:15px;font-weight:900;box-shadow:0 7px 16px #6558e833}.secondary{background:#f0efff;color:#5148bf;padding:11px 15px;border-radius:14px;font-weight:850}.field{width:100%;border:1px solid #e4e3f0;border-radius:13px;padding:12px 14px;background:#fcfcff;outline:none}.field:focus{border-color:#8177ef;box-shadow:0 0 0 3px #8177ef20}.stack{display:grid;gap:12px}.auth{max-width:460px;margin:6vh auto}.tabs{display:flex;gap:8px;background:#f3f2fb;padding:5px;border-radius:14px}.tabs button{flex:1;padding:10px;border-radius:11px;background:transparent;font-weight:900;color:#777}.tabs button.active{background:white;color:#5148bf;box-shadow:0 2px 8px #25204a12}
-.top{display:flex;justify-content:space-between;align-items:center;gap:14px}.hidden{display:none!important}.lesson{margin-top:20px}.lesson h2{margin-top:0}.question{font-size:25px;font-weight:950;margin:18px 0}.answers{display:flex;flex-wrap:wrap;gap:10px}.answer{background:#f0efff;color:#5148bf;border:2px solid transparent;padding:13px 18px;border-radius:14px;font-weight:900}.answer:hover{border-color:#8177ef}.chat{height:300px;overflow:auto;background:#f8f8fe;border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px}.bubble{max-width:88%;padding:12px 15px;border-radius:17px;line-height:1.45}.user{align-self:flex-end;background:#6558e8;color:white;border-bottom-right-radius:5px}.bot{align-self:flex-start;background:white;border:1px solid #ecebfa;border-bottom-left-radius:5px}.row{display:flex;gap:9px}.row .field{flex:1}.stats{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.stat{background:#fff;border:1px solid #ecebfa;border-radius:16px;padding:13px 17px;min-width:120px}.stat b{display:block;font-size:22px;color:#5148bf}
-footer{text-align:center;padding:28px;color:#85859d;font-size:13px}
-.hero{position:relative;overflow:hidden;background:linear-gradient(115deg,#fff 0%,#f0efff 65%,#e8f3ff 100%);border:1px solid #ecebfa;border-radius:28px;padding:22px 26px;min-height:220px}.hero-copy{position:relative;z-index:1}.mascot{width:190px;max-width:34%;height:auto;align-self:flex-end;filter:drop-shadow(0 12px 12px #3333);animation:mascot-float 3.4s ease-in-out infinite;transform-origin:50% 90%}@keyframes mascot-float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}.hero .secondary{align-self:flex-start;position:relative;z-index:2}@media(max-width:520px){.hero{padding:18px;min-height:180px}.mascot{width:120px;max-width:38%;margin-left:auto}.hero h1{font-size:29px}}
-@media(max-width:760px){.grid{grid-template-columns:repeat(2,1fr)}.hero{align-items:flex-start;flex-direction:column}.wrap{padding:15px}.panel{padding:19px}}@media(max-width:380px){.grid{grid-template-columns:1fr}}
-.tutor-panel{background:linear-gradient(145deg,#fff 0%,#f4f2ff 100%);border-color:#dedbff}.tutor-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.robot{width:112px;height:130px;object-fit:contain;animation:robot-bob 3.2s ease-in-out infinite;filter:drop-shadow(0 8px 8px #273d8b22)}@keyframes robot-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}.tutor-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0 14px}.tutor-tools label{font-weight:800}.tutor-tools select{max-width:230px}.quick-prompts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.quick-prompts button{font-size:12px;padding:9px 12px}.tutor-input{align-items:center}.tutor-input button{white-space:nowrap}.robot:active{transform:scale(.97)}@media(max-width:520px){.tutor-heading{align-items:flex-start}.robot{width:82px;height:100px}.tutor-input{flex-wrap:wrap}.tutor-input .field{min-width:100%}}
-:focus-visible{outline:3px solid #8177ef;outline-offset:3px}button:disabled{opacity:.65;cursor:not-allowed}.answers .answer{min-height:48px}.answers textarea{flex:1 1 100%;min-width:0;resize:vertical}#answers .primary{min-height:48px}
-@media(max-width:520px){.wrap{padding:12px;padding-bottom:calc(20px + env(safe-area-inset-bottom))}.panel{border-radius:20px;padding:16px}.subject{min-height:138px;padding:16px}.answers{display:grid;grid-template-columns:1fr}.answers .answer{width:100%;text-align:left}.chat{height:260px}.tutor-input{gap:8px}.tutor-input .field{flex-basis:100%}.tutor-input button{min-height:46px;flex:1}}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1e3a8a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Bilimdon Kids" />
+  <meta name="author" content="Saparova Matluba — Termiz davlat pedagogika instituti Boshlang'ich ta'lim fakulteti talabasi" />
+  <meta name="description" content="Bilimdon Kids — O'rgan, o'yna, rivojlan! Sun'iy intellekt bilan bolalar ta'lim dasturi. Muallif: Saparova Matluba (TDPI)" />
+  <title>Bilimdon Kids — Saparova Matluba | TDPI (To'liq 3D AI Dastur + APK)</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React 18 va Babel (hech qanday server talab qilmaydi, brauzerning o'zida va GitHub Pages-da 100% ishlaydi) -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- JSZip kutubxonasi: Dastur ichidan tayyor GitHub + APK loyiha ZIP faylini yuklab olish uchun -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
+
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+    }
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+    .animate-float {
+      animation: floatSlow 3.4s ease-in-out infinite;
+    }
+  </style>
+  <script>
+    // Haqiqiy PWA / Mobil va Kompyuter Ilovasi (Standalone App) Manifestini avtomatik ulash
+    (function() {
+      const appManifest = {
+        name: "Bilimdon Kids — Saparova Matluba (TDPI)",
+        short_name: "Bilimdon Kids",
+        description: "Sun'iy intellektga asoslangan interaktiv bolalar ta'lim dasturi. Muallif: Saparova Matluba",
+        start_url: window.location.href,
+        display: "standalone",
+        background_color: "#0f172a",
+        theme_color: "#1d4ed8",
+        icons: [
+          {
+            src: "https://placehold.co/192x192/2563eb/ffffff.png?text=BK",
+            sizes: "192x192",
+            type: "image/png"
+          },
+          {
+            src: "https://placehold.co/512x512/2563eb/ffffff.png?text=Bilimdon+Kids",
+            sizes: "512x512",
+            type: "image/png"
+          }
+        ]
+      };
+      const link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(appManifest));
+      document.head.appendChild(link);
+    })();
+  </script>
 </head>
-<body><main class="wrap">
-<header class="top"><div class="brand"><div class="logo">🎓</div>Bilimdon Kids</div><span class="pill">O'rgan • O'yna • Rivojlan</span></header>
-<section id="auth" class="panel auth">
-  <div class="brand" style="justify-content:center;margin-bottom:12px"><div class="logo">🌟</div>Bilimdon Kids</div>
-  <h2 style="text-align:center;margin:8px 0">Bilimlar olamiga xush kelibsiz!</h2><p class="muted" style="text-align:center">Ota-ona hisobiga kiring yoki yangi hisob yarating.</p>
-  <div class="tabs"><button id="loginTab" class="active">Kirish</button><button id="registerTab">Ro'yxatdan o'tish</button></div>
-  <form id="authForm" class="stack" style="margin-top:16px">
-    <div id="fullNameWrap" class="hidden"><label>Ota-ona ismi</label><input class="field" id="fullName" minlength="2" autocomplete="name"></div>
-    <div><label>Email</label><input class="field" id="email" type="email" required autocomplete="email"></div>
-    <div><label>Parol</label><input class="field" id="password" type="password" required minlength="10" autocomplete="current-password" placeholder="Kamida 10 belgi"></div>
-    <div id="childFields" class="hidden stack"><div><label>Bola ismi</label><input class="field" id="childName"></div><div><label>Bola yoshi</label><select class="field" id="age"><option value="7">7 yosh</option><option value="8">8 yosh</option><option value="9">9 yosh</option><option value="10">10 yosh</option><option value="6">6 yosh</option><option value="11">11 yosh</option><option value="12">12 yosh</option></select></div></div>
-    <button class="primary" id="authSubmit">Kirish 🚀</button><p id="authError" class="muted" role="alert"></p>
-  </form>
-  <p class="muted" style="font-size:12px;text-align:center">Bola profili ota-ona hisobiga bog'lanadi. Parolingiz xavfsiz xeshlanadi.</p>
-</section>
-<section id="app" class="hidden">
-  <div class="hero"><div class="hero-copy"><span class="pill">✨ Bugun yangi bilimlar sari!</span><h1>Salom, <span id="helloName">Bilimdon</span>! 👋</h1><p class="muted">Qaysi fan bilan shug'ullanamiz?</p><span class="pill">🤖 AI ustozing seni kutmoqda</span></div><img class="mascot" src="/assets/bilimdon-mascot.svg" alt="Bilimdon Kids quvnoq 3D qahramoni" width="190" height="203" loading="eager"><button class="secondary" id="logout">Chiqish</button></div>
-  <div class="stats"><div class="stat"><span class="muted">Mashqlar</span><b id="count">0</b></div><div class="stat"><span class="muted">O'rtacha natija</span><b id="average">—</b></div><div class="stat"><span class="muted">Yosh</span><b id="childAge">—</b></div></div>
-  <section class="panel" id="resultsPanel" style="margin:0 0 18px"><div class="top"><div><span class="pill">🏆 Natijalar</span><h2 style="margin:8px 0">So'nggi mashqlar</h2></div><span class="muted" id="resultCount">0 ta natija</span></div><div id="resultHistory" class="stack"><p class="muted">Hali natijalar yo'q. Birinchi mashqni bajar!</p></div></section>
-  <section class="panel" id="rewardsPanel" style="margin:0 0 18px"><div class="top"><div><span class="pill">⭐ Mukofotlar</span><h2 style="margin:8px 0">Yulduzlaring</h2></div><strong id="starTotal" style="font-size:24px">0 ⭐</strong></div><p class="muted">Har bir mashqdan ball ol: 50% dan boshlab 1, 70% dan 2, 90% dan 3 yulduz!</p><div class="stack" id="rewardList"></div></section>
-  <div class="grid">
-    <button class="subject" data-subject="math"><span class="emoji">🧮</span><h3>Matematika</h3><span class="muted">Hisobla va top!</span></button>
-    <button class="subject" data-subject="reading"><span class="emoji">📚</span><h3>O'qish</h3><span class="muted">Matnni tushun!</span></button>
-    <button class="subject" data-subject="writing"><span class="emoji">✍️</span><h3>Yozish</h3><span class="muted">So'zlarni mashq qil!</span></button>
-    <button class="subject" data-subject="english"><span class="emoji">🇬🇧</span><h3>Ingliz tili</h3><span class="muted">New words!</span></button>
-  </div>
-  <section class="panel lesson hidden" id="lesson"><div class="top"><span class="pill" id="subjectLabel">Fan</span><button class="secondary" id="back">← Bosh sahifa</button></div><h2 id="lessonTitle">Mashq</h2><p class="muted" id="lessonHint">Javobni tanlang.</p><div class="question" id="question"></div><div class="answers" id="answers"></div><p id="feedback" aria-live="polite"></p><button class="primary hidden" id="next">Keyingi mashq →</button></section>
-  <section class="panel lesson tutor-panel" id="tutor">
-    <div class="tutor-heading"><div><span class="pill">🤖 Gemini AI ustoz</span><h2 style="margin:8px 0">Savoling bormi?</h2><p class="muted">Mehribon AI ustoz va uning robot do'sti bilan suhbatlash!</p></div><img class="robot" src="/assets/mini-robot.svg" alt="Bilimdon Kids mini robot yordamchisi" width="112" height="130"></div>
-    <div class="tutor-tools"><label class="muted" for="tutorSubject">Suhbat mavzusi</label><select class="field" id="tutorSubject"><option value="math">🧮 Matematika</option><option value="reading">📚 O'qish</option><option value="writing">✍️ Yozish</option><option value="english">🇬🇧 Ingliz tili</option></select><button type="button" class="secondary" id="speakToggle" aria-pressed="true">🔊 Ovoz yoqilgan</button></div>
-    <div class="chat" id="chat" aria-live="polite"><div class="bubble bot">Salom, bilimdon! 😊 Men sening AI ustozingman. Bugun nimani o'rganamiz?</div></div>
-    <div class="quick-prompts"><button type="button" class="secondary" data-prompt="Menga qiziqarli matematik misol ber">🧮 Misol ber</button><button type="button" class="secondary" data-prompt="Qisqa va qiziqarli ertak aytib ber">📚 Ertak ayt</button><button type="button" class="secondary" data-prompt="Ingliz tilida 3 ta yangi so'z o'rgat">🇬🇧 Inglizcha so'zlar</button></div>
-    <form id="chatForm" class="row tutor-input" style="margin-top:12px"><input id="chatInput" class="field" maxlength="2000" placeholder="Savolingni shu yerga yoz..." required><button type="button" class="secondary" id="micButton" title="Ovoz bilan gapirish">🎤</button><button class="primary">Yuborish</button></form><p id="voiceStatus" class="muted" role="status" style="font-size:12px;margin:8px 2px 0">Savolingni yoz yoki mikrofon tugmasini bos.</p>
-  </section>
-</section>
-<footer>Bilimdon Kids · Bolalar uchun mehribon AI ta'lim platformasi</footer>
-</main>
-<script>
-const $=id=>document.getElementById(id);
-let mode="login",profile=null,child=null,subject="math",items=[],idx=0,correct=0,progress=[];
-function buildLessons(){
- const age=Number(child?.age||7),max=age<=7?10:age<=9?20:50;
- const math=[];
- for(let n=0;n<4;n++){const a=2+Math.floor(Math.random()*max),b=1+Math.floor(Math.random()*Math.min(max,12)),op=n%3;let q,answer,why;if(op===0){q=a+" + "+b+" = ?";answer=a+b;why=a+" ga "+b+" ni qo'shsak, "+answer+" bo'ladi.";}else if(op===1){const high=Math.max(a,b),low=Math.min(a,b);q=high+" − "+low+" = ?";answer=high-low;why=high+" dan "+low+" ni ayirsak, "+answer+" qoladi.";}else{const factor=1+Math.floor(Math.random()*5);q=a+" × "+factor+" = ?";answer=a*factor;why=a+" ni "+factor+" ga ko'paytirsak, "+answer+" bo'ladi.";}const choices=new Set([answer,answer+1,Math.max(0,answer-1),answer+2]);const opts=[...choices].sort(()=>Math.random()-.5).slice(0,3);if(!opts.includes(answer))opts[0]=answer;math.push({q,a:opts.map(String),c:opts.indexOf(answer),why});}
- return {
-  math,
-  reading:[
-   {q:"'Bahor keldi. Daraxtlar gulladi. Qushlar sayray boshladi.' Matnda qaysi fasl tasvirlangan?",a:["Qish","Bahor","Kuz"],c:1,why:"Daraxtlarning gullashi va qushlarning sayrashi bahor belgilaridir."},
-   {q:"'Dilshod kitobni diqqat bilan o'qidi va yangi so'zlarni daftariga yozdi.' Dilshod nima qildi?",a:["Rasm chizdi","Kitob o'qib, so'z yozdi","Futbol o'ynadi"],c:1,why:"Gapda Dilshod kitob o'qigani va yangi so'zlarni yozgani aytilgan."},
-   {q:"'Mushukcha yomg'irdan qochib, ayvon ostiga yashirindi.' Mushukcha qayerga yashirindi?",a:["Daraxtga","Ayvon ostiga","Uy tomiga"],c:1,why:"Mushukcha ayvon ostiga yashiringan."},
-   {q:"Matnni o'qiganda asosiy fikrni topish uchun nimaga e'tibor beramiz?",a:["Faqat uzun so'zlarga","Voqealar va muhim gaplarga","Faqat tinish belgilariga"],c:1,why:"Asosiy fikr voqea va muhim gaplar orqali anglashiladi."}
-  ],
-  writing:[
-   {type:"text",q:"Quyidagi so'zni xatosiz yoz: MAKTAB",check:v=>v.trim().toLocaleLowerCase("uz-UZ")==="maktab",why:"Maktab so'zi M-A-K-T-A-B harflaridan yoziladi."},
-   {type:"text",q:"'kitob' so'zidan foydalanib, kamida 3 so'zli gap tuz.",check:v=>{const t=v.trim().toLocaleLowerCase("uz-UZ");return t.includes("kitob")&&t.split(/\s+/).filter(Boolean).length>=3&&/[.!?]$/.test(t);},why:"Juda yaxshi! Gapda 'kitob' so'zi, kamida uchta so'z va gap oxirida tinish belgisi bo'lishi kerak."},
-   {type:"text",q:"Gapni bosh harf va tinish belgisi bilan to'g'ri yoz: bugun havo yaxshi",check:v=>/^bugun havo yaxshi[.!?]$/i.test(v.trim())&&v.trim()[0]==="B",why:"Gap bosh harf bilan boshlanadi va oxiriga nuqta qo'yiladi: Bugun havo yaxshi."},
-   {type:"text",q:"'Bahor' so'zini yoz va undan keyin bitta nuqta qo'y.",check:v=>v.trim().toLocaleLowerCase("uz-UZ")==="bahor.",why:"To'g'ri yozilishi: Bahor."}
-  ],
-  english:[
-   {q:"'Apple' so'zining tarjimasi qaysi?",a:["Olma","Kitob","Maktab"],c:0,why:"Apple — olma."},
-   {q:"'Good morning' nimani anglatadi?",a:["Xayrli tun","Xayrli tong","Rahmat"],c:1,why:"Good morning — xayrli tong."},
-   {q:"'Thank you' iborasining tarjimasi qaysi?",a:["Iltimos","Kechirasiz","Rahmat"],c:2,why:"Thank you — rahmat."},
-   {q:"'Blue' qaysi rang?",a:["Qizil","Ko'k","Yashil"],c:1,why:"Blue — ko'k rang."}
-  ]
- };
-}
-const labels={math:"Matematika",reading:"O'qish",writing:"Yozish",english:"Ingliz tili"};
-function setMode(next){mode=next;$("loginTab").classList.toggle("active",mode==="login");$("registerTab").classList.toggle("active",mode==="register");$("fullNameWrap").classList.toggle("hidden",mode!=="register");$("childFields").classList.toggle("hidden",mode!=="register");$("authSubmit").textContent=mode==="login"?"Kirish 🚀":"Hisob yaratish ✨";$("password").autocomplete=mode==="login"?"current-password":"new-password";}
-$("loginTab").onclick=()=>setMode("login");$("registerTab").onclick=()=>setMode("register");
-async function api(url,options={}){const r=await fetch(url,{...options,credentials:"same-origin",headers:{"Content-Type":"application/json",...(options.headers||{})}});const data=r.status===204?{}:await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||"Xatolik yuz berdi.");return data;}
-function showApp(data){profile=data.parent;child=data.child||data.children?.[0];if(!child){$("authError").textContent="Bola profili topilmadi.";return;}$("auth").classList.add("hidden");$("app").classList.remove("hidden");$("helloName").textContent=child.display_name;$("childAge").textContent=child.age+" yosh";loadProgress();}
-$("authForm").onsubmit=async e=>{e.preventDefault();$("authError").textContent="";$("authSubmit").disabled=true;try{const body={email:$("email").value,password:$("password").value};const data=mode==="register"?await api("/api/auth/register",{method:"POST",body:JSON.stringify({...body,fullName:$("fullName").value,childName:$("childName").value,age:Number($("age").value)})}):await api("/api/auth/login",{method:"POST",body:JSON.stringify(body)});showApp(data);}catch(err){$("authError").textContent=err.message;}finally{$("authSubmit").disabled=false;}};
-$("logout").onclick=async()=>{try{await api("/api/auth/logout",{method:"POST"});}finally{profile=child=null;$("app").classList.add("hidden");$("auth").classList.remove("hidden");}};
-async function restore(){try{const data=await api("/api/auth/me");showApp(data);}catch{}}
-function starsForScore(score){const n=Number(score);return n>=90?3:n>=70?2:n>=50?1:0;}
-function rewardName(total){return total>=20?"🏆 Yulduzlar chempioni":total>=10?"🥇 Super bilimdon":total>=5?"🎖️ Faol o'quvchi":"🌱 Yangi bilimdon";}
-async function loadProgress(){try{const d=await api("/api/progress/"+child.id);progress=d.progress; $("count").textContent=progress.length;const scores=progress.filter(x=>x.score!==null).map(x=>Number(x.score));$("average").textContent=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length)+"%":"—";$("resultCount").textContent=progress.length+" ta natija";const history=$("resultHistory");history.replaceChildren();if(!progress.length){const empty=document.createElement("p");empty.className="muted";empty.textContent="Hali natijalar yo'q. Birinchi mashqni bajar!";history.append(empty);}else{progress.slice(0,5).forEach(item=>{const row=document.createElement("div");row.className="top";row.style.cssText="padding:10px 12px;background:#f8f8fe;border-radius:14px;gap:12px";const title=document.createElement("strong");title.textContent=item.activity||labels[item.subject]||"Mashq";const score=document.createElement("span");score.className="pill";score.textContent=item.score===null?"Bajarildi":Math.round(Number(item.score))+"%";row.append(title,score);history.append(row);});}const total=progress.reduce((sum,item)=>sum+Number(item.details?.stars??starsForScore(item.score??0)),0);$("starTotal").textContent=total+" ⭐";const rewards=$("rewardList");rewards.replaceChildren();const milestones=[{n:5,t:"5 yulduz — Faol o'quvchi"},{n:10,t:"10 yulduz — Super bilimdon"},{n:20,t:"20 yulduz — Yulduzlar chempioni"}];milestones.forEach(m=>{const row=document.createElement("div");row.className="top";row.style.cssText="padding:9px 12px;border-radius:12px;background:#f8f8fe";const label=document.createElement("span");label.textContent=m.t;const state=document.createElement("strong");state.textContent=total>=m.n?"✅ Ochildi":Math.max(0,m.n-total)+" ⭐ qoldi";row.append(label,state);rewards.append(row);});}catch{}}
-function startLesson(s){subject=s;items=buildLessons()[s];idx=0;correct=0;$("lesson").classList.remove("hidden");$("tutor").classList.add("hidden");document.querySelector(".grid").classList.add("hidden");$("subjectLabel").textContent=labels[s];$("lessonTitle").textContent=labels[s]+" mashqlari";renderQuestion();$("lesson").scrollIntoView({behavior:"smooth"});}
-function renderQuestion(){const item=items[idx];$("question").textContent=item.q;$("lessonHint").textContent="Savol "+(idx+1)+" / "+items.length+(item.type==="text"?" — javobni o'zing yoz.":" — to'g'ri javobni tanla.");$("answers").replaceChildren();$("feedback").textContent="";$("next").classList.add("hidden");if(item.type==="text"){const input=document.createElement("textarea");input.className="field";input.id="writingResponse";input.rows=3;input.maxLength=300;input.placeholder="Javobingni shu yerga yoz...";input.setAttribute("aria-label","Yozma javob");const check=document.createElement("button");check.type="button";check.className="primary";check.textContent="Javobni tekshirish";check.style.marginTop="10px";check.onclick=()=>answer(input.value);$("answers").append(input,check);input.focus();}else{item.a.forEach((a,i)=>{const b=document.createElement("button");b.className="answer";b.textContent=a;b.onclick=()=>answer(i);$("answers").append(b);});}}
-async function answer(value){const item=items[idx];let ok;if(item.type==="text"){ok=Boolean(item.check(String(value??"")));$("writingResponse").disabled=true;const check=$("answers").querySelector("button");if(check)check.disabled=true;}else{[...$("answers").children].forEach((b,n)=>{b.disabled=true;if(n===item.c)b.style.background="#dcfce7";else if(n===value)b.style.background="#fee2e2";});ok=value===item.c;}if(ok)correct++;$("feedback").textContent=(ok?"🎉 Barakalla! ":"Yaxshi urinish! ")+item.why;$("next").classList.remove("hidden");}
-$("next").onclick=async()=>{idx++;if(idx<items.length){renderQuestion();return;}const score=Math.round(correct/items.length*100),earned=starsForScore(score);$("question").textContent="Mashq yakunlandi!";$("answers").innerHTML="";$("feedback").textContent="Natijang: "+correct+" / "+items.length+" ("+score+"%). "+(earned?"Mukofot: "+ "⭐".repeat(earned):"Keyingi safar yulduz olishga harakat qil!")+" Ajoyib harakat!";$("next").classList.add("hidden");try{await api("/api/progress",{method:"POST",body:JSON.stringify({childId:child.id,subject,activity:labels[subject]+" mashqi",score,details:{correct,total:items.length,stars:earned}})});await loadProgress();}catch(e){$("feedback").textContent+=" Natijani saqlashda xatolik: "+e.message;}};
-$("back").onclick=()=>{$("lesson").classList.add("hidden");$("tutor").classList.remove("hidden");document.querySelector(".grid").classList.remove("hidden");};
-document.querySelectorAll("[data-subject]").forEach(b=>b.onclick=()=>startLesson(b.dataset.subject));
-let tutorVoiceEnabled=true,recognition=null;
-function bubble(text,who){const d=document.createElement("div");d.className="bubble "+who;d.textContent=text;$("chat").append(d);$("chat").scrollTop=$("chat").scrollHeight;}
-function speakTutor(text){if(!tutorVoiceEnabled||!("speechSynthesis" in window))return;window.speechSynthesis.cancel();const utter=new SpeechSynthesisUtterance(text);utter.lang="uz-UZ";utter.rate=.94;utter.pitch=1.08;window.speechSynthesis.speak(utter);}
-async function sendTutorMessage(raw){const message=String(raw||"").trim();if(!message||!child)return;$("chatInput").value="";bubble(message,"user");const wait=document.createElement("div");wait.className="bubble bot";wait.textContent="O'ylayapman... 🤔";$("chat").append(wait);$("chat").scrollTop=$("chat").scrollHeight;try{const data=await api("/api/ai/tutor",{method:"POST",body:JSON.stringify({childId:child.id,subject:$("tutorSubject").value||subject,message})});wait.textContent=data.answer||"Javob hozircha olinmadi.";speakTutor(wait.textContent);}catch(err){wait.textContent=err.message;}}
-$("chatForm").onsubmit=async e=>{e.preventDefault();await sendTutorMessage($("chatInput").value);};
-$("speakToggle").onclick=()=>{tutorVoiceEnabled=!tutorVoiceEnabled;$("speakToggle").textContent=tutorVoiceEnabled?"🔊 Ovoz yoqilgan":"🔇 Ovoz o'chirilgan";$("speakToggle").setAttribute("aria-pressed",String(tutorVoiceEnabled));if(!tutorVoiceEnabled&&"speechSynthesis" in window)window.speechSynthesis.cancel();};
-document.querySelectorAll("[data-prompt]").forEach(b=>b.addEventListener("click",()=>sendTutorMessage(b.dataset.prompt)));
-$("micButton").onclick=()=>{const SpeechRec=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SpeechRec){$("voiceStatus").textContent="Brauzer ovoz orqali yozishni qo'llab-quvvatlamaydi. Savolingni matn ko'rinishida yubor.";return;}if(recognition){recognition.stop();recognition=null;return;}try{recognition=new SpeechRec();recognition.lang="uz-UZ";recognition.interimResults=false;recognition.maxAlternatives=1;$("voiceStatus").textContent="Tinglayapman... Gapirishingiz mumkin 🎙️";$("micButton").textContent="⏹️";recognition.onresult=e=>{const said=e.results?.[0]?.[0]?.transcript||"";$("chatInput").value=said;$("voiceStatus").textContent=said?"Ovoz matnga aylantirildi. Yuborish tugmasini bosing.":"Ovoz aniqlanmadi.";};recognition.onerror=()=>{$("voiceStatus").textContent="Mikrofonga ruxsat berilmadi yoki ovoz aniqlanmadi.";};recognition.onend=()=>{$("micButton").textContent="🎤";recognition=null;};recognition.start();}catch(e){$("voiceStatus").textContent="Mikrofonni ishga tushirib bo'lmadi.";recognition=null;$("micButton").textContent="🎤";}};
-restore();
-if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));
-</script></body></html>
+<body class="bg-slate-950 min-h-screen text-slate-800 m-0 p-0">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // ==========================================
+    // LOYIHA MUALLIFI HAQIDA RASMIY MA'LUMOT
+    // ==========================================
+    const AUTHOR_INFO = {
+      fullName: 'Saparova Matluba',
+      university: 'Termiz davlat pedagogika instituti',
+      faculty: "Boshlang'ich ta'lim fakulteti talabasi",
+      projectTitle: '«Bilimdon Kids» — Sun’iy intellektga asoslangan interaktiv bolalar ta’lim platformasi',
+      year: '2026'
+    };
+
+    // ==========================================
+    // OVOZ VA NUTQ FUNKSIYALARI
+    // ==========================================
+    const playSound = (type, muted) => {
+      if (muted) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        const now = ctx.currentTime;
+
+        if (type === 'success') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.setValueAtTime(659.25, now + 0.1);
+          osc.frequency.setValueAtTime(783.99, now + 0.2);
+          osc.frequency.setValueAtTime(1046.5, now + 0.3);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+          osc.start(now);
+          osc.stop(now + 0.55);
+        } else if (type === 'wrong') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(240, now);
+          osc.frequency.setValueAtTime(170, now + 0.15);
+          gain.gain.setValueAtTime(0.14, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc.start(now);
+          osc.stop(now + 0.35);
+        } else {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(620, now);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        }
+      } catch (e) {}
+    };
+
+    const speakText = (text, lang = 'uz-UZ', muted = false, onStart, onEnd) => {
+      if (muted || typeof window === 'undefined' || !('speechSynthesis' in window)) {
+        if (onEnd) onEnd();
+        return;
+      }
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = lang;
+        utter.rate = 0.96;
+        utter.pitch = 1.15;
+        utter.onstart = () => onStart && onStart();
+        utter.onend = () => onEnd && onEnd();
+        utter.onerror = () => onEnd && onEnd();
+        window.speechSynthesis.speak(utter);
+      } catch (e) {
+        if (onEnd) onEnd();
+      }
+    };
+
+    // ==========================================
+    // GEMINI SUN'IY INTELLEKT API INTEGRATSIYASI
+    // ==========================================
+    async function askGeminiKidsTutor(promptText, customApiKey, childName = 'Ali') {
+      const res = await fetch('/api/ai/guest-tutor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ promptText, childName })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "AI bilan bog'lanib bo'lmadi.");
+      return data.answer;
+    }
+
+    // ==========================================
+    // 3D ANIMATSION BOLAKAY OBRAZI (PIXAR 3D STYLE)
+    // ==========================================
+    const Boy3DCharacter = ({
+      outfit = 'blue',
+      pose = 'wave',
+      size = 'md',
+      isSpeaking = false
+    }) => {
+      const [blink, setBlink] = useState(false);
+      const [mouthStep, setMouthStep] = useState(0);
+
+      useEffect(() => {
+        const t = setInterval(() => {
+          setBlink(true);
+          setTimeout(() => setBlink(false), 150);
+        }, 3400);
+        return () => clearInterval(t);
+      }, []);
+
+      useEffect(() => {
+        if (!isSpeaking) {
+          setMouthStep(0);
+          return;
+        }
+        const m = setInterval(() => {
+          setMouthStep((prev) => (prev + 1) % 3);
+        }, 150);
+        return () => clearInterval(m);
+      }, [isSpeaking]);
+
+      const sizeMap = {
+        sm: 'w-28 h-32',
+        md: 'w-44 h-52',
+        lg: 'w-60 h-72',
+        xl: 'w-68 h-80'
+      };
+
+      const hoodiePalettes = {
+        blue: { c1: '#2563EB', c2: '#1D4ED8', c3: '#1E3A8A', badge: 'cap' },
+        red: { c1: '#EF4444', c2: '#DC2626', c3: '#991B1B', badge: 'abc' },
+        green: { c1: '#10B981', c2: '#059669', c3: '#065F46', badge: 'book' },
+        lab: { c1: '#F8FAFC', c2: '#E2E8F0', c3: '#94A3B8', badge: 'ai' }
+      };
+
+      const pal = hoodiePalettes[outfit] || hoodiePalettes.blue;
+      const uid = `${outfit}-${pose}-${size}`;
+
+      return (
+        <div
+          className={`relative select-none flex items-center justify-center animate-float ${sizeMap[size] || sizeMap.md} transition-transform duration-500 hover:scale-105`}
+        >
+          <div
+            className={`absolute inset-2 rounded-full blur-2xl opacity-55 pointer-events-none ${
+              outfit === 'red'
+                ? 'bg-rose-400'
+                : outfit === 'green'
+                ? 'bg-emerald-400'
+                : outfit === 'lab'
+                ? 'bg-cyan-400'
+                : 'bg-blue-400'
+            }`}
+          />
+
+          <svg viewBox="0 0 280 320" className="w-full h-full drop-shadow-[0_18px_22px_rgba(15,23,42,0.42)]">
+            <defs>
+              <radialGradient id={`skin-${uid}`} cx="42%" cy="34%" r="65%">
+                <stop offset="0%" stopColor="#FFF0E5" />
+                <stop offset="38%" stopColor="#FCD2B8" />
+                <stop offset="78%" stopColor="#F2A983" />
+                <stop offset="100%" stopColor="#D47D54" />
+              </radialGradient>
+
+              <radialGradient id={`cheek-${uid}`} cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#FB7185" stopOpacity="0.55" />
+                <stop offset="100%" stopColor="#FB7185" stopOpacity="0" />
+              </radialGradient>
+
+              <linearGradient id={`hair-${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#7C3F1D" />
+                <stop offset="45%" stopColor="#4A210B" />
+                <stop offset="100%" stopColor="#230E04" />
+              </linearGradient>
+
+              <linearGradient id={`hairShine-${uid}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#D97736" stopOpacity="0.75" />
+                <stop offset="100%" stopColor="#7C3F1D" stopOpacity="0" />
+              </linearGradient>
+
+              <linearGradient id={`hoodie-${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor={pal.c1} />
+                <stop offset="60%" stopColor={pal.c2} />
+                <stop offset="100%" stopColor={pal.c3} />
+              </linearGradient>
+
+              <radialGradient id={`iris-${uid}`} cx="45%" cy="45%" r="55%">
+                <stop offset="0%" stopColor="#A16207" />
+                <stop offset="55%" stopColor="#5C2D0C" />
+                <stop offset="100%" stopColor="#1E0B02" />
+              </radialGradient>
+            </defs>
+
+            <path
+              d="M 70 215 C 65 188, 215 188, 210 215 C 216 240, 64 240, 70 215 Z"
+              fill={pal.c3}
+            />
+
+            <path
+              d="M 60 312 C 62 232, 92 206, 140 206 C 188 206, 218 232, 220 312 Z"
+              fill={`url(#hoodie-${uid})`}
+            />
+
+            {outfit === 'lab' && (
+              <g>
+                <path d="M 105 208 L 140 312 L 175 208 Z" fill="#1D4ED8" />
+                <path d="M 92 208 L 122 312 L 62 312 L 72 225 Z" fill="#F8FAFC" />
+                <path d="M 188 208 L 158 312 L 218 312 L 208 225 Z" fill="#F8FAFC" />
+              </g>
+            )}
+
+            <path d="M 118 214 Q 112 248 118 265" stroke="#E2E8F0" strokeWidth="4" strokeLinecap="round" fill="none" />
+            <path d="M 162 214 Q 168 248 162 265" stroke="#E2E8F0" strokeWidth="4" strokeLinecap="round" fill="none" />
+
+            {pal.badge === 'cap' && (
+              <g transform="translate(114, 240)">
+                <polygon points="26,2 50,13 26,24 2,13" fill="none" stroke="#38BDF8" strokeWidth="3" />
+                <path d="M 12 18 L 12 30 C 12 35, 40 35, 40 30 L 40 18" fill="none" stroke="#38BDF8" strokeWidth="3" />
+                <line x1="46" y1="15" x2="49" y2="29" stroke="#FACC15" strokeWidth="2.8" strokeLinecap="round" />
+              </g>
+            )}
+            {pal.badge === 'abc' && (
+              <text x="140" y="272" textAnchor="middle" fill="#FDE047" fontWeight="900" fontSize="28" letterSpacing="2">
+                ABC
+              </text>
+            )}
+
+            <rect x="123" y="180" width="34" height="34" rx="14" fill={`url(#skin-${uid})`} />
+            <path d="M 123 192 Q 140 206 157 192 L 157 206 L 123 206 Z" fill="#B85D38" opacity="0.35" />
+
+            <g transform="translate(55, 118)">
+              <ellipse cx="14" cy="24" rx="14" ry="20" fill={`url(#skin-${uid})`} />
+              <ellipse cx="15" cy="24" rx="7" ry="11" fill="#D97B54" opacity="0.55" />
+            </g>
+            <g transform="translate(197, 118)">
+              <ellipse cx="14" cy="24" rx="14" ry="20" fill={`url(#skin-${uid})`} />
+              <ellipse cx="13" cy="24" rx="7" ry="11" fill="#D97B54" opacity="0.55" />
+            </g>
+
+            <path
+              d="M 74 114 C 74 66, 206 66, 206 114 C 211 162, 188 197, 140 197 C 92 197, 69 162, 74 114 Z"
+              fill={`url(#skin-${uid})`}
+            />
+
+            <ellipse cx="96" cy="152" rx="17" ry="11" fill={`url(#cheek-${uid})`} />
+            <ellipse cx="184" cy="152" rx="17" ry="11" fill={`url(#cheek-${uid})`} />
+
+            <path d="M 90 107 Q 108 97 124 105" fill="none" stroke="#3A1807" strokeWidth="6.5" strokeLinecap="round" />
+            <path d="M 156 105 Q 172 97 190 107" fill="none" stroke="#3A1807" strokeWidth="6.5" strokeLinecap="round" />
+
+            {blink ? (
+              <g>
+                <path d="M 92 132 Q 110 142 126 132" fill="none" stroke="#3A1807" strokeWidth="5" strokeLinecap="round" />
+                <path d="M 154 132 Q 170 142 188 132" fill="none" stroke="#3A1807" strokeWidth="5" strokeLinecap="round" />
+              </g>
+            ) : (
+              <g>
+                <ellipse cx="109" cy="131" rx="18" ry="19" fill="#FFFFFF" />
+                <circle cx="111" cy="132" r="12.5" fill={`url(#iris-${uid})`} />
+                <circle cx="111" cy="132" r="6.5" fill="#090401" />
+                <circle cx="105" cy="125" r="4.5" fill="#FFFFFF" />
+                <circle cx="116" cy="137" r="2.2" fill="#FFFFFF" opacity="0.85" />
+                <path d="M 90 124 Q 109 110 128 124" fill="none" stroke="#2B1204" strokeWidth="3.5" strokeLinecap="round" />
+
+                <ellipse cx="171" cy="131" rx="18" ry="19" fill="#FFFFFF" />
+                <circle cx="169" cy="132" r="12.5" fill={`url(#iris-${uid})`} />
+                <circle cx="169" cy="132" r="6.5" fill="#090401" />
+                <circle cx="163" cy="125" r="4.5" fill="#FFFFFF" />
+                <circle cx="174" cy="137" r="2.2" fill="#FFFFFF" opacity="0.85" />
+                <path d="M 152 124 Q 171 110 190 124" fill="none" stroke="#2B1204" strokeWidth="3.5" strokeLinecap="round" />
+              </g>
+            )}
+
+            <ellipse cx="140" cy="146" rx="9" ry="6.5" fill="#E58C65" opacity="0.7" />
+            <ellipse cx="138" cy="144" rx="4" ry="2.2" fill="#FFF2E8" opacity="0.7" />
+
+            {isSpeaking ? (
+              mouthStep === 0 ? (
+                <ellipse cx="140" cy="169" rx="14" ry="11" fill="#7F1D1D" />
+              ) : mouthStep === 1 ? (
+                <path d="M 122 163 Q 140 184 158 163 Z" fill="#7F1D1D" />
+              ) : (
+                <ellipse cx="140" cy="168" rx="9" ry="7" fill="#7F1D1D" />
+              )
+            ) : (
+              <g>
+                <path d="M 118 160 Q 140 183 162 160 Z" fill="#7F1D1D" />
+                <path d="M 123 161 Q 140 166 157 161 L 155 166 Q 140 170 125 166 Z" fill="#FFFFFF" />
+                <path d="M 129 172 Q 140 179 151 172 Q 140 167 129 172 Z" fill="#FB7185" />
+              </g>
+            )}
+
+            <g>
+              <path
+                d="M 66 120 C 52 82, 74 42, 114 38 C 128 22, 168 22, 184 40 C 216 46, 226 84, 212 120 C 206 94, 188 80, 166 78 C 144 92, 108 92, 88 78 C 76 88, 70 102, 66 120 Z"
+                fill={`url(#hair-${uid})`}
+              />
+              <path
+                d="M 84 68 C 102 42, 146 40, 168 62 C 142 56, 110 58, 84 68 Z"
+                fill={`url(#hairShine-${uid})`}
+              />
+              <path
+                d="M 102 36 C 118 16, 156 18, 170 38 C 146 30, 122 32, 102 36 Z"
+                fill={`url(#hair-${uid})`}
+              />
+            </g>
+
+            {outfit === 'lab' && (
+              <g>
+                <path d="M 64 122 C 62 48, 218 48, 216 122" fill="none" stroke="#38BDF8" strokeWidth="10" strokeLinecap="round" />
+                <rect x="48" y="108" width="22" height="44" rx="11" fill="#1E293B" stroke="#38BDF8" strokeWidth="3.5" />
+                <rect x="210" y="108" width="22" height="44" rx="11" fill="#1E293B" stroke="#38BDF8" strokeWidth="3.5" />
+                <path d="M 214 146 Q 192 174 162 172" fill="none" stroke="#0F172A" strokeWidth="4" strokeLinecap="round" />
+                <circle cx="159" cy="172" r="5" fill="#38BDF8" />
+              </g>
+            )}
+
+            {pose === 'thumbsup' && (
+              <g transform="translate(10, 188)">
+                <ellipse cx="42" cy="48" rx="18" ry="16" fill={`url(#skin-${uid})`} />
+                <rect x="36" y="16" width="13" height="24" rx="6.5" fill={`url(#skin-${uid})`} />
+              </g>
+            )}
+
+            {pose === 'wave' && (
+              <g transform="translate(202, 168)">
+                <path d="M 8 64 L 26 26" stroke={pal.c1} strokeWidth="24" strokeLinecap="round" />
+                <circle cx="30" cy="18" r="15" fill={`url(#skin-${uid})`} />
+              </g>
+            )}
+
+            {pose === 'point' && (
+              <g transform="translate(198, 174)">
+                <path d="M 6 58 L 36 28" stroke={pal.c1} strokeWidth="22" strokeLinecap="round" />
+                <circle cx="42" cy="22" r="14" fill={`url(#skin-${uid})`} />
+              </g>
+            )}
+
+            {pose === 'book' && (
+              <g transform="translate(82, 224)">
+                <path d="M 8 14 L 58 24 L 58 76 L 8 64 Z" fill="#1D4ED8" stroke="#93C5FD" strokeWidth="2" />
+                <path d="M 108 14 L 58 24 L 58 76 L 108 64 Z" fill="#2563EB" stroke="#93C5FD" strokeWidth="2" />
+                <circle cx="24" cy="40" r="11" fill={`url(#skin-${uid})`} />
+                <circle cx="92" cy="40" r="11" fill={`url(#skin-${uid})`} />
+              </g>
+            )}
+
+            {pose === 'pen' && (
+              <g transform="translate(186, 178)">
+                <rect x="14" y="4" width="13" height="58" rx="6" transform="rotate(20 14 4)" fill="#2563EB" stroke="#93C5FD" strokeWidth="2" />
+                <circle cx="14" cy="40" r="13" fill={`url(#skin-${uid})`} />
+              </g>
+            )}
+          </svg>
+        </div>
+      );
+    };
+
+    // ==========================================
+    // 3D MINI-ROBOT YORDAMCHI OBRAZI
+    // ==========================================
+    const MiniRobot3D = ({ size = 'md' }) => {
+      const dims = size === 'sm' ? 'w-16 h-20' : 'w-24 h-28';
+      return (
+        <div className={`${dims} relative select-none flex items-center justify-center animate-bounce`} style={{ animationDuration: '3.2s' }}>
+          <svg viewBox="0 0 120 140" className="w-full h-full drop-shadow-xl">
+            <defs>
+              <radialGradient id="robotBody3D" cx="35%" cy="30%" r="70%">
+                <stop offset="0%" stopColor="#FFFFFF" />
+                <stop offset="65%" stopColor="#DBEAFE" />
+                <stop offset="100%" stopColor="#93C5FD" />
+              </radialGradient>
+            </defs>
+            <line x1="60" y1="26" x2="60" y2="10" stroke="#60A5FA" strokeWidth="5" strokeLinecap="round" />
+            <circle cx="60" cy="9" r="7" fill="#38BDF8" />
+            <rect x="18" y="24" width="84" height="62" rx="30" fill="url(#robotBody3D)" stroke="#93C5FD" strokeWidth="2.5" />
+            <rect x="28" y="35" width="64" height="40" rx="20" fill="#0F172A" />
+            <circle cx="45" cy="55" r="9" fill="#38BDF8" />
+            <circle cx="42" cy="52" r="3" fill="#FFFFFF" />
+            <circle cx="75" cy="55" r="9" fill="#38BDF8" />
+            <circle cx="72" cy="52" r="3" fill="#FFFFFF" />
+            <path d="M 52 66 Q 60 72 68 66" fill="none" stroke="#38BDF8" strokeWidth="3" strokeLinecap="round" />
+            <path d="M 30 92 C 30 84, 90 84, 90 92 C 94 118, 26 118, 30 92 Z" fill="url(#robotBody3D)" stroke="#93C5FD" strokeWidth="2" />
+            <circle cx="60" cy="103" r="8" fill="#3B82F6" />
+          </svg>
+        </div>
+      );
+    };
+
+    // ==========================================
+    // MA'LUMOTLAR BAZASI (SAVOLLAR VA MASHQLAR)
+    // ==========================================
+    const MATH_QUESTIONS = [
+      { q: '7 + 5 = ?', options: [10, 11, 12, 13], answer: 12 },
+      { q: '9 + 6 = ?', options: [13, 14, 15, 16], answer: 15 },
+      { q: '14 - 5 = ?', options: [7, 8, 9, 10], answer: 9 },
+      { q: '4 × 3 = ?', options: [10, 12, 14, 16], answer: 12 },
+      { q: '8 + 7 = ?', options: [14, 15, 16, 17], answer: 15 }
+    ];
+
+    const ENGLISH_WORDS = [
+      { word: 'Apple', uz: 'Olma', emoji: '🍎' },
+      { word: 'Cat', uz: 'Mushuk', emoji: '🐱' },
+      { word: 'Book', uz: 'Kitob', emoji: '📘' },
+      { word: 'Sun', uz: 'Quyosh', emoji: '☀️' },
+      { word: 'Star', uz: 'Yulduz', emoji: '⭐' }
+    ];
+
+    const READING_STORIES = [
+      {
+        sentence: 'The cat is on the bed.',
+        uzHint: 'Mushuk karavot ustida turibdi.',
+        question: 'Savol: Rasmda nima bor?',
+        options: [
+          { id: 'A', text: 'It' },
+          { id: 'B', text: 'A cat' },
+          { id: 'C', text: 'A dog' }
+        ],
+        correct: 'B'
+      },
+      {
+        sentence: 'Ali has a red apple.',
+        uzHint: 'Alida qizil olma bor.',
+        question: 'Savol: Olmaning rangi qanaqa?',
+        options: [
+          { id: 'A', text: 'Red (Qizil)' },
+          { id: 'B', text: 'Blue (Ko‘k)' },
+          { id: 'C', text: 'Green (Yashil)' }
+        ],
+        correct: 'A'
+      },
+      {
+        sentence: 'The sun is bright today.',
+        uzHint: 'Bugun quyosh charaqlab turibdi.',
+        question: 'Savol: Osmonda nima charaqlayapti?',
+        options: [
+          { id: 'A', text: 'The moon' },
+          { id: 'B', text: 'A car' },
+          { id: 'C', text: 'The sun' }
+        ],
+        correct: 'C'
+      }
+    ];
+
+    const LETTERS_LIST = ['A', 'B', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'O', 'S', 'T', 'U', 'Z'];
+
+    // ==========================================
+    // ASOSIY DASTUR KOMPONENTI
+    // ==========================================
+    function App() {
+      const [activeScreen, setActiveScreen] = useState('login');
+      const [viewMode, setViewMode] = useState('single');
+
+      const [childName, setChildName] = useState('Ali');
+      const [loginInput, setLoginInput] = useState('Ali');
+      const [passwordInput, setPasswordInput] = useState('12345');
+      const [authTab, setAuthTab] = useState('login');
+
+      const [stars, setStars] = useState(1250);
+      const [muted, setMuted] = useState(false);
+
+      const [mathIdx, setMathIdx] = useState(0);
+      const [selectedMath, setSelectedMath] = useState(11);
+      const [mathFeedback, setMathFeedback] = useState('Ajoyib! To‘g‘ri javob! 🎉');
+
+      const [engIdx, setEngIdx] = useState(0);
+      const [engPrompt, setEngPrompt] = useState('Bu nima? (What is this?)');
+      const [isListeningEng, setIsListeningEng] = useState(false);
+
+      const [readIdx, setReadIdx] = useState(0);
+      const [selectedRead, setSelectedRead] = useState('B');
+      const [readPrompt, setReadPrompt] = useState('Matnni o‘qing va savolga javob bering.');
+
+      const [letterIdx, setLetterIdx] = useState(0);
+      const canvasRef = useRef(null);
+      const [isDrawing, setIsDrawing] = useState(false);
+      const [strokeCount, setStrokeCount] = useState(0);
+
+      const [tutorReply, setTutorReply] = useState('Ajoyib! Endi ingliz tilida qo‘shiq aytib ko‘ramizmi?');
+      const [chatInput, setChatInput] = useState('');
+      const [isAiLoading, setIsAiLoading] = useState(false);
+      const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+      const [isVoiceRec, setIsVoiceRec] = useState(false);
+
+      const [customApiKey, setCustomApiKey] = useState(() => {
+        try {
+          return localStorage.getItem('BILIMDON_KIDS_GEMINI_KEY') || '';
+        } catch {
+          return '';
+        }
+      });
+      const [showApiModal, setShowApiModal] = useState(false);
+      const [apiKeyDraft, setApiKeyDraft] = useState(customApiKey);
+      const [apiSaved, setApiSaved] = useState(false);
+
+      const [showGithubApkModal, setShowGithubApkModal] = useState(false);
+      const [apkModalTab, setApkModalTab] = useState('zip');
+      const [isBuildingZip, setIsBuildingZip] = useState(false);
+      const [showAuthorModal, setShowAuthorModal] = useState(false);
+      const [showAppDrawer, setShowAppDrawer] = useState(false);
+      const [deferredPrompt, setDeferredPrompt] = useState(null);
+      const [isFullscreen, setIsFullscreen] = useState(false);
+
+      useEffect(() => {
+        const handler = (e) => {
+          e.preventDefault();
+          setDeferredPrompt(e);
+        };
+        window.addEventListener('beforeinstallprompt', handler);
+        return () => window.removeEventListener('beforeinstallprompt', handler);
+      }, []);
+
+      const toggleFullScreenApp = () => {
+        try {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+            setIsFullscreen(true);
+          } else {
+            document.exitFullscreen();
+            setIsFullscreen(false);
+          }
+        } catch (e) {}
+      };
+
+      const handleInstallNativeApp = async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          await deferredPrompt.userChoice;
+          setDeferredPrompt(null);
+        } else {
+          setShowGithubApkModal(true);
+        }
+      };
+
+      const goScreen = (screenName) => {
+        playSound('click', muted);
+        setActiveScreen(screenName);
+      };
+
+      // ==========================================
+      // GITHUB VA ANDROID APK UCHUN TAYYOR ZIP ARXIV YARATISH
+      // ==========================================
+      const handleDownloadGithubAndApkZip = async () => {
+        setIsBuildingZip(true);
+        playSound('click', muted);
+        try {
+          const currentHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+
+          const manifestJson = JSON.stringify({
+            name: "Bilimdon Kids — O'rgan, o'yna, rivojlan!",
+            short_name: "Bilimdon Kids",
+            description: "Sun'iy intellektga asoslangan interaktiv bolalar ta'lim dasturi. Muallif: Saparova Matluba (TDPI)",
+            start_url: "./index.html",
+            display: "standalone",
+            orientation: "landscape",
+            background_color: "#0f172a",
+            theme_color: "#2563eb",
+            icons: [
+              {
+                src: "https://placehold.co/192x192/2563eb/ffffff.png?text=BK",
+                sizes: "192x192",
+                type: "image/png",
+                purpose: "any maskable"
+              },
+              {
+                src: "https://placehold.co/512x512/2563eb/ffffff.png?text=Bilimdon+Kids",
+                sizes: "512x512",
+                type: "image/png",
+                purpose: "any maskable"
+              }
+            ]
+          }, null, 2);
+
+          const swJs = `const CACHE_NAME = 'bilimdon-kids-v1';
+const ASSETS = ['./', './index.html', './manifest.json'];
+
+self.addEventListener('install', (e) => {
+  e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
+  self.skipWaiting();
+});
+
+self.addEventListener('fetch', (e) => {
+  e.respondWith(caches.match(e.request).then((res) => res || fetch(e.request)));
+});`;
+
+          const capacitorConfig = JSON.stringify({
+            appId: "uz.tdpi.saparovamatluba.bilimdonkids",
+            appName: "Bilimdon Kids",
+            webDir: ".",
+            bundledWebRuntime: false
+          }, null, 2);
+
+          const githubWorkflowYaml = `name: Deploy Bilimdon Kids to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: \${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+`;
+
+          const windowsLauncherBat = `@echo off
+title Bilimdon Kids - Saparova Matluba (TDPI)
+echo "Bilimdon Kids" dasturi ishga tushirilmoqda...
+start "" chrome --app="%~dp0index.html" --start-maximized || start "" msedge --app="%~dp0index.html" --start-maximized || start "" "%~dp0index.html"
+exit
+`;
+
+          const readmeMd = `# 🎓 Bilimdon Kids — O'rgan, o'yna, rivojlan!
+
+**Loyiha muallifi:** Saparova Matluba  
+**Oliygoh:** Termiz davlat pedagogika instituti (TDPI)  
+**Fakultet:** Boshlang'ich ta'lim fakulteti talabasi  
+
+---
+
+## 💻 1. Kompyuterda Haqiqiy Dastur Sifatida Ochish
+Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`** ustiga ikki marta bosing — dastur brauzer satrlarisiz, to'liq ekranli **haqiqiy Windows/Mac ilovasi** ko'rinishida ochiladi!
+
+---
+
+## 🌐 2. GitHub Pages orqali Avtomatik Online Sayt Qilish
+1. [GitHub.com](https://github.com) saytida yangi **Repository** oching (masalan: \`bilimdon-kids\`).
+2. Ushbu ZIP ichidagi barcha fayllarni yuklang.
+3. **Settings ➔ Pages ➔ Branch: main ➔ Save** tugmasini bosing.
+
+---
+
+## 📱 3. Tayyor Android (.APK) Ilova Qilib Olish
+1. **[WebIntoApp.com](https://www.webintoapp.com)** saytiga kiring va ushbu ZIP arxivni yuklang — 30 soniyada tayyor **\`BilimdonKids.apk\`** faylini beradi!
+`;
+
+          if (window.JSZip) {
+            const zip = new window.JSZip();
+            zip.file('index.html', currentHtml);
+            zip.file('manifest.json', manifestJson);
+            zip.file('sw.js', swJs);
+            zip.file('capacitor.config.json', capacitorConfig);
+            zip.file('Bilimdon-Kids-Ishga-Tushirish.bat', windowsLauncherBat);
+            zip.file('.github/workflows/deploy.yml', githubWorkflowYaml);
+            zip.file('README.md', readmeMd);
+
+            const content = await zip.generateAsync({ type: 'blob' });
+            const url = URL.createObjectURL(content);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Bilimdon-Kids-App-Saparova-Matluba.zip';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            playSound('success', muted);
+          } else {
+            handleDownloadSingleHtml();
+          }
+        } catch (e) {
+          handleDownloadSingleHtml();
+        }
+        setIsBuildingZip(false);
+      };
+
+      const handleDownloadSingleHtml = () => {
+        playSound('success', muted);
+        const currentHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+        const blob = new Blob([currentHtml], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'index.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      };
+
+      // Yozish ekrani uchun harf shablonini chizish
+      const drawLetterGuide = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width;
+        const h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+
+        const currentLetter = LETTERS_LIST[letterIdx];
+        ctx.save();
+        ctx.font = '900 155px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.strokeStyle = '#64748B';
+        ctx.lineWidth = 4;
+        ctx.setLineDash([10, 10]);
+        ctx.strokeText(currentLetter, w / 2, h / 2 + 8);
+        ctx.restore();
+      };
+
+      useEffect(() => {
+        drawLetterGuide();
+        setStrokeCount(0);
+      }, [letterIdx, activeScreen, viewMode]);
+
+      const getCanvasCoords = (e) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return { x: 0, y: 0 };
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: ((clientX - rect.left) / rect.width) * canvas.width,
+          y: ((clientY - rect.top) / rect.height) * canvas.height
+        };
+      };
+
+      const startDraw = (e) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const { x, y } = getCanvasCoords(e);
+        setIsDrawing(true);
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+      };
+
+      const moveDraw = (e) => {
+        if (!isDrawing) return;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const { x, y } = getCanvasCoords(e);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = 14;
+        ctx.strokeStyle = '#2563EB';
+        ctx.setLineDash([]);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        setStrokeCount((c) => c + 1);
+      };
+
+      const endDraw = () => {
+        if (!isDrawing) return;
+        setIsDrawing(false);
+        if (strokeCount > 12) {
+          playSound('success', muted);
+          setStars((s) => s + 5);
+        }
+      };
+
+      const handleMathOption = (opt) => {
+        const current = MATH_QUESTIONS[mathIdx];
+        setSelectedMath(opt);
+        if (opt === current.answer) {
+          playSound('success', muted);
+          setMathFeedback('Ajoyib! To‘g‘ri javob! 🎉');
+          setStars((s) => s + 10);
+          speakText('Ajoyib! To‘g‘ri javob!', 'uz-UZ', muted);
+          setTimeout(() => {
+            const next = (mathIdx + 1) % MATH_QUESTIONS.length;
+            setMathIdx(next);
+            setSelectedMath(null);
+          }, 1300);
+        } else {
+          playSound('wrong', muted);
+          setMathFeedback('Yana bir bor urinib ko‘r! 💡');
+        }
+      };
+
+      const handlePronounceEnglish = () => {
+        const item = ENGLISH_WORDS[engIdx];
+        setIsListeningEng(true);
+        playSound('click', muted);
+        speakText(
+          `${item.word}. Very good!`,
+          'en-US',
+          muted,
+          () => setIsAiSpeaking(true),
+          () => {
+            setIsAiSpeaking(false);
+            setIsListeningEng(false);
+            setEngPrompt(`Barakalla! "${item.word}" — ${item.uz}! 🎉`);
+            setStars((s) => s + 10);
+          }
+        );
+      };
+
+      const handleReadingAnswer = (optId) => {
+        const current = READING_STORIES[readIdx];
+        setSelectedRead(optId);
+        if (optId === current.correct) {
+          playSound('success', muted);
+          setReadPrompt('Ofarin! Savolga to‘g‘ri javob berding! 🌟');
+          setStars((s) => s + 15);
+        } else {
+          playSound('wrong', muted);
+          setReadPrompt('Matnga yana bir bor diqqat bilan qara! 📖');
+        }
+      };
+
+      const handleSendToGemini = async (overrideText) => {
+        const text = (overrideText ?? chatInput).trim();
+        if (!text || isAiLoading) return;
+        setChatInput('');
+        setIsAiLoading(true);
+        playSound('click', muted);
+
+        const reply = await askGeminiKidsTutor(text, customApiKey, childName);
+        setTutorReply(reply);
+        setIsAiLoading(false);
+        playSound('success', muted);
+
+        speakText(
+          reply,
+          'uz-UZ',
+          muted,
+          () => setIsAiSpeaking(true),
+          () => setIsAiSpeaking(false)
+        );
+      };
+
+      const handleVoiceMic = () => {
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRec) {
+          handleSendToGemini('Menga ingliz tilida quvnoq qo‘shiq o‘rgat!');
+          return;
+        }
+        try {
+          const rec = new SpeechRec();
+          rec.lang = 'uz-UZ';
+          setIsVoiceRec(true);
+          rec.onresult = (e) => {
+            const transcript = e.results?.[0]?.[0]?.transcript || '';
+            setIsVoiceRec(false);
+            if (transcript) {
+              handleSendToGemini(transcript);
+            }
+          };
+          rec.onerror = () => setIsVoiceRec(false);
+          rec.onend = () => setIsVoiceRec(false);
+          rec.start();
+        } catch {
+          setIsVoiceRec(false);
+        }
+      };
+
+      // ==========================================
+      // 1-EKRAN: KIRISH OYNASI ("BILIMDON KIDS")
+      // ==========================================
+      const renderLoginScreen = () => (
+        <div className="relative w-full rounded-[34px] overflow-hidden shadow-2xl border-4 border-white/80 bg-gradient-to-br from-[#1d4ed8] via-[#38bdf8] to-[#fde68a] p-6 md:p-10 min-h-[540px] flex flex-col justify-between">
+          <div className="absolute -top-12 -left-12 w-64 h-64 bg-white/25 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute bottom-0 inset-x-0 h-28 bg-gradient-to-t from-emerald-500/45 via-emerald-300/20 to-transparent pointer-events-none" />
+
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center my-auto">
+            <div className="lg:col-span-4 space-y-5 text-white">
+              <div className="space-y-1">
+                <div className="flex items-center gap-3">
+                  <div className="w-14 h-14 rounded-2xl bg-blue-600/90 border-2 border-cyan-300 shadow-lg flex items-center justify-center -rotate-6">
+                    <span className="text-3xl">🎓</span>
+                  </div>
+                  <div>
+                    <h1
+                      className="text-3xl md:text-4xl font-black tracking-tight text-white drop-shadow-[0_4px_0_rgba(30,58,138,0.9)]"
+                      style={{ WebkitTextStroke: '1px #1e3a8a' }}
+                    >
+                      Bilimdon
+                    </h1>
+                    <h2
+                      className="text-3xl md:text-4xl font-black tracking-tight text-amber-300 -mt-1 drop-shadow-[0_4px_0_rgba(146,64,14,0.95)]"
+                      style={{ WebkitTextStroke: '1px #78350f' }}
+                    >
+                      Kids
+                    </h2>
+                  </div>
+                </div>
+                <p className="text-lg md:text-xl font-extrabold text-white drop-shadow pt-1">
+                  O‘rgan, o‘yna, rivojlan!
+                </p>
+                <div className="w-44 h-1.5 rounded-full bg-gradient-to-r from-amber-300 to-yellow-400 shadow" />
+              </div>
+
+              <div className="bg-white/25 backdrop-blur-md rounded-3xl p-3.5 border border-white/40 space-y-2.5 max-w-xs shadow-xl">
+                <button
+                  onClick={() => goScreen('math')}
+                  className="w-full flex items-center gap-3 bg-white/85 hover:bg-white text-slate-800 px-3.5 py-2.5 rounded-2xl font-extrabold text-sm shadow transition"
+                >
+                  <span className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black">
+                    ±
+                  </span>
+                  <span>Matematika</span>
+                </button>
+                <button
+                  onClick={() => goScreen('english')}
+                  className="w-full flex items-center gap-3 bg-white/85 hover:bg-white text-slate-800 px-3.5 py-2.5 rounded-2xl font-extrabold text-sm shadow transition"
+                >
+                  <span className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black">
+                    A
+                  </span>
+                  <span>Ingliz tili</span>
+                </button>
+                <button
+                  onClick={() => goScreen('reading')}
+                  className="w-full flex items-center gap-3 bg-white/85 hover:bg-white text-slate-800 px-3.5 py-2.5 rounded-2xl font-extrabold text-sm shadow transition"
+                >
+                  <span className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black">
+                    ✏️
+                  </span>
+                  <span>Yozish va o‘qish</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3 pt-1">
+                <MiniRobot3D size="md" />
+                <div className="bg-white/95 text-slate-800 px-4 py-3 rounded-3xl rounded-bl-none shadow-xl border-2 border-blue-100 font-extrabold text-sm md:text-base leading-snug">
+                  Sun’iy intellekt bilan
+                  <br />
+                  qiziqarli ta’lim!
+                </div>
+              </div>
+
+              <div
+                onClick={() => setShowAuthorModal(true)}
+                className="cursor-pointer bg-slate-900/65 hover:bg-slate-900/85 backdrop-blur-md text-white px-4 py-3 rounded-2xl border border-amber-300/60 shadow-lg flex items-center gap-3 max-w-xs transition group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-slate-950 flex items-center justify-center shrink-0 shadow font-black text-xl">
+                  🎓
+                </div>
+                <div className="text-left leading-tight">
+                  <p className="text-[11px] font-bold text-amber-300 uppercase tracking-wider">
+                    Loyiha muallifi:
+                  </p>
+                  <p className="text-sm font-black text-white group-hover:text-amber-200 transition">
+                    {AUTHOR_INFO.fullName}
+                  </p>
+                  <p className="text-[11px] font-semibold text-sky-100">
+                    {AUTHOR_INFO.university} • {AUTHOR_INFO.faculty}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="lg:col-span-4 flex flex-col items-center justify-center relative">
+              <Boy3DCharacter outfit="blue" pose="thumbsup" size="xl" />
+            </div>
+
+            <div className="lg:col-span-4 flex justify-center">
+              <div className="w-full max-w-sm bg-white/95 backdrop-blur-xl rounded-[32px] p-6 shadow-2xl border-2 border-white space-y-4">
+                <div className="grid grid-cols-2 bg-slate-100 p-1.5 rounded-2xl font-extrabold text-sm">
+                  <button
+                    onClick={() => setAuthTab('login')}
+                    className={`py-2.5 rounded-xl transition ${
+                      authTab === 'login' ? 'bg-blue-600 text-white shadow' : 'text-slate-600'
+                    }`}
+                  >
+                    Kirish
+                  </button>
+                  <button
+                    onClick={() => setAuthTab('register')}
+                    className={`py-2.5 rounded-xl transition ${
+                      authTab === 'register' ? 'bg-blue-600 text-white shadow' : 'text-slate-600'
+                    }`}
+                  >
+                    Ro‘yxatdan o‘tish
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 bg-slate-50 border-2 border-slate-200/80 rounded-2xl px-4 py-3">
+                    <span className="text-blue-600 font-bold">👤</span>
+                    <input
+                      type="text"
+                      value={loginInput}
+                      onChange={(e) => setLoginInput(e.target.value)}
+                      placeholder="Foydalanuvchi ismi"
+                      className="w-full bg-transparent outline-none font-bold text-slate-700 text-sm"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3 bg-slate-50 border-2 border-slate-200/80 rounded-2xl px-4 py-3">
+                    <span className="text-blue-600 font-bold">🔒</span>
+                    <input
+                      type="password"
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      placeholder="Parol"
+                      className="w-full bg-transparent outline-none font-bold text-slate-700 text-sm"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    if (loginInput.trim()) setChildName(loginInput.trim());
+                    playSound('success', muted);
+                    goScreen('dashboard');
+                  }}
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-base shadow-lg shadow-blue-500/30 transition transform active:scale-95"
+                >
+                  Kirish 🚀
+                </button>
+
+                <div className="text-center text-xs font-bold text-slate-400">Yoki</div>
+
+                <div className="flex justify-center gap-4">
+                  <button
+                    onClick={() => goScreen('dashboard')}
+                    className="w-11 h-11 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center font-black text-lg text-rose-500 hover:scale-105 transition"
+                  >
+                    G
+                  </button>
+                  <button
+                    onClick={() => goScreen('dashboard')}
+                    className="w-11 h-11 rounded-full bg-sky-500 text-white shadow-md flex items-center justify-center hover:scale-105 transition font-bold"
+                  >
+                    ✈️
+                  </button>
+                </div>
+
+                <p className="text-center text-xs text-slate-500 font-semibold">
+                  Hisobingiz yo‘qmi?{' '}
+                  <button
+                    onClick={() => setAuthTab('register')}
+                    className="text-blue-600 font-extrabold hover:underline"
+                  >
+                    Ro‘yxatdan o‘tish
+                  </button>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+
+      // ==========================================
+      // 2-EKRAN: BOSH SAHIFA (DASHBOARD)
+      // ==========================================
+      const renderDashboardScreen = () => (
+        <div className="relative w-full rounded-[34px] overflow-hidden shadow-2xl border-4 border-white/80 bg-gradient-to-br from-[#f5d0fe] via-[#fed7aa] to-[#fde68a] p-6 md:p-8 min-h-[540px] flex flex-col justify-between">
+          <div className="relative z-10 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3 bg-[#5b4666]/85 backdrop-blur-md text-white pl-2 pr-5 py-1.5 rounded-full shadow-lg border border-white/30">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-400 to-blue-600 border-2 border-white flex items-center justify-center font-black text-base">
+                👦🏻
+              </div>
+              <span className="font-black text-lg">{childName}</span>
+              <div className="flex items-center gap-1.5 pl-3 border-l border-white/25 text-amber-300 font-black">
+                <span>⭐</span>
+                <span>{stars} ball</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowAuthorModal(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-400/30 hover:bg-amber-400/45 text-slate-900 font-extrabold text-xs sm:text-sm border-2 border-amber-500/60 shadow-lg transition"
+              >
+                <span>🎓</span>
+                <span>{AUTHOR_INFO.fullName}</span>
+              </button>
+              <button
+                onClick={() => goScreen('gifts')}
+                className="flex items-center gap-2 px-5 py-2 rounded-full bg-[#5c4d42] text-yellow-300 font-extrabold text-sm border-2 border-yellow-400/70 shadow-lg hover:scale-105 transition"
+              >
+                <span>👑</span>
+                <span>Premium</span>
+              </button>
+              <button
+                onClick={() => setShowApiModal(true)}
+                title="Gemini API Key Sozlamalari"
+                className="w-11 h-11 rounded-full bg-[#5c4d68] text-white flex items-center justify-center border-2 border-white/35 shadow-lg hover:rotate-45 transition"
+              >
+                ⚙️
+              </button>
+            </div>
+          </div>
+
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center my-6">
+            <div className="lg:col-span-4 flex flex-col items-center">
+              <div className="bg-white/95 text-slate-800 px-5 py-3.5 rounded-3xl rounded-bl-none shadow-xl border-2 border-white mb-2 max-w-xs">
+                <p className="font-black text-base md:text-lg">Salom, {childName}! 👋</p>
+                <p className="font-bold text-slate-600 text-sm">Bugun nimalarni o‘rganamiz?</p>
+              </div>
+              <Boy3DCharacter outfit="blue" pose="wave" size="lg" />
+            </div>
+
+            <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <button
+                onClick={() => goScreen('math')}
+                className="group bg-gradient-to-b from-[#38bdf8] to-[#2563eb] p-5 rounded-[28px] text-white shadow-xl border-4 border-white/80 flex flex-col items-center justify-between min-h-[210px] hover:-translate-y-1.5 transition"
+              >
+                <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center text-2xl font-black shadow-inner leading-tight">
+                  ＋－
+                  <br />
+                  ×÷
+                </div>
+                <div className="text-center space-y-2 w-full">
+                  <div className="font-black text-lg">Matematika</div>
+                  <div className="bg-white/25 group-hover:bg-white/35 py-1.5 px-3 rounded-full text-xs font-extrabold flex items-center justify-center gap-1">
+                    <span>Boshlash</span>
+                    <span>▶</span>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => goScreen('english')}
+                className="group bg-gradient-to-b from-[#84cc16] to-[#16a34a] p-5 rounded-[28px] text-white shadow-xl border-4 border-white/80 flex flex-col items-center justify-between min-h-[210px] hover:-translate-y-1.5 transition"
+              >
+                <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center text-2xl font-black shadow-inner">
+                  🅰️🅱️🆎
+                </div>
+                <div className="text-center space-y-2 w-full">
+                  <div className="font-black text-lg">Ingliz tili</div>
+                  <div className="bg-white/25 group-hover:bg-white/35 py-1.5 px-3 rounded-full text-xs font-extrabold flex items-center justify-center gap-1">
+                    <span>Boshlash</span>
+                    <span>▶</span>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => goScreen('reading')}
+                className="group bg-gradient-to-b from-[#d946ef] to-[#9333ea] p-5 rounded-[28px] text-white shadow-xl border-4 border-white/80 flex flex-col items-center justify-between min-h-[210px] hover:-translate-y-1.5 transition"
+              >
+                <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center text-4xl shadow-inner">
+                  📖
+                </div>
+                <div className="text-center space-y-2 w-full">
+                  <div className="font-black text-lg">O‘qish</div>
+                  <div className="bg-white/25 group-hover:bg-white/35 py-1.5 px-3 rounded-full text-xs font-extrabold flex items-center justify-center gap-1">
+                    <span>Boshlash</span>
+                    <span>▶</span>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => goScreen('writing')}
+                className="group bg-gradient-to-b from-[#facc15] to-[#f97316] p-5 rounded-[28px] text-white shadow-xl border-4 border-white/80 flex flex-col items-center justify-between min-h-[210px] hover:-translate-y-1.5 transition"
+              >
+                <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center text-4xl shadow-inner">
+                  ✏️
+                </div>
+                <div className="text-center space-y-2 w-full">
+                  <div className="font-black text-lg">Yozish</div>
+                  <div className="bg-white/25 group-hover:bg-white/35 py-1.5 px-3 rounded-full text-xs font-extrabold flex items-center justify-center gap-1">
+                    <span>Boshlash</span>
+                    <span>▶</span>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div className="relative z-10 bg-white/95 backdrop-blur-xl rounded-3xl p-2 shadow-xl border-2 border-white grid grid-cols-5 gap-2">
+            {[
+              { id: 'dashboard', label: 'Bosh sahifa', icon: '🏠' },
+              { id: 'results', label: 'Natijalar', icon: '🏆' },
+              { id: 'aitutor', label: 'AI Ustoz', icon: '✨' },
+              { id: 'gifts', label: 'Sovg‘alar', icon: '🎁' },
+              { id: 'login', label: 'Profil', icon: '👤' }
+            ].map((tab) => {
+              const active = activeScreen === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => goScreen(tab.id)}
+                  className={`flex flex-col items-center justify-center py-2.5 rounded-2xl font-extrabold text-xs sm:text-sm transition ${
+                    active ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <span className="text-lg mb-0.5">{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+
+      // ==========================================
+      // 3-EKRAN: MATEMATIKA
+      // ==========================================
+      const renderMathScreen = () => {
+        const cur = MATH_QUESTIONS[mathIdx];
+        return (
+          <div className="relative w-full rounded-[34px] overflow-hidden shadow-2xl border-4 border-white/80 bg-gradient-to-br from-[#1d4ed8] via-[#38bdf8] to-[#bfdbfe] p-6 md:p-8 min-h-[500px] flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => goScreen('dashboard')}
+                  className="w-11 h-11 rounded-full bg-white/25 hover:bg-white/40 text-white flex items-center justify-center border-2 border-white/60 shadow font-black"
+                >
+                  ←
+                </button>
+                <div className="flex items-center gap-2 text-white font-black text-2xl drop-shadow">
+                  <span className="text-2xl">🧮</span>
+                  <span>Matematika</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#1e3a8a]/80 text-amber-300 font-black border-2 border-white/40 shadow">
+                <span>⭐</span>
+                <span>10</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center my-auto py-4">
+              <div className="lg:col-span-5 flex items-end justify-center gap-2">
+                <MiniRobot3D size="sm" />
+                <Boy3DCharacter outfit="blue" pose="point" size="lg" />
+              </div>
+
+              <div className="lg:col-span-7 flex flex-col items-center space-y-5">
+                <div className="bg-white text-slate-800 px-6 py-3 rounded-2xl shadow-lg font-extrabold text-base border-2 border-blue-100">
+                  {mathFeedback}
+                </div>
+
+                <div className="w-full max-w-md bg-white/95 rounded-[28px] py-8 px-6 text-center shadow-2xl border-4 border-blue-200">
+                  <div className="text-5xl md:text-6xl font-black text-[#1e3a8a] tracking-wider">
+                    {cur.q}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-4 gap-3 w-full max-w-md">
+                  {cur.options.map((opt) => {
+                    const isSelected = selectedMath === opt;
+                    return (
+                      <button
+                        key={opt}
+                        onClick={() => handleMathOption(opt)}
+                        className={`relative py-4 rounded-2xl font-black text-2xl shadow-xl border-2 transition transform active:scale-95 ${
+                          isSelected
+                            ? 'bg-gradient-to-b from-emerald-400 to-emerald-600 text-white border-white scale-105'
+                            : 'bg-white hover:bg-blue-50 text-slate-800 border-blue-100'
+                        }`}
+                      >
+                        {opt}
+                        {isSelected && (
+                          <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-emerald-500 border-2 border-white text-white flex items-center justify-center text-xs">
+                            ✓
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      // ==========================================
+      // 4-EKRAN: INGLIZ TILI
+      // ==========================================
+      const renderEnglishScreen = () => {
+        const item = ENGLISH_WORDS[engIdx];
+        return (
+          <div className="relative w-full rounded-[34px] overflow-hidden shadow-2xl border-4 border-white/80 bg-gradient-to-br from-[#6d28d9] via-[#a855f7] to-[#7dd3fc] p-6 md:p-8 min-h-[500px] flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => goScreen('dashboard')}
+                  className="w-11 h-11 rounded-full bg-white/25 hover:bg-white/40 text-white flex items-center justify-center border-2 border-white/60 shadow font-black"
+                >
+                  ←
+                </button>
+                <div className="flex items-center gap-2 text-white font-black text-2xl drop-shadow">
+                  <span>🇬🇧</span>
+                  <span>Ingliz tili</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-950/75 text-amber-300 font-black border-2 border-white/40 shadow">
+                <span>⭐</span>
+                <span>20</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center my-auto py-4">
+              <div className="lg:col-span-5 flex flex-col items-center">
+                <div className="bg-white text-slate-800 px-5 py-3 rounded-2xl shadow-lg font-extrabold text-sm md:text-base mb-2 text-center">
+                  {engPrompt}
+                </div>
+                <div className="flex items-end gap-2">
+                  <MiniRobot3D size="sm" />
+                  <Boy3DCharacter outfit="red" pose="wave" size="lg" isSpeaking={isAiSpeaking} />
+                </div>
+              </div>
+
+              <div className="lg:col-span-7 flex flex-col items-center space-y-5">
+                <div
+                  onClick={handlePronounceEnglish}
+                  className="cursor-pointer w-full max-w-md bg-white/95 rounded-[32px] p-8 text-center shadow-2xl border-4 border-white hover:scale-[1.02] transition"
+                >
+                  <div className="text-7xl md:text-8xl mb-3 drop-shadow">{item.emoji}</div>
+                  <div className="text-4xl md:text-5xl font-black text-[#1e3a8a]">{item.word}</div>
+                  <div className="text-sm font-bold text-slate-400 mt-1">({item.uz} — eshitish uchun bosing)</div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={handlePronounceEnglish}
+                    className={`w-16 h-16 rounded-full bg-gradient-to-b from-emerald-400 to-emerald-600 text-white flex items-center justify-center shadow-xl border-4 border-white text-2xl transition ${
+                      isListeningEng ? 'animate-ping' : 'hover:scale-110'
+                    }`}
+                  >
+                    🎤
+                  </button>
+                  <button
+                    onClick={() => {
+                      const next = (engIdx + 1) % ENGLISH_WORDS.length;
+                      setEngIdx(next);
+                      setEngPrompt('Bu nima? (What is this?)');
+                    }}
+                    className="px-5 py-3 rounded-2xl bg-white/25 hover:bg-white/35 text-white font-extrabold text-sm border border-white/50 shadow"
+                  >
+                    Keyingi so‘z →
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      // ==========================================
+      // 5-EKRAN: O'QISH
+      // ==========================================
+      const renderReadingScreen = () => {
+        const story = READING_STORIES[readIdx];
+        return (
+          <div className="relative w-full rounded-[34px] overflow-hidden shadow-2xl border-4 border-white/80 bg-gradient-to-br from-[#22c55e] via-[#86efac] to-[#fef08a] p-6 md:p-8 min-h-[500px] flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => goScreen('dashboard')}
+                  className="w-11 h-11 rounded-full bg-white/30 hover:bg-white/50 text-emerald-950 flex items-center justify-center border-2 border-white shadow font-black"
+                >
+                  ←
+                </button>
+                <div className="flex items-center gap-2 text-white font-black text-2xl drop-shadow">
+                  <span>📖</span>
+                  <span>O‘qish</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-900/80 text-amber-300 font-black border-2 border-white/40 shadow">
+                <span>⭐</span>
+                <span>15</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center my-auto py-4">
+              <div className="lg:col-span-4 flex flex-col items-center">
+                <div className="bg-white text-slate-800 px-4 py-2.5 rounded-2xl shadow-lg font-extrabold text-xs md:text-sm mb-2 text-center">
+                  {readPrompt}
+                </div>
+                <div className="flex items-end gap-2">
+                  <MiniRobot3D size="sm" />
+                  <Boy3DCharacter outfit="green" pose="book" size="lg" />
+                </div>
+              </div>
+
+              <div className="lg:col-span-4">
+                <div
+                  onClick={() => speakText(story.sentence, 'en-US', muted)}
+                  className="cursor-pointer bg-[#fffbeb] rounded-[28px] p-6 text-center shadow-xl border-4 border-white space-y-3 hover:scale-[1.02] transition"
+                >
+                  <div className="text-6xl">📖🐱</div>
+                  <p className="text-2xl font-black text-slate-800 leading-snug">{story.sentence}</p>
+                  <p className="text-xs font-bold text-slate-500">{story.uzHint}</p>
+                  <div className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
+                    <span>🔊 Tinglash</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="lg:col-span-4">
+                <div className="bg-white/95 rounded-[28px] p-5 shadow-xl border-4 border-white space-y-3">
+                  <h4 className="font-black text-slate-800 text-base">{story.question}</h4>
+                  <div className="space-y-2.5">
+                    {story.options.map((opt) => {
+                      const active = selectedRead === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          onClick={() => handleReadingAnswer(opt.id)}
+                          className={`w-full flex items-center gap-3 p-3 rounded-2xl font-extrabold text-sm border-2 transition ${
+                            active
+                              ? 'bg-blue-600 text-white border-blue-600 shadow'
+                              : 'bg-slate-50 hover:bg-blue-50 text-slate-800 border-slate-200'
+                          }`}
+                        >
+                          <span
+                            className={`w-7 h-7 rounded-full flex items-center justify-center font-black text-xs ${
+                              active ? 'bg-white text-blue-600' : 'bg-blue-100 text-blue-700'
+                            }`}
+                          >
+                            {opt.id}
+                          </span>
+                          <span>{opt.text}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    onClick={() => {
+                      const next = (readIdx + 1) % READING_STORIES.length;
+                      setReadIdx(next);
+                      setSelectedRead(null);
+                    }}
+                    className="w-full py-2 text-xs font-extrabold text-emerald-700 hover:underline"
+                  >
+                    Keyingi matn →
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      // ==========================================
+      // 6-EKRAN: YOZISH
+      // ==========================================
+      const renderWritingScreen = () => {
+        const currentLetter = LETTERS_LIST[letterIdx];
+        return (
+          <div className="relative w-full rounded-[34px] overflow-hidden shadow-2xl border-4 border-white/80 bg-gradient-to-br from-[#7c3aed] via-[#c084fc] to-[#fde68a] p-6 md:p-8 min-h-[500px] flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => goScreen('dashboard')}
+                  className="w-11 h-11 rounded-full bg-white/25 hover:bg-white/40 text-white flex items-center justify-center border-2 border-white/60 shadow font-black"
+                >
+                  ←
+                </button>
+                <div className="flex items-center gap-2 text-white font-black text-2xl drop-shadow">
+                  <span>✏️</span>
+                  <span>Yozish</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-950/75 text-amber-300 font-black border-2 border-white/40 shadow">
+                <span>⭐</span>
+                <span>15</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center my-auto py-4">
+              <div className="lg:col-span-5 flex flex-col items-center">
+                <div className="bg-white text-slate-800 px-5 py-2.5 rounded-2xl shadow-lg font-extrabold text-base mb-2">
+                  «{currentLetter}» harfini yozing:
+                </div>
+                <div className="flex items-end gap-2">
+                  <MiniRobot3D size="sm" />
+                  <Boy3DCharacter outfit="blue" pose="pen" size="lg" />
+                </div>
+              </div>
+
+              <div className="lg:col-span-7 flex flex-col items-center space-y-4">
+                <div className="relative bg-white rounded-[28px] p-4 shadow-2xl border-4 border-purple-200">
+                  <canvas
+                    ref={canvasRef}
+                    width={320}
+                    height={220}
+                    onMouseDown={startDraw}
+                    onMouseMove={moveDraw}
+                    onMouseUp={endDraw}
+                    onMouseLeave={endDraw}
+                    onTouchStart={startDraw}
+                    onTouchMove={moveDraw}
+                    onTouchEnd={endDraw}
+                    className="w-72 sm:w-80 h-52 bg-slate-50 rounded-2xl cursor-crosshair touch-none"
+                  />
+                  <button
+                    onClick={drawLetterGuide}
+                    title="Tozalash"
+                    className="absolute top-6 right-6 px-2.5 py-1 rounded-xl bg-slate-200/80 hover:bg-slate-300 text-slate-700 font-black text-xs"
+                  >
+                    🔄
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={drawLetterGuide}
+                    className="px-4 py-2 rounded-xl bg-white/85 text-purple-900 font-extrabold text-xs shadow"
+                  >
+                    Qayta yozish
+                  </button>
+                  <button
+                    onClick={() => setLetterIdx((letterIdx + 1) % LETTERS_LIST.length)}
+                    className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow flex items-center gap-1"
+                  >
+                    <span>Keyingi harf →</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      // ==========================================
+      // 7-EKRAN: MENING NATIJALARIM
+      // ==========================================
+      const renderResultsScreen = () => (
+        <div className="relative w-full rounded-[34px] overflow-hidden shadow-2xl border-4 border-white/80 bg-gradient-to-br from-[#22c55e] via-[#86efac] to-[#bbf7d0] p-6 md:p-8 min-h-[500px] flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-full bg-amber-400 text-white flex items-center justify-center shadow border-2 border-white text-xl">
+                🏆
+              </div>
+              <h2 className="text-white font-black text-2xl md:text-3xl drop-shadow">
+                Mening Natijalarim
+              </h2>
+            </div>
+            <button
+              onClick={() => goScreen('dashboard')}
+              className="w-10 h-10 rounded-full bg-emerald-800/60 text-white flex items-center justify-center border border-white/40 font-black"
+            >
+              →
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center my-auto py-4">
+            <div className="lg:col-span-4 bg-white/95 rounded-[28px] p-6 text-center shadow-xl border-4 border-white flex flex-col items-center space-y-2">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-b from-sky-200 to-blue-400 border-4 border-blue-500 flex items-center justify-center overflow-hidden shadow-md">
+                <Boy3DCharacter outfit="blue" pose="wave" size="sm" />
+              </div>
+              <h3 className="text-2xl font-black text-slate-800">{childName}</h3>
+              <p className="text-sm font-bold text-slate-500">7 yosh</p>
+              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-2xl bg-gradient-to-r from-amber-300 to-yellow-400 text-amber-950 font-black text-sm shadow">
+                <span>⭐ Level 3</span>
+              </div>
+            </div>
+
+            <div className="lg:col-span-8 bg-white/95 rounded-[28px] p-6 shadow-xl border-4 border-white space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
+                <div className="sm:col-span-5 flex flex-col items-center">
+                  <div className="relative w-36 h-36 flex items-center justify-center">
+                    <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
+                      <circle cx="60" cy="60" r="48" fill="none" stroke="#E2E8F0" strokeWidth="12" />
+                      <circle
+                        cx="60"
+                        cy="60"
+                        r="48"
+                        fill="none"
+                        stroke="#10B981"
+                        strokeWidth="12"
+                        strokeDasharray="301.59"
+                        strokeDashoffset="45.2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-3xl font-black text-slate-800">85%</span>
+                    </div>
+                  </div>
+                  <p className="font-extrabold text-slate-700 text-sm mt-1 text-center">
+                    Umumiy progress
+                  </p>
+                </div>
+
+                <div className="sm:col-span-7 space-y-3">
+                  {[
+                    { name: 'Matematika', pct: '92%', color: 'bg-blue-600', icon: '🧮' },
+                    { name: 'Ingliz tili', pct: '88%', color: 'bg-emerald-500', icon: '🇬🇧' },
+                    { name: 'O‘qish', pct: '80%', color: 'bg-purple-500', icon: '📖' },
+                    { name: 'Yozish', pct: '87%', color: 'bg-amber-500', icon: '✏️' }
+                  ].map((s) => (
+                    <div key={s.name} className="space-y-1">
+                      <div className="flex items-center justify-between text-sm font-extrabold text-slate-700">
+                        <span className="flex items-center gap-2">
+                          <span>{s.icon}</span>
+                          <span>{s.name}</span>
+                        </span>
+                        <span className="font-black text-slate-900">{s.pct}</span>
+                      </div>
+                      <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className={`h-full ${s.color} rounded-full`} style={{ width: s.pct }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={() => goScreen('aitutor')}
+                className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black text-sm shadow-lg flex items-center justify-center gap-2"
+              >
+                <span>Batafsil statistika 📊</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+
+      // ==========================================
+      // 8-EKRAN: AI O'QITUVCHI BILAN SUHBAT (GEMINI LIVE)
+      // ==========================================
+      const renderAiTutorScreen = () => (
+        <div className="relative w-full rounded-[34px] overflow-hidden shadow-2xl border-4 border-indigo-400/70 bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#311042] p-6 md:p-8 min-h-[500px] flex flex-col justify-between text-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => goScreen('dashboard')}
+                className="w-10 h-10 rounded-full bg-indigo-600 font-black text-lg flex items-center justify-center shadow border border-indigo-300"
+              >
+                A
+              </button>
+              <h2 className="font-black text-xl md:text-2xl">AI O‘qituvchi bilan suhbat</h2>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-950/90 border border-emerald-400/50 text-emerald-300 text-xs font-black">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+              <span>Live</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center my-auto py-4">
+            <div className="lg:col-span-5 flex justify-center">
+              <Boy3DCharacter
+                outfit="lab"
+                pose="wave"
+                size="lg"
+                isSpeaking={isAiSpeaking || isAiLoading}
+              />
+            </div>
+
+            <div className="lg:col-span-7 space-y-4">
+              <div className="bg-white text-slate-900 p-5 rounded-3xl rounded-bl-none shadow-2xl font-extrabold text-base md:text-lg leading-relaxed">
+                {isAiLoading ? '🤔 O‘ylayapman...' : tutorReply}
+              </div>
+
+              <div className="flex items-center gap-3 bg-indigo-950/80 border border-indigo-400/40 rounded-2xl p-3">
+                <button
+                  onClick={() =>
+                    speakText(
+                      tutorReply,
+                      'uz-UZ',
+                      muted,
+                      () => setIsAiSpeaking(true),
+                      () => setIsAiSpeaking(false)
+                    )
+                  }
+                  className="w-11 h-11 rounded-full bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center shadow shrink-0 font-black"
+                >
+                  ▶
+                </button>
+
+                <div className="flex-1 flex items-center justify-center gap-1 h-9 px-2">
+                  {[25, 55, 80, 45, 95, 60, 35, 85, 50, 75, 40, 90, 55, 30, 70, 45].map((h, i) => (
+                    <div
+                      key={i}
+                      className={`w-1.5 rounded-full bg-gradient-to-t from-cyan-400 via-purple-400 to-pink-400 transition-all duration-300 ${
+                        isAiSpeaking ? 'animate-pulse' : 'opacity-65'
+                      }`}
+                      style={{ height: `${isAiSpeaking ? Math.max(25, (h * ((i % 3) + 1)) % 100) : h}%` }}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  onClick={handleVoiceMic}
+                  title="Ovoz bilan gapirish"
+                  className={`w-11 h-11 rounded-full flex items-center justify-center shadow shrink-0 ${
+                    isVoiceRec ? 'bg-rose-500 animate-ping' : 'bg-indigo-700 hover:bg-indigo-600'
+                  }`}
+                >
+                  🎤
+                </button>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {[
+                  '🎵 Inglizcha qo‘shiq aytaylik',
+                  '🧮 Menga qiziqarli misol ber',
+                  '📚 Qisqa ertak aytib ber',
+                  '👩‍🏫 Dastur muallifi kim?'
+                ].map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => handleSendToGemini(q)}
+                    className="text-xs font-bold bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-full transition"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex-1 flex items-center bg-indigo-950/90 border-2 border-indigo-400/50 rounded-full px-5 py-3">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendToGemini()}
+                    placeholder="Savolingizni yozing..."
+                    className="w-full bg-transparent outline-none text-sm font-bold text-white placeholder-indigo-300"
+                  />
+                  <span className="text-amber-300">✨</span>
+                </div>
+                <button
+                  onClick={() => handleSendToGemini()}
+                  className="w-12 h-12 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 flex items-center justify-center shadow-xl border-2 border-white/40 shrink-0 font-black"
+                >
+                  ➤
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+
+      // ==========================================
+      // SOVG'ALAR EKRANI
+      // ==========================================
+      const renderGiftsScreen = () => (
+        <div className="relative w-full rounded-[34px] overflow-hidden shadow-2xl border-4 border-white/80 bg-gradient-to-br from-amber-400 via-orange-300 to-yellow-200 p-6 md:p-8 min-h-[460px] flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => goScreen('dashboard')}
+                className="w-11 h-11 rounded-full bg-white/50 text-amber-950 flex items-center justify-center font-black"
+              >
+                ←
+              </button>
+              <h2 className="text-2xl md:text-3xl font-black text-amber-950">🎁 Sovg‘alar Do‘koni</h2>
+            </div>
+            <div className="px-4 py-1.5 rounded-full bg-amber-950 text-amber-300 font-black flex items-center gap-2">
+              <span>⭐ {stars} ball</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 my-auto py-6">
+            {[
+              { title: 'Oltin Toj Nishoni', cost: 200, icon: '👑' },
+              { title: 'Kosmik Raketa Stikeri', cost: 350, icon: '🚀' },
+              { title: 'Super Bilimdon Kubogi', cost: 500, icon: '🏆' }
+            ].map((g) => (
+              <div
+                key={g.title}
+                className="bg-white/95 rounded-3xl p-5 text-center shadow-xl border-2 border-white space-y-3"
+              >
+                <div className="text-6xl">{g.icon}</div>
+                <div className="font-black text-slate-800 text-base">{g.title}</div>
+                <button
+                  onClick={() => {
+                    if (stars >= g.cost) {
+                      setStars((s) => s - g.cost);
+                      playSound('success', muted);
+                    } else {
+                      playSound('wrong', muted);
+                    }
+                  }}
+                  className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-xs shadow"
+                >
+                  ⭐ {g.cost} ballga olish
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+
+      return (
+        <div className="min-h-screen w-screen bg-slate-950 text-slate-800 flex flex-col justify-between overflow-x-hidden relative">
+          {/* HAQIQIY ILOVA EKRANI (To'liq ekranli Native App ko'rinishi, hech qanday ortiqcha web-preview satrlarisiz) */}
+          <div className="w-full min-h-screen flex-1 flex items-stretch justify-center p-0 sm:p-2 md:p-4">
+            <div className="w-full max-w-7xl mx-auto flex items-stretch">
+              {activeScreen === 'login' && renderLoginScreen()}
+              {activeScreen === 'dashboard' && renderDashboardScreen()}
+              {activeScreen === 'math' && renderMathScreen()}
+              {activeScreen === 'english' && renderEnglishScreen()}
+              {activeScreen === 'reading' && renderReadingScreen()}
+              {activeScreen === 'writing' && renderWritingScreen()}
+              {activeScreen === 'results' && renderResultsScreen()}
+              {activeScreen === 'aitutor' && renderAiTutorScreen()}
+              {activeScreen === 'gifts' && renderGiftsScreen()}
+            </div>
+          </div>
+
+          {/* SUZIB YURUVCHI HAQIQIY ILOVA BOSHQARUV TUGMASI (Floating App Dock) */}
+          <div className="fixed bottom-4 right-4 z-40 flex items-center gap-2">
+            {activeScreen !== 'dashboard' && activeScreen !== 'login' && (
+              <button
+                onClick={() => goScreen('dashboard')}
+                title="Bosh menyuga qaytish"
+                className="px-4 py-2.5 rounded-full bg-slate-900/90 hover:bg-slate-900 text-white font-black text-xs shadow-2xl border-2 border-white/30 backdrop-blur-md flex items-center gap-1.5 transition transform hover:scale-105"
+              >
+                <span>🏠 Bosh menyu</span>
+              </button>
+            )}
+
+            <button
+              onClick={toggleFullScreenApp}
+              title="To'liq ekranli ilova rejimi"
+              className="w-11 h-11 rounded-full bg-slate-900/90 hover:bg-slate-900 text-cyan-300 font-black text-base shadow-2xl border-2 border-white/30 backdrop-blur-md flex items-center justify-center transition transform hover:scale-105"
+            >
+              {isFullscreen ? '🗗' : '⛶'}
+            </button>
+
+            <button
+              onClick={() => setShowAppDrawer(!showAppDrawer)}
+              className="px-4 py-2.5 rounded-full bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-500 text-white font-black text-xs shadow-2xl border-2 border-white/70 flex items-center gap-2 transition transform hover:scale-105"
+            >
+              <span>📲 Ilova & APK</span>
+            </button>
+          </div>
+
+          {/* MAXSUS ILOVA PANELI (APP DRAWER): O'RNATISH, APK, ZIP VA SOZLAMALAR */}
+          {showAppDrawer && (
+            <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md flex items-end sm:items-center justify-center p-4">
+              <div className="bg-slate-900 text-white rounded-[32px] max-w-xl w-full p-6 shadow-2xl border-2 border-cyan-400/50 space-y-5">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-2xl shadow-lg border border-white/30">
+                      🎓
+                    </div>
+                    <div>
+                      <h3 className="font-black text-lg text-white">Bilimdon Kids — Rasmiy Ilova Menyusi</h3>
+                      <p className="text-xs text-amber-300 font-bold">
+                        Muallif: {AUTHOR_INFO.fullName} (TDPI)
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowAppDrawer(false)}
+                    className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 font-black"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Tezkor Ilova amallari */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    onClick={() => {
+                      setShowAppDrawer(false);
+                      handleDownloadGithubAndApkZip();
+                    }}
+                    className="p-4 rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-black text-left shadow-lg hover:scale-[1.02] transition space-y-1"
+                  >
+                    <div className="text-xl">📦 Tayyor Ilova Paketini Olish (.ZIP)</div>
+                    <p className="text-[11px] font-bold text-slate-900 leading-tight">
+                      Windows (.bat), GitHub Pages va Android (.APK) uchun barcha fayllar
+                    </p>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setShowAppDrawer(false);
+                      handleInstallNativeApp();
+                    }}
+                    className="p-4 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-black text-left shadow-lg hover:scale-[1.02] transition space-y-1"
+                  >
+                    <div className="text-xl">📱 Telefonga / Kompyuterga O‘rnatish</div>
+                    <p className="text-[11px] font-bold text-slate-900 leading-tight">
+                      Ilovani qurilmangizning asosiy ekraniga o‘rnatish va APK chiqarish
+                    </p>
+                  </button>
+                </div>
+
+                {/* Bo'limlarga tezkor o'tish */}
+                <div className="space-y-2">
+                  <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
+                    Ilova Bo‘limlari:
+                  </p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { id: 'login', label: 'Kirish', icon: '🔐' },
+                      { id: 'dashboard', label: 'Asosiy', icon: '🏠' },
+                      { id: 'math', label: 'Matematika', icon: '🧮' },
+                      { id: 'english', label: 'Ingliz tili', icon: '🇬🇧' },
+                      { id: 'reading', label: 'O‘qish', icon: '📖' },
+                      { id: 'writing', label: 'Yozish', icon: '✏️' },
+                      { id: 'results', label: 'Natijalar', icon: '🏆' },
+                      { id: 'aitutor', label: 'AI Ustoz', icon: '🤖' }
+                    ].map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          goScreen(item.id);
+                          setShowAppDrawer(false);
+                        }}
+                        className={`p-2.5 rounded-xl font-extrabold text-xs flex flex-col items-center gap-1 border transition ${
+                          activeScreen === item.id
+                            ? 'bg-blue-600 text-white border-blue-400'
+                            : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-white/10'
+                        }`}
+                      >
+                        <span className="text-lg">{item.icon}</span>
+                        <span>{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/10">
+                  <button
+                    onClick={() => {
+                      setShowAppDrawer(false);
+                      setShowAuthorModal(true);
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-amber-300 font-extrabold text-xs"
+                  >
+                    🎓 Muallif Pasporti (Saparova Matluba)
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setMuted(!muted)}
+                      className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-extrabold text-xs"
+                    >
+                      {muted ? '🔇 Ovoz o‘chiq' : '🔊 Ovoz yoqiq'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowAppDrawer(false);
+                        setShowApiModal(true);
+                      }}
+                      className="px-3.5 py-2 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 font-extrabold text-xs border border-amber-400/40"
+                    >
+                      🔑 Gemini API Sozlamasi
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MUALLIF HAQIDA MAXSUS MODAL OYNA */}
+          {showAuthorModal && (
+            <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+              <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-[32px] max-w-lg w-full p-6 md:p-8 shadow-2xl border-2 border-amber-400/60 space-y-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-slate-950 flex items-center justify-center shadow-lg text-3xl">
+                      🎓
+                    </div>
+                    <div>
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 font-black text-[11px] uppercase tracking-wider border border-amber-400/40">
+                        Loyiha Muallifi Pasporti
+                      </span>
+                      <h3 className="text-2xl font-black text-white mt-1">{AUTHOR_INFO.fullName}</h3>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowAuthorModal(false)}
+                    className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-black"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15 space-y-3 text-sm">
+                  <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2.5">
+                    <span className="text-slate-300 font-semibold">Muallif:</span>
+                    <span className="font-black text-amber-300 text-right">{AUTHOR_INFO.fullName}</span>
+                  </div>
+                  <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2.5">
+                    <span className="text-slate-300 font-semibold">Oliygoh:</span>
+                    <span className="font-extrabold text-cyan-300 text-right">
+                      {AUTHOR_INFO.university}
+                    </span>
+                  </div>
+                  <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2.5">
+                    <span className="text-slate-300 font-semibold">Fakultet:</span>
+                    <span className="font-extrabold text-emerald-300 text-right">
+                      {AUTHOR_INFO.faculty}
+                    </span>
+                  </div>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-slate-300 font-semibold">Loyiha nomi:</span>
+                    <span className="font-bold text-white text-right max-w-xs">
+                      {AUTHOR_INFO.projectTitle}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() =>
+                      speakText(
+                        "Ushbu Bilimdon Kids dasturi Termiz davlat pedagogika instituti Boshlang'ich ta'lim fakulteti talabasi Saparova Matluba tomonidan yaratilgan.",
+                        'uz-UZ',
+                        muted
+                      )
+                    }
+                    className="px-4 py-2.5 rounded-2xl bg-white/15 hover:bg-white/25 text-cyan-200 font-extrabold text-xs"
+                  >
+                    🔊 Ovozli eshitish
+                  </button>
+                  <button
+                    onClick={() => setShowAuthorModal(false)}
+                    className="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-black text-xs shadow-lg"
+                  >
+                    Tushunarli ✨
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* GEMINI API KEY MODALI */}
+          {showApiModal && (
+            <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4">
+              <div className="bg-slate-900 text-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-2 border-amber-400/40 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-black text-lg text-amber-300">🔑 Google Gemini API Key</h3>
+                  <button
+                    onClick={() => setShowApiModal(false)}
+                    className="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  <b>aistudio.google.com/apikey</b> sahifasidan olingan bepul Gemini API kalitingizni kiriting:
+                </p>
+
+                <input
+                  type="password"
+                  value={apiKeyDraft}
+                  onChange={(e) => setApiKeyDraft(e.target.value)}
+                  placeholder="AIzaSy..."
+                  className="w-full bg-slate-800 border-2 border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold text-amber-300 outline-none focus:border-amber-400"
+                />
+
+                {apiSaved && (
+                  <div className="text-xs font-extrabold text-emerald-400">
+                    ✅ API kalit muvaffaqiyatli saqlandi!
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => setShowApiModal(false)}
+                    className="px-4 py-2.5 rounded-xl bg-white/10 text-xs font-bold"
+                  >
+                    Yopish
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCustomApiKey(apiKeyDraft.trim());
+                      try {
+                        localStorage.setItem('BILIMDON_KIDS_GEMINI_KEY', apiKeyDraft.trim());
+                      } catch {}
+                      setApiSaved(true);
+                      setTimeout(() => {
+                        setApiSaved(false);
+                        setShowApiModal(false);
+                      }, 900);
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-amber-400 text-slate-950 font-black text-xs"
+                  >
+                    Saqlash va Qo‘llash
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* GITHUB VA APK QO'LLANMA MODALI */}
+          {showGithubApkModal && (
+            <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+              <div className="bg-slate-900 text-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border-2 border-emerald-400/50 space-y-4">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <div>
+                    <h3 className="font-black text-lg text-emerald-300">
+                      📦 GitHub Pages + Android (.APK) Tayyor Paket Маркази
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Muallif: {AUTHOR_INFO.fullName} ({AUTHOR_INFO.university})
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowGithubApkModal(false)}
+                    className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 font-black"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: 'zip', label: '📦 1. Tayyor ZIP va HTML Yuklab Olish' },
+                    { id: 'github', label: '🌐 2. GitHub Pages-da Online Qilish' },
+                    { id: 'apk', label: '📱 3. Tayyor Android (.APK) Chiqarish' }
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => setApkModalTab(t.id)}
+                      className={`px-3 py-2 rounded-xl font-extrabold text-xs ${
+                        apkModalTab === t.id ? 'bg-emerald-400 text-slate-950' : 'bg-white/10 text-slate-300'
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+
+                {apkModalTab === 'zip' && (
+                  <div className="bg-slate-800 rounded-2xl p-5 space-y-4 text-xs leading-relaxed text-slate-200">
+                    <p className="text-amber-300 font-black text-sm">
+                      Quyidagi tugmani bossangiz, kompyuteringizga yoki telefoningizga barcha fayllar jamlangan tayyor <code>bilimdon-kids-github-va-apk.zip</code> arxivi yuklab olinadi:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-slate-300">
+                      <li><code>index.html</code> — To‘liq 8 ta ekranli interaktiv dastur (Saparova Matluba muallifligida)</li>
+                      <li><code>manifest.json</code> va <code>sw.js</code> — Mobil telefonlarga ilova bo‘lib o‘rnatish (PWA/APK) fayllari</li>
+                      <li><code>capacitor.config.json</code> — Android Studio / Capacitor APK konfiguratsiyasi</li>
+                      <li><code>README.md</code> — GitHub uchun tayyor rasmiy pasport va yo‘riqnoma</li>
+                    </ul>
+                    <div className="flex flex-wrap gap-3 pt-2">
+                      <button
+                        onClick={handleDownloadGithubAndApkZip}
+                        className="px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-black text-xs shadow-lg"
+                      >
+                        📦 Tayyor ZIP Paketni Yuklab Olish (.ZIP)
+                      </button>
+                      <button
+                        onClick={handleDownloadSingleHtml}
+                        className="px-5 py-3 rounded-2xl bg-amber-400 text-slate-950 font-black text-xs shadow-lg"
+                      >
+                        📄 Yagona index.html Faylni Yuklab Olish
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {apkModalTab === 'github' && (
+                  <div className="bg-slate-800 rounded-2xl p-5 space-y-2.5 text-xs leading-relaxed text-slate-200">
+                    <p className="text-cyan-300 font-black text-sm">GitHub Pages yoki Netlify orqali 1 daqiqada internetga joylash:</p>
+                    <ol className="list-decimal list-inside space-y-2">
+                      <li>Yuqoridagi tugma orqali <b>ZIP</b> faylni yuklab oling va ichidagi fayllarni oching.</li>
+                      <li><b>github.com</b> saytida yangi Repository yarating (masalan: <code>bilimdon-kids</code>).</li>
+                      <li><b>Add file ➔ Upload files</b> orqali <code>index.html</code>, <code>manifest.json</code> va <code>sw.js</code> fayllarini tashlang va <b>Commit changes</b> bosing.</li>
+                      <li>Repository ichida <b>Settings ➔ Pages ➔ Branch: main ➔ Save</b> tugmasini bosing — 60 soniyadan so‘ng shaxsiy online saytingiz ishga tushadi!</li>
+                    </ol>
+                  </div>
+                )}
+
+                {apkModalTab === 'apk' && (
+                  <div className="bg-slate-800 rounded-2xl p-5 space-y-2.5 text-xs leading-relaxed text-slate-200">
+                    <p className="text-amber-300 font-black text-sm">Telefonga o‘rnatiladigan haqiqiy Android (.APK) fayl olishning 2 ta bepul yo‘li:</p>
+                    <div className="bg-slate-900/90 p-3.5 rounded-xl border border-white/10 space-y-1.5">
+                      <p className="font-black text-emerald-300">1-Usul: WebIntoApp.com (Eng tez — 30 soniyada HTML/ZIP dan APK olish)</p>
+                      <p>1. <b>webintoapp.com/html-to-app</b> saytiga kiring.</p>
+                      <p>2. Bizning <b>📦 Tayyor ZIP</b> yoki <b>index.html</b> faylimizni yuklang.</p>
+                      <p>3. App Name qismiga <b>Bilimdon Kids</b> deb yozib, <b>Make App (Download Free APK)</b> tugmasini bosing!</p>
+                    </div>
+                    <div className="bg-slate-900/90 p-3.5 rounded-xl border border-white/10 space-y-1.5">
+                      <p className="font-black text-cyan-300">2-Usul: PWABuilder.com (GitHub Pages linkidan rasmiy APK olish)</p>
+                      <p>1. GitHub Pages yoki Netlify linkini <b>pwabuilder.com</b> saytiga kiriting.</p>
+                      <p>2. <b>Package for stores ➔ Android ➔ Download APK</b> tugmasini bosing!</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
