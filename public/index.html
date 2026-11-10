@@ -518,6 +518,7 @@
     // ASOSIY DASTUR KOMPONENTI
     // ==========================================
     function App() {
+      const requestedAdminPanel = new URLSearchParams(window.location.search).get('admin') === '1';
       const [activeScreen, setActiveScreen] = useState('login');
       const [viewMode, setViewMode] = useState('single');
 
@@ -838,7 +839,7 @@
             setAuthUser(data.parent); setProfileFullName(data.parent.full_name || '');
             const firstChild = data.children?.[0];
             if (firstChild) { setChildName(firstChild.display_name); setSelectedChildId(firstChild.id); setProfileChildName(firstChild.display_name); setProfileAge(String(firstChild.age || 7)); }
-            setActiveScreen('dashboard');
+            setActiveScreen(data.parent.is_admin && requestedAdminPanel ? 'admin' : 'dashboard');
           })
           .catch(() => {});
         return () => { alive = false; };
@@ -901,7 +902,7 @@
           if (child) { setChildName(child.display_name); setSelectedChildId(child.id); setProfileChildName(child.display_name); setProfileAge(String(child.age || 7)); }
           setPasswordInput('');
           setAuthError('');
-          setActiveScreen('dashboard');
+          setActiveScreen(data.parent.is_admin && requestedAdminPanel ? 'admin' : 'dashboard');
           playSound('success', muted);
         } catch (error) {
           setAuthError(error.message || "Server bilan bog‘lanib bo‘lmadi. Keyinroq urinib ko‘ring.");
