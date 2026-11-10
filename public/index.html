@@ -733,6 +733,7 @@
       const [adminTitle, setAdminTitle] = useState('');
       const [adminDescription, setAdminDescription] = useState('');
       const [adminImageUrl, setAdminImageUrl] = useState('');
+      const [adminVideoUrl, setAdminVideoUrl] = useState('');
       const [adminGameQuestion, setAdminGameQuestion] = useState('');
       const [adminGameOptions, setAdminGameOptions] = useState('Olma,Anor,Banan');
       const [adminGameAnswer, setAdminGameAnswer] = useState('Olma');
@@ -797,8 +798,8 @@
         if (!adminTitle.trim()) return setAdminMessage('Material nomini kiriting.');
         setAdminBusy(true); setAdminMessage(''); setTemporaryPassword('');
         try {
-          await adminRequest('/api/admin/content', 'POST', { kind: adminKind, title: adminTitle, description: adminDescription, imageUrl: adminImageUrl, contentData: adminKind === 'game' ? { question: adminGameQuestion, options: adminGameOptions.split(',').map(x=>x.trim()).filter(Boolean), answer: adminGameAnswer.trim() } : {} });
-          setAdminTitle(''); setAdminDescription(''); setAdminImageUrl(''); setAdminGameQuestion('');
+          await adminRequest('/api/admin/content', 'POST', { kind: adminKind, title: adminTitle, description: adminDescription, imageUrl: adminImageUrl, contentData: adminKind === 'game' ? { question: adminGameQuestion, options: adminGameOptions.split(',').map(x=>x.trim()).filter(Boolean), answer: adminGameAnswer.trim() } : adminKind === 'video' ? { videoUrl: adminVideoUrl.trim() } : {} });
+          setAdminTitle(''); setAdminDescription(''); setAdminImageUrl(''); setAdminVideoUrl(''); setAdminGameQuestion('');
           await refreshAdmin(); setAdminMessage('Yangi material muvaffaqiyatli qo‘shildi.');
         } catch (e) { setAdminMessage(e.message); } finally { setAdminBusy(false); }
       };
@@ -2097,12 +2098,17 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[['Foydalanuvchilar',adminOverview.stats.users || 0,'👨‍👩‍👧'],['Bolalar',adminOverview.stats.children || 0,'🧒'],['Materiallar',adminOverview.stats.content || 0,'📚'],['Bloklangan',adminOverview.stats.blocked || 0,'⛔']].map(([label,value,icon]) => <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-4"><div className="text-2xl">{icon}</div><div className="text-2xl font-black mt-2">{value}</div><div className="text-xs text-slate-400 font-bold">{label}</div></div>)}
           </div>
+          <section className="rounded-2xl border border-emerald-300/30 bg-emerald-400/5 p-4 md:p-5 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"><div><h3 className="text-lg font-black text-emerald-300">📱 Android APK fayllari</h3><p className="text-xs text-slate-300 mt-1">Bitta APK barcha foydalanuvchilar uchun. Admin huquqi hisob orqali ochiladi.</p></div><a href="https://github.com/hasanjaylovov3/Bilimdon-Kids-AI/actions/workflows/android-apk.yml" target="_blank" rel="noreferrer" className="inline-flex justify-center rounded-xl bg-emerald-400 px-4 py-3 text-sm font-black text-slate-950">APK yig‘ish / yuklab olish ↗</a></div>
+            <p className="text-xs text-slate-400">Havolani oching → eng so‘nggi muvaffaqiyatli Build run → Artifacts → <b>bilimdon-kids-android-apk</b>. Yangi versiyani chiqarish uchun Run workflow tugmasidan foydalaning.</p>
+          </section>
           <section className="rounded-2xl border border-white/10 bg-white/5 p-4 md:p-5 space-y-3">
-            <h3 className="text-lg font-black text-cyan-300">➕ Mashg‘ulot, rasm yoki o‘yin qo‘shish</h3>
+            <h3 className="text-lg font-black text-cyan-300">➕ Mashg‘ulot, rasm, video yoki o‘yin qo‘shish</h3>
             <div className="grid md:grid-cols-2 gap-3">
-              <select value={adminKind} onChange={e=>setAdminKind(e.target.value)} className="rounded-xl bg-slate-800 border border-white/10 p-3 text-white"><option value="lesson">📘 Mashg‘ulot</option><option value="image">🖼️ Rasm</option><option value="game">🎮 O‘yin</option></select>
+              <select value={adminKind} onChange={e=>setAdminKind(e.target.value)} className="rounded-xl bg-slate-800 border border-white/10 p-3 text-white"><option value="lesson">📘 Mashg‘ulot</option><option value="image">🖼️ Rasm</option><option value="game">🎮 O‘yin</option><option value="video">▶️ YouTube video</option></select>
               <input value={adminTitle} onChange={e=>setAdminTitle(e.target.value)} placeholder="Material nomi" className="rounded-xl bg-slate-800 border border-white/10 p-3 text-white"/>
               <input value={adminImageUrl} onChange={e=>setAdminImageUrl(e.target.value)} placeholder="Rasm URL (https://...)" className="rounded-xl bg-slate-800 border border-white/10 p-3 text-white md:col-span-2"/>
+              {adminKind === 'video' && <input value={adminVideoUrl} onChange={e=>setAdminVideoUrl(e.target.value)} placeholder="YouTube video havolasi (https://youtube.com/watch?v=...)" className="rounded-xl bg-slate-800 border border-cyan-300/30 p-3 text-white md:col-span-2"/>}
               <textarea value={adminDescription} onChange={e=>setAdminDescription(e.target.value)} placeholder="Qisqa izoh yoki o‘yin qoidasi" className="rounded-xl bg-slate-800 border border-white/10 p-3 text-white md:col-span-2 min-h-24"/>
               {adminKind === 'game' && <><input value={adminGameQuestion} onChange={e=>setAdminGameQuestion(e.target.value)} placeholder="O‘yin savoli" className="rounded-xl bg-slate-800 border border-white/10 p-3 text-white md:col-span-2"/><input value={adminGameOptions} onChange={e=>setAdminGameOptions(e.target.value)} placeholder="Variantlar: Olma,Anor,Banan" className="rounded-xl bg-slate-800 border border-white/10 p-3 text-white"/><input value={adminGameAnswer} onChange={e=>setAdminGameAnswer(e.target.value)} placeholder="To‘g‘ri javob (variantlardan biri)" className="rounded-xl bg-slate-800 border border-white/10 p-3 text-white"/></>}
             </div>
