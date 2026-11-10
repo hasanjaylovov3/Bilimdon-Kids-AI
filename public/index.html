@@ -73,7 +73,7 @@ function buildLessons(){
   ],
   writing:[
    {type:"text",q:"Quyidagi so'zni xatosiz yoz: MAKTAB",check:v=>v.trim().toLocaleLowerCase("uz-UZ")==="maktab",why:"Maktab so'zi M-A-K-T-A-B harflaridan yoziladi."},
-   {type:"text",q:"'kitob' so'zidan foydalanib, kamida 3 so'zli gap tuz.",check:v=>{const t=v.trim().toLocaleLowerCase("uz-UZ");return t.includes("kitob")&&t.split(/\\s+/).filter(Boolean).length>=3&&/[.!?]$/.test(t);},why:"Juda yaxshi! Gapda 'kitob' so'zi, kamida uchta so'z va gap oxirida tinish belgisi bo'lishi kerak."},
+   {type:"text",q:"'kitob' so'zidan foydalanib, kamida 3 so'zli gap tuz.",check:v=>{const t=v.trim().toLocaleLowerCase("uz-UZ");return t.includes("kitob")&&t.split(/\s+/).filter(Boolean).length>=3&&/[.!?]$/.test(t);},why:"Juda yaxshi! Gapda 'kitob' so'zi, kamida uchta so'z va gap oxirida tinish belgisi bo'lishi kerak."},
    {type:"text",q:"Gapni bosh harf va tinish belgisi bilan to'g'ri yoz: bugun havo yaxshi",check:v=>/^bugun havo yaxshi[.!?]$/i.test(v.trim())&&v.trim()[0]==="B",why:"Gap bosh harf bilan boshlanadi va oxiriga nuqta qo'yiladi: Bugun havo yaxshi."},
    {type:"text",q:"'Bahor' so'zini yoz va undan keyin bitta nuqta qo'y.",check:v=>v.trim().toLocaleLowerCase("uz-UZ")==="bahor.",why:"To'g'ri yozilishi: Bahor."}
   ],
