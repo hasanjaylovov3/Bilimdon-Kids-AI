@@ -2126,33 +2126,57 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
 
       const renderActivitiesScreen = () => {
         const builtInActivities = [
-          { id: "starter-math", kind: "lesson", title: "Qo‘shish va ayirish", description: "1 dan 20 gacha sonlarni qo‘shish va ayirishni misollar orqali mashq qil.", emoji: "🧮" },
-          { id: "starter-english", kind: "lesson", title: "Inglizcha ilk so‘zlar", description: "Apple — olma, Cat — mushuk, Book — kitob. So‘zlarni yodlab, ma’nosini top.", emoji: "🇬🇧" },
-          { id: "starter-reading", kind: "lesson", title: "O‘qish va tushunish", description: "Qisqa gapni o‘qi, undagi qahramon va predmetlarni top.", emoji: "📖" },
+          { id: "starter-math", kind: "lesson", title: "Qo‘shish va ayirish", description: "1 dan 20 gacha sonlarni qo‘shish va ayirishni misollar orqali mashq qil.", emoji: "🧮", screen: "math" },
+          { id: "starter-addition", kind: "lesson", title: "Sonlarni sanash", description: "Rasmlardagi buyumlarni sanab, sonlar bilan bog‘la.", emoji: "🔢", screen: "math" },
+          { id: "starter-english", kind: "lesson", title: "Inglizcha ilk so‘zlar", description: "Apple — olma, Cat — mushuk, Book — kitob. So‘zlarni yodlab, ma’nosini top.", emoji: "🇬🇧", screen: "english" },
+          { id: "starter-colors", kind: "lesson", title: "Colors — ranglar", description: "Red, blue, yellow va green ranglarini ingliz tilida o‘rgan.", emoji: "🎨", screen: "english" },
+          { id: "starter-reading", kind: "lesson", title: "O‘qish va tushunish", description: "Qisqa gapni o‘qi, undagi qahramon va predmetlarni top.", emoji: "📖", screen: "reading" },
+          { id: "starter-phonics", kind: "lesson", title: "Harflar va tovushlar", description: "A, B, C harflarini tanib, ularning tovushlarini mashq qil.", emoji: "🔤", screen: "reading" },
+          { id: "starter-writing", kind: "lesson", title: "Harf yozishni mashq qil", description: "Harflarni to‘g‘ri yozish va so‘zlarni ko‘chirib yozishni mashq qil.", emoji: "✏️", screen: "writing" },
+          { id: "starter-sentences", kind: "lesson", title: "So‘zlardan gap tuzish", description: "So‘zlarni tartibga solib, sodda va mazmunli gaplar tuz.", emoji: "📝", screen: "writing" },
           { id: "game-fruit", kind: "game", title: "Mevalarni top", description: "Savolga to‘g‘ri javobni tanla.", emoji: "🍎", question: "Qaysi biri meva?", options: ["Olma", "Stol", "Kitob"], answer: "Olma" },
           { id: "game-math", kind: "game", title: "Tezkor hisob", description: "Oddiy misolni yechib ko‘r.", emoji: "⭐", question: "8 + 5 nechaga teng?", options: ["12", "13", "14"], answer: "13" },
-          { id: "game-english", kind: "game", title: "Inglizcha so‘z", description: "Inglizcha so‘zning o‘zbekcha ma’nosini top.", emoji: "🔤", question: "“Cat” so‘zining ma’nosi nima?", options: ["It", "Mushuk", "Qush"], answer: "Mushuk" }
+          { id: "game-english", kind: "game", title: "Inglizcha so‘z", description: "Inglizcha so‘zning o‘zbekcha ma’nosini top.", emoji: "🔤", question: "“Cat” so‘zining ma’nosi nima?", options: ["It", "Mushuk", "Qush"], answer: "Mushuk" },
+          { id: "game-reading", kind: "game", title: "So‘zni top", description: "Rasmga mos so‘zni tanla.", emoji: "🐱", question: "🐱 Bu nima?", options: ["Cat", "Sun", "Book"], answer: "Cat" }
         ];
         const allActivities = [...builtInActivities, ...activityItems];
+        const learningVideos = [
+          { subject: "Ingliz tili", title: "ABC Alphabet Song — Super Simple Songs", description: "Ingliz alifbosi va talaffuzini qo‘shiq orqali o‘rganish", emoji: "🇬🇧", url: "https://www.youtube.com/results?search_query=Super+Simple+Songs+ABC+Alphabet+Song+official", color: "from-sky-500 to-blue-600" },
+          { subject: "Matematika", title: "Numberblocks & Alphablocks", description: "Rangli animatsiya orqali sanash, sonlar va oddiy matematik tushunchalar", emoji: "🔢", url: "https://www.youtube.com/watch?v=I4EtoQ7BXSw", color: "from-amber-400 to-orange-500" },
+          { subject: "O‘qish", title: "Alphablocks — Learn to Read", description: "Harflar tovushlardan so‘z yasab, bolalarga o‘qishni o‘rgatadi", emoji: "📚", url: "https://www.youtube.com/watch?v=xJSVrq-6-jc", color: "from-violet-500 to-fuchsia-600" },
+          { subject: "Yozish", title: "Alphablocks — Writing Made Easy", description: "Harflar va sodda so‘zlarni yozishni animatsiya orqali mashq qilish", emoji: "✏️", url: "https://www.youtube.com/watch?v=YrzMazkqRzY", color: "from-emerald-500 to-teal-600" }
+        ];
         return (
-          <div className="w-full min-h-full rounded-[28px] bg-gradient-to-br from-sky-100 via-white to-violet-100 p-5 md:p-8 space-y-5">
-            <div><h2 className="text-2xl md:text-3xl font-black text-slate-900">📚 Mashg‘ulotlar</h2><p className="text-slate-600 font-semibold">Darslarni o‘rgan, savollarga javob ber va o‘yinlarda yulduz to‘pla!</p></div>
+          <div className="w-full min-h-full rounded-[28px] bg-gradient-to-br from-sky-100 via-white to-violet-100 p-4 md:p-7 space-y-6">
+            <div><h2 className="text-2xl md:text-3xl font-black text-slate-900">📚 Mashg‘ulotlar</h2><p className="text-slate-600 font-semibold">Ingliz tili, matematika, o‘qish va yozishni o‘yinlar bilan o‘rgan!</p></div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {allActivities.map(item => (
                 <article key={item.id} className="overflow-hidden rounded-2xl bg-white shadow-lg border border-slate-100">
-                  <div className="h-28 bg-gradient-to-br from-indigo-100 to-amber-100 flex items-center justify-center text-5xl">{item.emoji || (item.kind === "game" ? "🎮" : item.kind === "image" ? "🖼️" : "📘")}</div>
+                  <div className="h-24 bg-gradient-to-br from-indigo-100 to-amber-100 flex items-center justify-center text-5xl">{item.emoji || (item.kind === "game" ? "🎮" : item.kind === "image" ? "🖼️" : "📘")}</div>
                   <div className="p-4">
                     <div className="text-xs font-black text-indigo-500">{item.kind === "lesson" ? "📘 MASHG‘ULOT" : item.kind === "image" ? "🖼️ RASM" : "🎮 O‘YIN"}</div>
                     <h3 className="font-black text-lg text-slate-900 mt-1">{item.title}</h3>
                     <p className="text-sm text-slate-600 mt-2">{item.description}</p>
                     {item.kind === "game" && (item.options?.length > 1 || item.content_data?.options?.length > 1) && <div className="mt-3 space-y-2"><p className="font-black text-slate-800">{item.question || item.content_data?.question}</p><div className="grid grid-cols-1 gap-2">{(item.options || item.content_data?.options || []).map(option => <button key={option} onClick={() => { const answer = item.answer || item.content_data?.answer; const right = option === answer; setActivityFeedback(prev => ({ ...prev, [item.id]: right ? "Barakalla! To‘g‘ri javob! 🎉" : "Yana urinib ko‘r! 💡" })); if (right) setStars(value => value + 5); }} className="rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-slate-800 p-2 text-sm font-black">{option}</button>)}</div>{activityFeedback[item.id] && <p className="text-sm font-black text-emerald-700">{activityFeedback[item.id]}</p>}</div>}
-                    {item.kind === "lesson" && <button onClick={() => goScreen(item.id === "starter-math" ? "math" : item.id === "starter-english" ? "english" : "reading")} className="mt-3 rounded-xl bg-indigo-600 text-white px-4 py-2 text-sm font-black">Boshlash ▶</button>}
+                    {item.kind === "lesson" && <button onClick={() => goScreen(item.screen || (item.id === "starter-math" ? "math" : item.id === "starter-english" ? "english" : "reading"))} className="mt-3 rounded-xl bg-indigo-600 text-white px-4 py-2 text-sm font-black">Boshlash ▶</button>}
                     {item.kind === "image" && item.image_url && <img src={item.image_url} alt={item.title} className="w-full h-36 object-cover rounded-xl mt-3"/>}
                     {activityFeedback[item.id] && item.kind === "lesson" && <p className="mt-2 text-sm font-black text-emerald-700">{activityFeedback[item.id]}</p>}
                   </div>
                 </article>
               ))}
             </div>
+            <section className="space-y-3">
+              <div><h3 className="text-xl md:text-2xl font-black text-slate-900">🎬 Bolalar uchun animatsion videolar</h3><p className="text-sm text-slate-600 font-semibold">YouTube’dagi ta’limiy videolar — mavzuni tanlab tomosha qil.</p></div>
+              <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                {learningVideos.map(video => (
+                  <article key={video.subject} className="overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-lg">
+                    <div className={"h-28 bg-gradient-to-br "+video.color+" flex items-center justify-center text-6xl"}>{video.emoji}</div>
+                    <div className="p-4"><div className="text-xs font-black text-indigo-600">{video.subject.toUpperCase()}</div><h4 className="font-black text-slate-900 mt-1">{video.title}</h4><p className="text-xs text-slate-600 mt-2 min-h-10">{video.description}</p><a href={video.url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 text-white px-3 py-2.5 text-sm font-black">▶ YouTube’da ko‘rish</a></div>
+                  </article>
+                ))}
+              </div>
+              <p className="text-xs text-slate-500">Eslatma: videolar YouTube’da ochiladi. Bolalar tomosha qilayotganda ota-ona nazorati va YouTube Kids’dan foydalanish tavsiya etiladi.</p>
+            </section>
           </div>
         );
       };
@@ -2189,7 +2213,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
           </div>
 
           {/* SUZIB YURUVCHI HAQIQIY ILOVA BOSHQARUV TUGMASI (Floating App Dock) */}
-          <div className="fixed bottom-20 right-4 z-30 flex items-center gap-2">
+          <div className="fixed bottom-20 left-4 z-30 flex items-center gap-2">
             {activeScreen !== 'dashboard' && activeScreen !== 'login' && (
               <button
                 onClick={() => goScreen('dashboard')}
