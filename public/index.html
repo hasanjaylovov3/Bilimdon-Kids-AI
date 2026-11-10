@@ -556,7 +556,9 @@
       const [isDrawing, setIsDrawing] = useState(false);
       const [strokeCount, setStrokeCount] = useState(0);
 
-      const [tutorReply, setTutorReply] = useState('Ajoyib! Endi ingliz tilida qo‘shiq aytib ko‘ramizmi?');
+      const [tutorReply, setTutorReply] = useState('');
+      const [chatMessages, setChatMessages] = useState([{ id: 'welcome', role: 'assistant', text: 'Ajoyib! Men AI Ustozman. Savolingni yoz yoki mikrofon orqali ayt.' }]);
+      const chatScrollRef = useRef(null);
       const [chatInput, setChatInput] = useState('');
       const [isAiLoading, setIsAiLoading] = useState(false);
       const [isAiSpeaking, setIsAiSpeaking] = useState(false);
@@ -564,6 +566,10 @@
 
       const liveVoiceRef = useRef(null);
       const liveTokenRef = useRef(null);
+      useEffect(() => {
+        const viewport = chatScrollRef.current;
+        if (viewport) viewport.scrollTop = viewport.scrollHeight;
+      }, [chatMessages, tutorReply, isAiLoading]);
       useEffect(() => {
         if (activeScreen !== "aitutor") return;
         let cancelled = false;
@@ -617,7 +623,11 @@
                 const inputText = message?.serverContent?.inputTranscription?.text;
                 if (inputText) setChatInput(inputText);
                 const outputText = message?.serverContent?.outputTranscription?.text;
-                if (outputText) setTutorReply(prev => prev.startsWith("Siz:") || prev.includes("ulanmoqda") || prev.includes("Tinglayapman") ? outputText : prev + outputText);
+                if (outputText) {
+                  if (!live.outputTranscript) setTutorReply('');
+                  live.outputTranscript = (live.outputTranscript || '') + outputText;
+                  setTutorReply(live.outputTranscript);
+                }
                 const parts = message?.serverContent?.modelTurn?.parts;
                 if (Array.isArray(parts)) for (const part of parts) {
                   const audioData = part?.inlineData?.data;
@@ -644,7 +654,7 @@
                     source.start(startAt);
                   } catch (audioError) { console.error("AI ovoz ijrosi:", audioError); }
                 }
-                if (message?.serverContent?.turnComplete) { live.turnComplete = true; if (!live.playingCount) { live.onSpeechEnd?.(); live.onSpeechEnd = null; live.speechStarted = false; } }
+                if (message?.serverContent?.turnComplete) { live.turnComplete = true; live.outputTranscript = ''; if (!live.playingCount) { live.onSpeechEnd?.(); live.onSpeechEnd = null; live.speechStarted = false; } }
               },
               onerror: error => { console.error("AI ovozli aloqa xatosi:", error); setTutorReply("Ovozli AI bilan aloqa uzildi. Mikrofon tugmasini qayta bosing."); },
               onclose: () => { if (liveVoiceRef.current === live) { live.running = false; liveConnectingRef.current = false; try { live.processor?.disconnect(); live.source?.disconnect(); live.stream?.getTracks()?.forEach(track => track.stop()); live.audioContext?.close(); } catch {} liveVoiceRef.current = null; setIsVoiceRec(false); setIsAiSpeaking(false); } }
@@ -1184,16 +1194,23 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
       const handleSendToAiTutor = async (overrideText) => {
         const text = (overrideText ?? chatInput).trim();
         if (!text || isAiLoading) return;
+        const messageId = Date.now();
+        const userMessageId = `user-${messageId}`;
+        const assistantMessageId = `assistant-${messageId}`;
         setChatInput('');
         setIsAiLoading(true);
-        setTutorReply('O‘ylab ko‘rayapman, hozir javob beraman! 🤔');
+        setChatMessages(prev => [...prev,
+          { id: userMessageId, role: 'user', text },
+          { id: assistantMessageId, role: 'assistant', text: 'O‘ylayapman...' }
+        ]);
         playSound('click', muted);
         try {
           const reply = await askBilimdonTutor(text, '', childName, selectedChildId);
-          setTutorReply(reply);
+          setChatMessages(prev => prev.map(message => message.id === assistantMessageId ? { ...message, text: reply } : message));
           playSound('success', muted);
-} catch (error) {
-          setTutorReply(error?.message || "AI ustoz bilan bog‘lanib bo‘lmadi. Birozdan keyin yana urinib ko‘r.");
+        } catch (error) {
+          const errorText = error?.message || "AI ustoz bilan bog‘lanib bo‘lmadi. Birozdan keyin yana urinib ko‘r.";
+          setChatMessages(prev => prev.map(message => message.id === assistantMessageId ? { ...message, text: errorText } : message));
         } finally {
           setIsAiLoading(false);
         }
@@ -1833,7 +1850,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
       // 8-EKRAN: AI USTOZ BILAN SUHBAT
       // ==========================================
       const renderAiTutorScreen = () => (
-        <div className="relative w-full rounded-[34px] overflow-hidden shadow-2xl border-4 border-indigo-400/70 bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#311042] p-6 md:p-8 min-h-[500px] flex flex-col justify-between text-white">
+        <div className="relative w-full h-full min-h-0 rounded-[34px] overflow-hidden shadow-2xl border-4 border-indigo-400/70 bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#311042] p-4 md:p-6 flex flex-col text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
@@ -1850,8 +1867,8 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center my-auto py-4">
-            <div className="lg:col-span-5 flex justify-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-0 py-3">
+            <div className="lg:col-span-5 flex justify-center items-center min-h-0">
               <Boy3DCharacter
                 outfit="lab"
                 pose="wave"
@@ -1860,16 +1877,31 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
               />
             </div>
 
-            <div className="lg:col-span-7 space-y-4">
-              <div className="bg-white text-slate-900 p-5 rounded-3xl rounded-bl-none shadow-2xl font-extrabold text-base md:text-lg leading-relaxed">
-                {isAiLoading ? '🤔 O‘ylayapman...' : tutorReply}
+            <div className="lg:col-span-7 flex flex-col gap-3 min-h-0">
+              <div ref={chatScrollRef} className="flex-1 min-h-[170px] max-h-[42vh] lg:max-h-[52vh] overflow-y-auto overscroll-contain rounded-2xl bg-indigo-950/45 border border-indigo-400/25 p-3 space-y-3 scroll-smooth">
+                {chatMessages.map((message) => (
+                  <div key={message.id} className={"flex " + (message.role === "user" ? "justify-end" : "justify-start")}>
+                    <div className={"max-w-[92%] whitespace-pre-wrap break-words [overflow-wrap:anywhere] rounded-2xl px-4 py-3 shadow-lg text-sm md:text-base leading-relaxed " + (message.role === "user" ? "bg-indigo-600 text-white rounded-br-md" : "bg-white text-slate-900 rounded-bl-md font-extrabold")}>
+                      {message.role === "assistant" && <div className="text-[10px] uppercase tracking-wide font-black text-indigo-500 mb-1">AI Ustoz javobi</div>}
+                      {message.text}
+                    </div>
+                  </div>
+                ))}
+                {tutorReply && (
+                  <div className="flex justify-start">
+                    <div className="max-w-[92%] whitespace-pre-wrap break-words [overflow-wrap:anywhere] rounded-2xl rounded-bl-md bg-white text-slate-900 px-4 py-3 shadow-lg font-extrabold text-sm md:text-base leading-relaxed">
+                      <div className="text-[10px] uppercase tracking-wide font-black text-indigo-500 mb-1">AI Ustoz javobi</div>
+                      {tutorReply}
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center gap-3 bg-indigo-950/80 border border-indigo-400/40 rounded-2xl p-3">
+              <div className="flex items-center gap-3 bg-indigo-950/80 border border-indigo-400/40 rounded-2xl p-3 shrink-0">
                 <button
                   onClick={() =>
                     speakTutorText(
-                      tutorReply,
+                      tutorReply || [...chatMessages].reverse().find(message => message.role === 'assistant')?.text || '',
                       'uz-UZ',
                       muted,
                       () => setIsAiSpeaking(true),
@@ -1921,7 +1953,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                 ))}
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 shrink-0">
                 <div className="flex-1 flex items-center bg-indigo-950/90 border-2 border-indigo-400/50 rounded-full px-5 py-3">
                   <input
                     type="text"
@@ -2109,7 +2141,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
           {/* HAQIQIY ILOVA EKRANI (To'liq ekranli Native App ko'rinishi, hech qanday ortiqcha web-preview satrlarisiz) */}
           <div className="w-full min-h-0 flex-1 flex items-stretch justify-center p-0 sm:p-2 md:p-4 pt-16 pb-24">
             <div className="w-full max-w-7xl mx-auto flex flex-col flex-1 min-h-0 items-stretch">
-              <div className="w-full flex-1 min-h-0 flex items-stretch overflow-y-auto overscroll-contain">
+              <div className={"w-full flex-1 min-h-0 flex items-stretch " + (activeScreen === "aitutor" ? "overflow-hidden" : "overflow-y-auto overscroll-contain")}>
               {activeScreen === 'login' && renderLoginScreen()}
               {activeScreen === 'dashboard' && renderDashboardScreen()}
               {activeScreen === 'math' && renderMathScreen()}
