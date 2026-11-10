@@ -20,28 +20,24 @@ const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GE
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash-lite";
 const TTS_MODEL = process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-lite-tts";
-async function generateTutorContent({ input, systemInstruction = tutorInstruction, temperature = 0.35, maxOutputTokens = 300 }) {
+async function generateTutorContent({ input, systemInstruction = tutorInstruction, temperature = 0.25, maxOutputTokens = 180 }) {
   if (!ai) throw new Error("GEMINI_API_KEY serverda sozlanmagan.");
-  const models = [...new Set([MODEL, FALLBACK_MODEL])];
+  const models = [...new Set([MODEL, FALLBACK_MODEL].filter(Boolean))];
   let lastError;
+  // Tezkor rejim: asosiy modelga bir marta murojaat qilamiz; faqat xato bo‘lsa zaxira model sinovdan o‘tadi.
   for (const model of models) {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        return await ai.interactions.create({
-          model, input, system_instruction: systemInstruction,
-          generation_config: { temperature, max_output_tokens: maxOutputTokens }, store: false
-        });
-      } catch (error) {
-        lastError = error;
-        const message = String(error?.message || "");
-        const transient = /429|503|500|502|504|UNAVAILABLE|high demand|overloaded|RESOURCE_EXHAUSTED/i.test(message) || [429,500,502,503,504].includes(Number(error?.status || error?.code));
-        if (!transient) throw error;
-        if (attempt === 0 && model === MODEL) await new Promise(resolve => setTimeout(resolve, 350));
-        else break;
-      }
+    try {
+      return await ai.interactions.create({
+        model, input, system_instruction: systemInstruction,
+        generation_config: { temperature, max_output_tokens: maxOutputTokens }, store: false
+      });
+    } catch (error) {
+      lastError = error;
+      const status = Number(error?.status || error?.code || 0);
+      if (status === 401 || status === 403 || /API key|permission|unauthorized/i.test(String(error?.message || ""))) throw error;
     }
   }
-  throw lastError || new Error("AI modellari vaqtincha javob bermayapti.");
+  throw lastError || new Error("AI modeli vaqtincha javob bermayapti.");
 }
 
 async function generateTutorSpeech(input) {
@@ -179,10 +175,46 @@ app.post("/api/auth/login", requireDb, authLimiter, async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+app.get("/api/ai/status", (_req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({ configured: Boolean(ai), model: MODEL, speechModel: TTS_MODEL, database: Boolean(pool), mode: "fast" });
+});
 app.get("/api/auth/me", requireDb, auth, async (req, res, next) => {
   try {
     const children = await pool.query("SELECT id,display_name,age FROM children WHERE parent_id=$1 ORDER BY created_at", [req.parent.id]);
     res.json({ parent: { ...req.parent, is_admin: Boolean(process.env.ADMIN_EMAIL && req.parent.email === process.env.ADMIN_EMAIL.toLowerCase()) }, children: children.rows });
+  } catch (error) { next(error); }
+});
+app.patch("/api/profile", requireDb, auth, async (req, res, next) => {
+  try {
+    const fullName = clean(req.body?.fullName);
+    const childName = clean(req.body?.childName);
+    const age = Number(req.body?.age);
+    const childId = clean(req.body?.childId);
+    const currentPassword = String(req.body?.currentPassword || "");
+    const newPassword = String(req.body?.newPassword || "");
+    if (fullName.length < 2 || fullName.length > 100 || childName.length < 1 || childName.length > 40 ||
+        !Number.isInteger(age) || age < 5 || age > 12 || !/^[0-9a-f-]{36}$/i.test(childId)) {
+      return res.status(400).json({ error: "Ism, bola ismi yoki yosh ma’lumotlarini tekshiring." });
+    }
+    const child = await pool.query("SELECT id FROM children WHERE id=$1 AND parent_id=$2", [childId, req.parent.id]);
+    if (!child.rowCount) return res.status(404).json({ error: "Bola profili topilmadi." });
+    if (newPassword) {
+      if (newPassword.length < 10 || newPassword.length > 72 || !currentPassword) {
+        return res.status(400).json({ error: "Yangi parol kamida 10 belgi bo‘lsin va joriy parolni kiriting." });
+      }
+      const stored = await pool.query("SELECT password_hash FROM parents WHERE id=$1", [req.parent.id]);
+      if (!stored.rowCount || !(await bcrypt.compare(currentPassword, stored.rows[0].password_hash))) {
+        return res.status(401).json({ error: "Joriy parol noto‘g‘ri." });
+      }
+      const hash = await bcrypt.hash(newPassword, 12);
+      await pool.query("UPDATE parents SET full_name=$1,password_hash=$2 WHERE id=$3", [fullName, hash, req.parent.id]);
+      await pool.query("DELETE FROM sessions WHERE parent_id=$1 AND token_hash<>$2", [req.parent.id, tokenHash(req.cookies.bk_session)]);
+    } else {
+      await pool.query("UPDATE parents SET full_name=$1 WHERE id=$2", [fullName, req.parent.id]);
+    }
+    const updatedChild = await pool.query("UPDATE children SET display_name=$1,age=$2 WHERE id=$3 AND parent_id=$4 RETURNING id,display_name,age", [childName, age, childId, req.parent.id]);
+    res.json({ parent: { id: req.parent.id, email: req.parent.email, full_name: fullName, is_admin: Boolean(process.env.ADMIN_EMAIL && req.parent.email === process.env.ADMIN_EMAIL.toLowerCase()) }, child: updatedChild.rows[0] });
   } catch (error) { next(error); }
 });
 app.post("/api/auth/logout", requireDb, async (req, res, next) => {
@@ -264,7 +296,7 @@ app.post("/api/ai/guest-tutor", aiLimiter, async (req, res, next) => {
       input: `O‘quvchi: ${childName}, yoshi: ${childAge}. Savoli: ${prompt}`,
       systemInstruction: tutorInstruction,
       temperature: 0.35,
-      maxOutputTokens: 300
+      maxOutputTokens: 180
     });
     const answer = clean(response.output_text);
     if (!answer) return res.status(502).json({ error: "AI bo‘sh javob qaytardi. Yana urinib ko‘ring." });
@@ -289,7 +321,7 @@ app.post("/api/ai/tutor", requireDb, auth, aiLimiter, async (req, res, next) => 
     if (!owned.rowCount) return res.status(404).json({ error: "O‘quvchi profili topilmadi." });
     const child = owned.rows[0];
     const history = await pool.query(
-      "SELECT role,message FROM ai_conversations WHERE child_id=$1 ORDER BY created_at DESC LIMIT 6",
+      "SELECT role,message FROM ai_conversations WHERE child_id=$1 ORDER BY created_at DESC LIMIT 4",
       [childId]
     );
     const transcript = history.rows.reverse().map(row => (row.role === "user" ? "Bola: " : "Ustoz: ") + row.message).join("\n");
@@ -335,6 +367,20 @@ app.get("/api/admin/overview", requireDb, auth, requireAdmin, async (_req, res, 
       pool.query("SELECT (SELECT COUNT(*)::int FROM parents) AS users,(SELECT COUNT(*)::int FROM children) AS children,(SELECT COUNT(*)::int FROM learning_content) AS content,(SELECT COUNT(*)::int FROM parents WHERE is_blocked=TRUE) AS blocked")
     ]);
     res.json({ users: users.rows, content: content.rows, stats: stats.rows[0] });
+  } catch (error) { next(error); }
+});
+app.patch("/api/admin/users/:id", requireDb, auth, requireAdmin, async (req, res, next) => {
+  try {
+    const fullName = clean(req.body?.fullName);
+    const childName = clean(req.body?.childName);
+    const age = Number(req.body?.age);
+    if (fullName.length < 2 || fullName.length > 100 || childName.length < 1 || childName.length > 40 || !Number.isInteger(age) || age < 5 || age > 12) {
+      return res.status(400).json({ error: "Foydalanuvchi yoki bola ma’lumotlarini tekshiring." });
+    }
+    const updated = await pool.query("UPDATE parents SET full_name=$1 WHERE id=$2 RETURNING id,full_name,email", [fullName, req.params.id]);
+    if (!updated.rowCount) return res.status(404).json({ error: "Foydalanuvchi topilmadi." });
+    const child = await pool.query("UPDATE children SET display_name=$1,age=$2 WHERE parent_id=$3 AND id=(SELECT id FROM children WHERE parent_id=$3 ORDER BY created_at LIMIT 1) RETURNING id,display_name,age", [childName, age, req.params.id]);
+    res.json({ user: updated.rows[0], child: child.rows[0] || null });
   } catch (error) { next(error); }
 });
 app.patch("/api/admin/users/:id/block", requireDb, auth, requireAdmin, async (req, res, next) => {
