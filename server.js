@@ -367,6 +367,16 @@ app.post("/api/admin/content", requireDb, auth, requireAdmin, async (req, res, n
         imageUrl.length > 1000 || (imageUrl && !imageUrl.startsWith("https://"))) {
       return res.status(400).json({ error: "Tur, sarlavha yoki HTTPS rasm havolasini tekshiring." });
     }
+    if (kind === "game") {
+      const options = Array.isArray(contentData.options) ? contentData.options.map(clean).filter(Boolean).slice(0, 6) : [];
+      const answer = clean(contentData.answer);
+      if (!clean(contentData.question) || options.length < 2 || !options.includes(answer)) {
+        return res.status(400).json({ error: "O‘yin savoli, kamida 2 ta variant va variantlar ichidagi to‘g‘ri javobni kiriting." });
+      }
+      contentData.options = options;
+      contentData.answer = answer;
+      contentData.question = clean(contentData.question).slice(0, 300);
+    }
     const result = await pool.query(
       "INSERT INTO learning_content(kind,title,description,image_url,content_data,is_published) VALUES($1,$2,$3,$4,$5,TRUE) RETURNING id,kind,title,description,image_url,content_data,is_published,created_at",
       [kind,title,description,imageUrl || null,JSON.stringify(contentData)]
