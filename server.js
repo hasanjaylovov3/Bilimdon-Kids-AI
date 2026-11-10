@@ -189,7 +189,7 @@ app.post("/api/ai/speech", aiLimiter, async (req, res, next) => {
     if (wav.length < 48 || wav.toString("ascii", 0, 4) !== "RIFF") {
       return res.status(502).json({ error: "Gemini audio formati noto‘g‘ri qaytdi." });
     }
-    // WAV ichidagi oxirgi 140 ms shovqinli qismni olib tashlab, 70 ms yumshoq yakunlaymiz.
+    // WAV ichidagi oxirgi 240 ms oxirgi shovqin qismini olib tashlab, 100 ms yumshoq yakunlaymiz.
     const dataMarker = wav.indexOf("data", 12, "ascii");
     if (dataMarker > 0) {
       const dataStart = dataMarker + 8;
@@ -199,10 +199,10 @@ app.post("/api/ai/speech", aiLimiter, async (req, res, next) => {
       const frameBytes = channels * bytesPerSample;
       const dataLength = wav.readUInt32LE(dataMarker + 4);
       const originalEnd = Math.min(wav.length, dataStart + dataLength);
-      const trimFrames = Math.floor(sampleRate * 0.14);
+      const trimFrames = Math.floor(sampleRate * 0.24);
       const trimBytes = Math.min(Math.max(0, originalEnd - dataStart - frameBytes * 8), trimFrames * frameBytes);
       const cleanEnd = originalEnd - trimBytes;
-      const fadeBytes = Math.min(cleanEnd - dataStart, Math.floor(sampleRate * 0.07) * frameBytes);
+      const fadeBytes = Math.min(cleanEnd - dataStart, Math.floor(sampleRate * 0.10) * frameBytes);
       for (let offset = cleanEnd - fadeBytes; offset + 1 < cleanEnd; offset += 2) {
         const progress = (offset - (cleanEnd - fadeBytes)) / Math.max(1, fadeBytes - 2);
         const gain = Math.cos(progress * Math.PI / 2);
