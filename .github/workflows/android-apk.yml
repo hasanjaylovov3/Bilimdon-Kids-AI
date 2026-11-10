@@ -87,20 +87,13 @@ jobs:
             throw new Error("AI tutor smoke test failed: " + JSON.stringify(tutor));
           }
           console.log("AI tutor: OK (" + (Date.now() - tutorStart) + " ms)");
-          const speechStart = Date.now();
-          const speechResponse = await fetch(base + "/api/ai/speech", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: "Salom, bolajon!" }),
-            signal: AbortSignal.timeout(90000)
+          const liveResponse = await fetch(base + "/api/live-token", {
+            signal: AbortSignal.timeout(90000),
+            headers: { "Cache-Control": "no-store" }
           });
-          const speech = await speechResponse.json();
-          if (!speechResponse.ok || typeof speech.audio !== "string" || speech.audio.length < 100) {
-            throw new Error("Uzbek TTS smoke test failed: " + JSON.stringify(speech));
+          const live = await liveResponse.json();
+          if (!liveResponse.ok || typeof live.token !== "string" || !live.model) {
+            throw new Error("Gemini Live token check failed: " + JSON.stringify(live));
           }
-          const wav = Buffer.from(speech.audio, "base64");
-          if (wav.toString("ascii", 0, 4) !== "RIFF" || wav.toString("ascii", 8, 12) !== "WAVE") {
-            throw new Error("TTS did not return a valid WAV file");
-          }
-          console.log("Uzbek TTS: OK (" + (Date.now() - speechStart) + " ms, " + wav.length + " bytes)");
+          console.log("Gemini Live token: OK (" + live.model + ")");
           NODE
