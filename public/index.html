@@ -61,7 +61,7 @@ let mode="login",profile=null,child=null,subject="math",items=[],idx=0,correct=0
 function buildLessons(){
  const age=Number(child?.age||7),max=age<=7?10:age<=9?20:50;
  const math=[];
- for(let n=0;n<4;n++){const a=2+Math.floor(Math.random()*max),b=1+Math.floor(Math.random()*Math.min(max,12)),op=n%3;let q,answer,why;if(op===0){q=a+" + "+b+" = ?";answer=a+b;why=a+" ga "+b+" ni qo'shsak, "+answer+" bo'ladi.";}else if(op===1){const high=Math.max(a,b),low=Math.min(a,b);q=high+" − "+low+" = ?";answer=high-low;why=high+" dan "+low+" ni ayirsak, "+answer+" qoladi.";}else{q=a+" × "+(1+Math.floor(Math.random()*5))+" = ?";const factor=Number(q.match(/× (\\d+)/)[1]);answer=a*factor;why=a+" ni "+factor+" ga ko'paytirsak, "+answer+" bo'ladi.";}const choices=new Set([answer,answer+1,Math.max(0,answer-1),answer+2]);const opts=[...choices].sort(()=>Math.random()-.5).slice(0,3);if(!opts.includes(answer))opts[0]=answer;math.push({q,a:opts.map(String),c:opts.indexOf(answer),why});}
+ for(let n=0;n<4;n++){const a=2+Math.floor(Math.random()*max),b=1+Math.floor(Math.random()*Math.min(max,12)),op=n%3;let q,answer,why;if(op===0){q=a+" + "+b+" = ?";answer=a+b;why=a+" ga "+b+" ni qo'shsak, "+answer+" bo'ladi.";}else if(op===1){const high=Math.max(a,b),low=Math.min(a,b);q=high+" − "+low+" = ?";answer=high-low;why=high+" dan "+low+" ni ayirsak, "+answer+" qoladi.";}else{const factor=1+Math.floor(Math.random()*5);q=a+" × "+factor+" = ?";answer=a*factor;why=a+" ni "+factor+" ga ko'paytirsak, "+answer+" bo'ladi.";}const choices=new Set([answer,answer+1,Math.max(0,answer-1),answer+2]);const opts=[...choices].sort(()=>Math.random()-.5).slice(0,3);if(!opts.includes(answer))opts[0]=answer;math.push({q,a:opts.map(String),c:opts.indexOf(answer),why});}
  return {
   math,
   reading:[
