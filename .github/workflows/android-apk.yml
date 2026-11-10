@@ -33,6 +33,9 @@ jobs:
       - name: Generate Android project
         run: npx cap add android
 
+      - name: Add Android camera and microphone permissions
+        run: node scripts/patch-android-permissions.js
+
       - name: Sync Android project
         run: npx cap sync android
 
