@@ -24,7 +24,7 @@ try {
     const tempFile = path.join(tempDir, "inline-" + index + "." + (isJsx ? "jsx" : type === "module" ? "mjs" : "js"));
     fs.writeFileSync(tempFile, source, "utf8");
     const result = isJsx
-      ? spawnSync("npx", ["--yes", "esbuild@0.25.0", tempFile, "--loader=jsx", "--outfile=" + tempFile + ".js", "--log-level=warning"], { cwd: root, stdio: "inherit" })
+      ? spawnSync("npx", ["--yes", "esbuild@0.25.0", tempFile, "--outfile=" + tempFile + ".js", "--log-level=warning"], { cwd: root, stdio: "inherit" })
       : spawnSync(process.execPath, ["--check", tempFile], { cwd: root, stdio: "inherit" });
     if (result.error) throw result.error;
     if (result.status !== 0) {
