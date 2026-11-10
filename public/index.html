@@ -1898,12 +1898,12 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
       // 8-EKRAN: AI USTOZ BILAN SUHBAT
       // ==========================================
       const renderAiTutorScreen = () => (
-        <div className="relative w-full h-full min-h-0 rounded-[34px] overflow-hidden shadow-2xl border-4 border-indigo-400/70 bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#311042] p-4 md:p-6 flex flex-col text-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+        <div className="relative w-full h-full min-h-0 max-h-full rounded-[28px] overflow-hidden shadow-2xl border-2 border-indigo-400/70 bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#311042] p-2 sm:p-3 md:p-4 flex flex-col text-white">
+          <div className="flex items-center justify-between shrink-0 pb-1">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => goScreen('dashboard')}
-                className="w-10 h-10 rounded-full bg-indigo-600 font-black text-lg flex items-center justify-center shadow border border-indigo-300"
+                className="w-9 h-9 rounded-full bg-indigo-600 font-black text-lg flex items-center justify-center shadow border border-indigo-300"
               >
                 A
               </button>
@@ -1915,18 +1915,18 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1 min-h-0 py-2">
-            <div className="order-2 lg:order-1 lg:col-span-5 flex justify-center items-center min-h-0">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-3 flex-1 min-h-0 py-1 overflow-hidden">
+            <div className="order-1 lg:order-1 lg:col-span-5 flex justify-center items-center min-h-0 h-20 sm:h-24 lg:h-auto overflow-hidden">
               <Boy3DCharacter
                 outfit="lab"
                 pose="wave"
-                size="lg"
+                size="sm"
                 isSpeaking={isAiSpeaking || isAiLoading}
               />
             </div>
 
-            <div className="order-1 lg:order-2 lg:col-span-7 flex flex-col gap-3 min-h-0">
-              <div ref={chatScrollRef} className="flex-1 min-h-[170px] max-h-[46vh] lg:max-h-[56vh] overflow-y-auto overscroll-contain rounded-2xl bg-indigo-950/45 border border-indigo-400/25 p-3 space-y-3 scroll-smooth">
+            <div className="order-2 lg:order-2 lg:col-span-7 flex flex-col gap-2 min-h-0 flex-1 overflow-hidden">
+              <div ref={chatScrollRef} className="flex-1 min-h-0 max-h-none overflow-y-auto overscroll-contain rounded-2xl bg-indigo-950/45 border border-indigo-400/25 p-2.5 space-y-2 scroll-smooth">
                 {chatMessages.map((message) => (
                   <div key={message.id} className={"flex " + (message.role === "user" ? "justify-end" : "justify-start")}>
                     <div className={"max-w-[92%] whitespace-pre-wrap break-words [overflow-wrap:anywhere] rounded-2xl px-4 py-3 shadow-lg text-sm md:text-base leading-relaxed " + (message.role === "user" ? "bg-indigo-600 text-white rounded-br-md" : "bg-white text-slate-900 rounded-bl-md font-extrabold")}>
@@ -1945,7 +1945,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                 )}
               </div>
 
-              <div className="flex items-center gap-3 bg-indigo-950/80 border border-indigo-400/40 rounded-2xl p-3 shrink-0">
+              <div className="flex items-center gap-2 bg-indigo-950/80 border border-indigo-400/40 rounded-2xl p-2 shrink-0">
                 <button
                   onClick={() =>
                     speakTutorText(
@@ -1956,7 +1956,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                       () => setIsAiSpeaking(false)
                     )
                   }
-                  className="w-11 h-11 rounded-full bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center shadow shrink-0 font-black"
+                  className="w-9 h-9 rounded-full bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center shadow shrink-0 font-black"
                 >
                   ▶
                 </button>
@@ -1976,7 +1976,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                 <button
                   onClick={handleVoiceMic}
                   title="Ovoz bilan gapirish"
-                  className={`w-11 h-11 rounded-full flex items-center justify-center shadow shrink-0 ${
+                  className={`w-9 h-9 rounded-full flex items-center justify-center shadow shrink-0 ${
                     isVoiceRec ? 'bg-rose-500 animate-ping' : 'bg-indigo-700 hover:bg-indigo-600'
                   }`}
                 >
@@ -1984,8 +1984,8 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                 </button>
               </div>
 
-              <div className="flex items-center gap-3 shrink-0">
-                <div className="flex-1 flex items-center bg-indigo-950/90 border-2 border-indigo-400/50 rounded-full px-5 py-3">
+              <div className="flex items-center gap-2 shrink-0 pb-0.5">
+                <div className="flex-1 min-w-0 flex items-center bg-indigo-950/90 border-2 border-indigo-400/50 rounded-full px-3 sm:px-4 py-2.5">
                   <input
                     type="text"
                     value={chatInput}
@@ -1998,7 +1998,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                 </div>
                 <button
                   onClick={() => handleSendToAiTutor()}
-                  className="w-12 h-12 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 flex items-center justify-center shadow-xl border-2 border-white/40 shrink-0 font-black"
+                  className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 flex items-center justify-center shadow-xl border-2 border-white/40 shrink-0 font-black"
                 >
                   ➤
                 </button>
