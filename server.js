@@ -134,26 +134,29 @@ app.post("/api/auth/logout", requireDb, async (req, res, next) => {
 });
 
 const SUBJECTS = new Set(["math", "reading", "writing", "english"]);
-const tutorInstruction = `Sen Bilimdon Kids platformasining 7–10 yoshli bolalar uchun mehribon, sabrli va bilimdon AI ustozisan.
-Asosiy til — ravon, grammatik jihatdan to'g'ri o'zbek tili. Bola boshqa tilni mashq qilayotgan bo'lsa, misollarni o'sha tilda ber, izohni sodda o'zbek tilida tushuntir.
-Matematika, o'qish, yozish va ingliz tilini kichik bosqichlarda o'rgat. Javoblar aniq, yoshga mos va odatda 2–5 qisqa gapdan iborat bo'lsin.
-Javobni darhol aytib qo'ymasdan, imkon bo'lsa bolani fikrlashga undaydigan bitta sodda savol ber. Xatolarni muloyim tuzat, hech qachon uyaltirma.
-Shaxsiy ma'lumot, manzil, telefon, parol yoki maktab nomini so'rama. Kattalar bilan bog'liq xavfli vaziyatlarda ishonchli kattaga murojaat qilishni ayt.
-Tibbiy, moliyaviy yoki xavfli ko'rsatmalar bermagin. O'zingni sun'iy intellekt yordamchisi ekaningni yashirma.`;
+const AI_SUBJECTS = new Set([...SUBJECTS, "general"]);
+const tutorInstruction = `Sen Bilimdon Kids platformasining 5–12 yoshli bolalar uchun mehribon, sabrli va bilimdon AI ustozisan.
+Asosiy til — adabiy, ravon, tabiiy va grammatik jihatdan to‘g‘ri o‘zbek tili (lotin yozuvi). Imlo, qo‘shimchalar va tinish belgilariga e’tibor ber. Sun’iy tarjimaga o‘xshagan jumlalar tuzma.
+Bola boshqa tilni mashq qilayotgan bo‘lsa, misollarni o‘sha tilda ber, izohni sodda o‘zbek tilida tushuntir.
+Matematika, o‘qish, yozish va ingliz tilini kichik bosqichlarda o‘rgat. Javoblar aniq, yoshga mos, quvnoq va odatda 2–4 qisqa gapdan iborat bo‘lsin.
+Javobni darhol aytib qo‘ymasdan, imkon bo‘lsa bolani fikrlashga undaydigan bitta sodda savol ber. Xatolarni muloyim tuzat, hech qachon uyaltirma. Ovoz chiqarib o‘qishga qulay, sodda jumlalardan foydalan.
+Shaxsiy ma’lumot, manzil, telefon, parol yoki maktab nomini so‘rama. Xavfli vaziyatlarda ishonchli kattaga murojaat qilishni ayt.
+Tibbiy, moliyaviy yoki xavfli ko‘rsatmalar bermagin. O‘zingni sun’iy intellekt yordamchisi ekaningni yashirma.`;
 
 app.post("/api/ai/guest-tutor", aiLimiter, async (req, res, next) => {
   try {
     if (!ai) return res.status(503).json({ error: "AI hozircha sozlanmagan. Gemini API kalitini Render Environment bo'limida tekshiring." });
     const prompt = clean(req.body?.promptText);
-    const childName = clean(req.body?.childName).slice(0, 40) || "Ali";
+    const childName = clean(req.body?.childName).slice(0, 40) || "Do‘stim";
+    const childAge = Math.min(12, Math.max(5, Number(req.body?.childAge) || 7));
     if (!prompt || prompt.length > 2000) return res.status(400).json({ error: "Savol 1–2000 belgi oralig'ida bo'lishi kerak." });
     const response = await ai.models.generateContent({
       model: MODEL,
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       config: {
-        systemInstruction: `Sen Bilimdon Kids dasturidagi 7 yoshli ${childName} ismli bolaning mehribon AI ustozisan. O'zbek tilida sodda, quvnoq va yoshga mos javob ber. Javob 1–3 qisqa gapdan oshmasin, bolani ruhlantir.`,
-        temperature: 0.75,
-        maxOutputTokens: 220
+        systemInstruction: tutorInstruction + ` Sen hozir ${childName} ismli ${childAge} yoshli bola bilan suhbatlashyapsan. Doimo adabiy, ravon va grammatik jihatdan to‘g‘ri o‘zbek tilida gapir. Iliq, quvnoq, mehribon ustoz ohangidan foydalan; murakkab atamalarni sodda misollar bilan tushuntir. Javoblaring tabiiy og‘zaki nutqqa mos, talaffuz qilishga qulay bo‘lsin. Odatda 2–4 qisqa gap yoz, bitta savol bilan bolani fikrlashga unda. Emoji me’yorida ishlat.`,
+        temperature: 0.65,
+        maxOutputTokens: 320
       }
     });
     const answer = clean(response.text);
@@ -172,7 +175,7 @@ app.post("/api/ai/tutor", requireDb, auth, aiLimiter, async (req, res, next) => 
     const childId = clean(req.body.childId);
     const message = clean(req.body.message);
     const subject = clean(req.body.subject);
-    if (!/^[0-9a-f-]{36}$/i.test(childId) || !SUBJECTS.has(subject) || !message || message.length > 2000) {
+    if (!/^[0-9a-f-]{36}$/i.test(childId) || !AI_SUBJECTS.has(subject) || !message || message.length > 2000) {
       return res.status(400).json({ error: "Savol yoki fan ma'lumoti noto'g'ri." });
     }
     const owned = await pool.query("SELECT display_name,age FROM children WHERE id=$1 AND parent_id=$2", [childId, req.parent.id]);
@@ -187,7 +190,7 @@ app.post("/api/ai/tutor", requireDb, auth, aiLimiter, async (req, res, next) => 
     const response = await ai.models.generateContent({
       model: MODEL,
       contents,
-      config: { systemInstruction: tutorInstruction, temperature: 0.65, maxOutputTokens: 500 }
+      config: { systemInstruction: tutorInstruction + " Javoblaring o‘zbek tilida ravon, tabiiy, quvnoq va bolaga tushunarli bo‘lsin. Ovozli o‘qishga mos qisqa jumlalardan foydalan.", temperature: 0.65, maxOutputTokens: 500 }
     });
     const answer = clean(response.text);
     if (!answer) throw new Error("Gemini bo'sh javob qaytardi.");
