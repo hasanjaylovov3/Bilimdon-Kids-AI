@@ -1,7 +1,7 @@
 name: Validate Bilimdon Kids
 on:
   push:
-    branches: [main]
+    branches: [main, feature/integrate-legacy-kids-ui]
   pull_request:
     branches: [main]
   workflow_dispatch:
