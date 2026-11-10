@@ -21,7 +21,7 @@ const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash-lite";
 const LIVE_MODEL = process.env.GEMINI_LIVE_MODEL || "gemini-3.1-flash-live-preview";
 async function generateTutorContent({ input, systemInstruction = tutorInstruction, temperature = 0.25, maxOutputTokens = 180 }) {
-  if (!ai) throw new Error("GEMINI_API_KEY serverda sozlanmagan.");
+  if (!ai) throw new Error("AI Ustoz kaliti serverda sozlanmagan.");
   const models = [...new Set([MODEL, FALLBACK_MODEL].filter(Boolean))];
   let lastError;
   // Tezkor rejim: asosiy modelga bir marta murojaat qilamiz; faqat xato bo‘lsa zaxira model sinovdan o‘tadi.
@@ -90,7 +90,7 @@ app.get("/api/health", async (_req, res) => {
     try { await pool.query("SELECT 1"); database = "ok"; }
     catch { database = "error"; }
   }
-  res.json({ ok: true, service: "bilimdon-kids-api", database, gemini: Boolean(ai) });
+  res.json({ ok: true, service: "bilimdon-kids-api", database, aiConfigured: Boolean(ai) });
 });
 
 app.post("/api/auth/register", requireDb, authLimiter, async (req, res, next) => {
@@ -276,7 +276,7 @@ app.post("/api/ai/guest-tutor", aiLimiter, async (req, res, next) => {
 });
 app.post("/api/ai/tutor", requireDb, auth, aiLimiter, async (req, res, next) => {
   try {
-    if (!ai) return res.status(503).json({ error: "AI kaliti serverda sozlanmagan. Administrator Gemini kalitini tekshirishi kerak." });
+    if (!ai) return res.status(503).json({ error: "AI Ustoz xizmati sozlanmagan. Administrator AI kalitini tekshirishi kerak." });
     const childId = clean(req.body.childId);
     const message = clean(req.body.message);
     const subject = clean(req.body.subject);
