@@ -1,7 +1,7 @@
-const fs = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
 
 const htmlPath = path.join(__dirname, "..", "public", "index.html");
 const html = fs.readFileSync(htmlPath, "utf8");
