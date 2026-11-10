@@ -632,10 +632,10 @@
                     for (let i = 0; i < samples.length; i++) channel[i] = samples[i] / 32768;
                     const source = audioContext.createBufferSource();
                     source.buffer = buffer;
-                    source.playbackRate.value = 1.12;
+                    source.playbackRate.value = 1.15;
                     source.connect(audioContext.destination);
                     const startAt = Math.max(audioContext.currentTime, live.nextAudioTime);
-                    live.nextAudioTime = startAt + buffer.duration;
+                    live.nextAudioTime = startAt + buffer.duration / 1.15;
                     live.playingCount++;
                     setIsAiSpeaking(true);
                     source.onended = () => { live.playingCount = Math.max(0, live.playingCount - 1); if (!live.playingCount) setIsAiSpeaking(false); };
@@ -649,7 +649,7 @@
           });
           live.stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
           live.source = audioContext.createMediaStreamSource(live.stream);
-          live.processor = audioContext.createScriptProcessor(4096, 1, 1);
+          live.processor = audioContext.createScriptProcessor(2048, 1, 1);
           let turnActive = false;
           let silentFrames = 0;
           live.processor.onaudioprocess = event => {
@@ -657,7 +657,7 @@
             const input = event.inputBuffer.getChannelData(0);
             let energy = 0;
             for (let i = 0; i < input.length; i++) energy += input[i] * input[i];
-            const speaking = Math.sqrt(energy / input.length) >= 0.015;
+            const speaking = Math.sqrt(energy / input.length) >= 0.01;
             if (speaking && !turnActive) { turnActive = true; silentFrames = 0; live.session.sendRealtimeInput({ activityStart: {} }); }
             if (!turnActive) return;
             const pcm = new Int16Array(input.length);
@@ -667,7 +667,7 @@
             for (let i = 0; i < raw.length; i += 0x8000) binary += String.fromCharCode(...raw.subarray(i, Math.min(i + 0x8000, raw.length)));
             live.session.sendRealtimeInput({ audio: { data: btoa(binary), mimeType: "audio/pcm;rate=16000" } });
             if (speaking) silentFrames = 0;
-            else if (++silentFrames >= 12) { live.session.sendRealtimeInput({ activityEnd: {} }); turnActive = false; silentFrames = 0; }
+            else if (++silentFrames >= 5) { live.session.sendRealtimeInput({ activityEnd: {} }); turnActive = false; silentFrames = 0; }
           };
           const silentGain = audioContext.createGain();
           silentGain.gain.value = 0;
@@ -2081,7 +2081,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                     <h3 className="font-black text-lg text-slate-900 mt-1">{item.title}</h3>
                     <p className="text-sm text-slate-600 mt-2">{item.description}</p>
                     {item.kind === "game" && (item.options?.length > 1 || item.content_data?.options?.length > 1) && <div className="mt-3 space-y-2"><p className="font-black text-slate-800">{item.question || item.content_data?.question}</p><div className="grid grid-cols-1 gap-2">{(item.options || item.content_data?.options || []).map(option => <button key={option} onClick={() => { const answer = item.answer || item.content_data?.answer; const right = option === answer; setActivityFeedback(prev => ({ ...prev, [item.id]: right ? "Barakalla! To‘g‘ri javob! 🎉" : "Yana urinib ko‘r! 💡" })); if (right) setStars(value => value + 5); }} className="rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-slate-800 p-2 text-sm font-black">{option}</button>)}</div>{activityFeedback[item.id] && <p className="text-sm font-black text-emerald-700">{activityFeedback[item.id]}</p>}</div>}
-                    {item.kind === "lesson" && <button onClick={() => setActivityFeedback(prev => ({ ...prev, [item.id]: "Mashg‘ulot boshlandi! Diqqat bilan o‘rgan. 🌟" }))} className="mt-3 rounded-xl bg-indigo-600 text-white px-4 py-2 text-sm font-black">Boshlash ▶</button>}
+                    {item.kind === "lesson" && <button onClick={() => goScreen(item.id === "starter-math" ? "math" : item.id === "starter-english" ? "english" : "reading")} className="mt-3 rounded-xl bg-indigo-600 text-white px-4 py-2 text-sm font-black">Boshlash ▶</button>}
                     {item.kind === "image" && item.image_url && <img src={item.image_url} alt={item.title} className="w-full h-36 object-cover rounded-xl mt-3"/>}
                     {activityFeedback[item.id] && item.kind === "lesson" && <p className="mt-2 text-sm font-black text-emerald-700">{activityFeedback[item.id]}</p>}
                   </div>
@@ -2096,7 +2096,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
       return (
         <div className="h-[100dvh] w-screen bg-slate-950 text-slate-800 flex flex-col overflow-hidden relative">
           {activeScreen !== 'login' && <header className="fixed top-0 inset-x-0 z-40 h-16 px-4 md:px-8 bg-slate-950/95 backdrop-blur-xl border-b border-white/10 flex items-center justify-between text-white">
-            <div className="flex items-center gap-2.5 min-w-0"><div className="w-10 h-10 rounded-xl bg-blue-600/90 border-2 border-cyan-300 shadow-lg flex items-center justify-center shrink-0 -rotate-6"><span className="text-2xl">🎓</span></div><div className="leading-[0.9]"><div className="font-black text-[17px] tracking-tight text-white" style={{WebkitTextStroke:'0.35px #1e3a8a'}}>Bilimdon</div><div className="font-black text-[17px] tracking-tight text-amber-300" style={{WebkitTextStroke:'0.35px #78350f'}}>Kids</div><div className="text-[8px] text-slate-300 font-extrabold mt-1">O‘rgan, o‘yna, rivojlan!</div></div></div>
+            <div className="flex items-center gap-2.5 min-w-0"><div className="w-10 h-10 rounded-xl bg-blue-600/90 border-2 border-cyan-300 shadow-lg flex items-center justify-center shrink-0 -rotate-6"><span className="text-2xl">🎓</span></div><div className="leading-[0.9]"><div className="font-black text-[17px] tracking-tight text-white" style={{WebkitTextStroke:'0.35px #1e3a8a'}}>Bilimdon</div><div className="font-black text-[17px] tracking-tight text-amber-300" style={{WebkitTextStroke:'0.35px #78350f'}}>Kids AI</div><div className="text-[8px] text-slate-300 font-extrabold mt-1">O‘rgan, o‘yna, rivojlan!</div></div></div>
             <div className="flex items-center gap-3"><span className="font-black text-sm max-w-32 truncate">{childName}</span><button onClick={()=>goScreen('settings')} className="w-10 h-10 rounded-xl bg-white/10 border border-white/10" aria-label="Sozlamalar">⚙️</button></div>
           </header>}
           {activeScreen !== 'login' && <nav className="fixed bottom-0 inset-x-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 px-2 py-2 grid grid-cols-5 gap-1">
