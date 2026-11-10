@@ -539,7 +539,7 @@
       const [muted, setMuted] = useState(false);
 
       const [mathIdx, setMathIdx] = useState(0);
-      const [selectedMath, setSelectedMath] = useState(11);
+      const [selectedMath, setSelectedMath] = useState(null);
       const [mathFeedback, setMathFeedback] = useState('Ajoyib! To‘g‘ri javob! 🎉');
 
       const [engIdx, setEngIdx] = useState(0);
@@ -581,13 +581,13 @@
         if (liveVoiceRef.current?.running || liveConnectingRef.current) return;
         liveConnectingRef.current = true;
         setIsVoiceRec(true);
-        setTutorReply("Gemini Live ulanmoqda. Mikrofonni yoqing va savolingizni ayting...");
+        setTutorReply("AI Ustoz ulanmoqda. Mikrofonni yoqing va savolingizni ayting...");
         try {
           if (!navigator.mediaDevices?.getUserMedia) throw new Error("Mikrofon uchun HTTPS va ruxsat kerak.");
           const { GoogleGenAI } = await import("https://esm.sh/@google/genai");
           const tokenResponse = await fetch("/api/live-token", { credentials: "same-origin", cache: "no-store" });
           const tokenData = await tokenResponse.json().catch(() => ({}));
-          if (!tokenResponse.ok || !tokenData.token) throw new Error(tokenData.error || "Gemini Live token olinmadi.");
+          if (!tokenResponse.ok || !tokenData.token) throw new Error(tokenData.error || "Ovozli AI xizmati ulanmayapti.");
           const audioContext = new AudioContext({ sampleRate: 16000 });
           await audioContext.resume();
           const client = new GoogleGenAI({ apiKey: tokenData.token, httpOptions: { apiVersion: "v1alpha" } });
@@ -595,9 +595,9 @@
           liveVoiceRef.current = live;
           live.session = await client.live.connect({
             model: tokenData.model,
-            config: { responseModalities: ["AUDIO"], inputAudioTranscription: {}, outputAudioTranscription: {}, realtimeInputConfig: { automaticActivityDetection: { disabled: true } } },
+            config: { responseModalities: ["AUDIO"], inputAudioTranscription: {}, outputAudioTranscription: {}, realtimeInputConfig: { automaticActivityDetection: { disabled: true } }, systemInstruction: "Sen Bilimdon Kids AI platformasining mehribon o‘zbek tilida gapiradigan AI Ustozisan. 5–12 yoshli bolaga qisqa, aniq va quvnoq javob ber. Har bir savolga faqat bir marta javob qaytar. Javobni tez boshlagin va ortiqcha izoh bermagin.", sessionResumption: {}, thinkingConfig: { thinkingLevel: "minimal" } },
             callbacks: {
-              onopen: () => console.info("Bilimdon Kids Gemini Live ulandi"),
+              onopen: () => console.info("BILIMDON KIDS AI ovozli tizimi ulandi"),
               onmessage: message => {
                 const inputText = message?.serverContent?.inputTranscription?.text;
                 if (inputText) setChatInput(inputText);
@@ -606,7 +606,7 @@
                 const parts = message?.serverContent?.modelTurn?.parts;
                 if (Array.isArray(parts)) for (const part of parts) {
                   const audioData = part?.inlineData?.data;
-                  if (!audioData || !live.running) continue;
+                  if (!audioData) continue;
                   try {
                     const binary = atob(audioData);
                     const bytes = new Uint8Array(binary.length);
@@ -617,6 +617,7 @@
                     for (let i = 0; i < samples.length; i++) channel[i] = samples[i] / 32768;
                     const source = audioContext.createBufferSource();
                     source.buffer = buffer;
+                    source.playbackRate.value = 1.12;
                     source.connect(audioContext.destination);
                     const startAt = Math.max(audioContext.currentTime, live.nextAudioTime);
                     live.nextAudioTime = startAt + buffer.duration;
@@ -627,7 +628,7 @@
                   } catch (audioError) { console.error("Gemini Live audio playback:", audioError); }
                 }
               },
-              onerror: error => { console.error("Gemini Live error:", error); setTutorReply("Ovozli AI bilan aloqa uzildi. Mikrofon tugmasini qayta bosing."); },
+              onerror: error => { console.error("AI ovozli aloqa xatosi:", error); setTutorReply("Ovozli AI bilan aloqa uzildi. Mikrofon tugmasini qayta bosing."); },
               onclose: () => { if (liveVoiceRef.current === live) { live.running = false; liveConnectingRef.current = false; try { live.processor?.disconnect(); live.source?.disconnect(); live.stream?.getTracks()?.forEach(track => track.stop()); live.audioContext?.close(); } catch {} liveVoiceRef.current = null; setIsVoiceRec(false); setIsAiSpeaking(false); } }
             }
           });
@@ -664,9 +665,9 @@
           setTutorReply("Tinglayapman! Savolingizni ayting. Tugatganingizdan keyin javob beraman.");
         } catch (error) {
           liveConnectingRef.current = false;
-          console.error("Bilimdon Kids Live start error:", error);
+          console.error("AI Ustoz ovozli ishga tushirish xatosi:", error);
           stopLiveTutor();
-          setTutorReply(error?.message || "Gemini Live ishga tushmadi. Mikrofon ruxsatini tekshiring.");
+          setTutorReply(error?.message || "AI Ustoz ishga tushmadi. Mikrofon ruxsatini tekshiring.");
         }
       };
       const speakTutorText = async (text, lang = 'uz-UZ', muted = false) => {
@@ -1120,7 +1121,6 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
           playSound('success', muted);
           setMathFeedback('Ajoyib! To‘g‘ri javob! 🎉');
           setStars((s) => s + 10);
-          speakTutorText('Ajoyib! To‘g‘ri javob!', 'uz-UZ', muted);
           setTimeout(() => {
             const next = (mathIdx + 1) % MATH_QUESTIONS.length;
             setMathIdx(next);
@@ -1163,7 +1163,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
         }
       };
 
-      const handleSendToGemini = async (overrideText) => {
+      const handleSendToAiTutor = async (overrideText) => {
         const text = (overrideText ?? chatInput).trim();
         if (!text || isAiLoading) return;
         setChatInput('');
@@ -1439,6 +1439,36 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
       // ==========================================
       // 4-EKRAN: INGLIZ TILI
       // ==========================================
+      const renderMathScreen = () => {
+        const current = MATH_QUESTIONS[mathIdx];
+        return (
+          <div className="w-full min-h-[500px] rounded-[30px] bg-gradient-to-br from-amber-50 via-white to-orange-100 border-4 border-amber-200 p-5 md:p-8 flex flex-col gap-6">
+            <div className="flex items-center justify-between gap-3">
+              <button onClick={() => goScreen('dashboard')} className="rounded-xl bg-slate-800 text-white px-4 py-2 font-black">← Orqaga</button>
+              <div className="rounded-full bg-amber-100 text-amber-900 px-4 py-2 font-black">⭐ {stars}</div>
+            </div>
+            <div className="text-center space-y-2">
+              <div className="text-5xl">🧮</div>
+              <h2 className="text-3xl font-black text-slate-900">Matematika mashg‘uloti</h2>
+              <p className="text-slate-600 font-bold">To‘g‘ri javobni tanla. Har bir to‘g‘ri javob uchun 10 yulduz olasan.</p>
+              <p className="text-sm text-slate-500 font-bold">Savol {mathIdx + 1} / {MATH_QUESTIONS.length}</p>
+            </div>
+            <div className="mx-auto w-full max-w-2xl rounded-[28px] bg-white border-2 border-amber-200 shadow-lg p-6 md:p-8 text-center">
+              <div className="text-4xl md:text-6xl font-black text-slate-900">{current.q}</div>
+              <div className="grid grid-cols-2 gap-3 mt-7">
+                {current.options.map(option => {
+                  const chosen = selectedMath === option;
+                  const correct = chosen && option === current.answer;
+                  const wrong = chosen && option !== current.answer;
+                  return <button key={option} onClick={() => handleMathOption(option)} className={"rounded-2xl border-2 p-4 text-2xl font-black transition focus:outline-none focus:ring-4 focus:ring-amber-200 " + (correct ? "bg-emerald-100 border-emerald-500 text-emerald-900" : wrong ? "bg-rose-100 border-rose-400 text-rose-900" : "bg-amber-50 border-amber-200 text-slate-900 hover:bg-amber-100")}>{option}</button>;
+                })}
+              </div>
+              <p className={"mt-5 text-lg font-black " + (mathFeedback.includes("Yana") ? "text-rose-600" : "text-emerald-700")}>{mathFeedback}</p>
+            </div>
+          </div>
+        );
+      };
+
       const renderEnglishScreen = () => {
         const item = ENGLISH_WORDS[engIdx];
         return (
@@ -1794,7 +1824,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
               >
                 A
               </button>
-              <h2 className="font-black text-xl md:text-2xl">AI O‘qituvchi bilan suhbat</h2>
+              <div><h2 className="font-black text-xl md:text-2xl">AI Ustoz</h2><p className="text-xs font-black text-cyan-200">BILIMDON KIDS AI</p></div>
             </div>
             <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-950/90 border border-emerald-400/50 text-emerald-300 text-xs font-black">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
@@ -1880,7 +1910,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSendToGemini()}
-                    placeholder="Savolingizni yozing..."
+                    placeholder="AI Ustozga savolingizni yozing..."
                     className="w-full bg-transparent outline-none text-sm font-bold text-white placeholder-indigo-300"
                   />
                   <span className="text-amber-300">✨</span>
@@ -2014,12 +2044,38 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
         </div>
       );
 
-      const renderActivitiesScreen = () => (
-        <div className="w-full min-h-full rounded-[28px] bg-gradient-to-br from-sky-100 via-white to-violet-100 p-5 md:p-8 space-y-5">
-          <div><h2 className="text-2xl md:text-3xl font-black text-slate-900">📚 Yangi mashg‘ulotlar</h2><p className="text-slate-600 font-semibold">Ustoz qo‘shgan rasmlar, mashg‘ulotlar va o‘yinlar</p></div>
-          {activityItems.length===0?<div className="rounded-2xl bg-white p-6 text-slate-500 font-bold">Hozircha yangi material yo‘q. Tez orada yangilari qo‘shiladi!</div>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{activityItems.map(item=><article key={item.id} className="overflow-hidden rounded-2xl bg-white shadow-lg border border-slate-100">{item.image_url&&<img src={item.image_url} alt={item.title} className="w-full h-44 object-cover"/>}<div className="p-4"><div className="text-xs font-black text-indigo-500">{item.kind==='lesson'?'📘 MASHG‘ULOT':item.kind==='image'?'🖼️ RASM':'🎮 O‘YIN'}</div><h3 className="font-black text-lg text-slate-900 mt-1">{item.title}</h3><p className="text-sm text-slate-600 mt-2">{item.description}</p>{item.kind==='game'&&item.content_data?.options?.length>1&&<div className="mt-3 space-y-2"><p className="font-black text-slate-800">{item.content_data.question}</p><div className="grid grid-cols-2 gap-2">{item.content_data.options.map(option=><button key={option} onClick={()=>setActivityFeedback(prev=>({...prev,[item.id]:option===item.content_data.answer?'Barakalla! To‘g‘ri javob! 🎉':'Yana urinib ko‘r! 💡'}))} className="rounded-xl bg-indigo-50 text-indigo-800 p-2 text-sm font-black">{option}</button>)}</div>{activityFeedback[item.id]&&<p className="text-sm font-black text-emerald-700">{activityFeedback[item.id]}</p>}</div>}</div></article>)}</div>}
-        </div>
-      );
+      const renderActivitiesScreen = () => {
+        const builtInActivities = [
+          { id: "starter-math", kind: "lesson", title: "Qo‘shish va ayirish", description: "1 dan 20 gacha sonlarni qo‘shish va ayirishni misollar orqali mashq qil.", emoji: "🧮" },
+          { id: "starter-english", kind: "lesson", title: "Inglizcha ilk so‘zlar", description: "Apple — olma, Cat — mushuk, Book — kitob. So‘zlarni yodlab, ma’nosini top.", emoji: "🇬🇧" },
+          { id: "starter-reading", kind: "lesson", title: "O‘qish va tushunish", description: "Qisqa gapni o‘qi, undagi qahramon va predmetlarni top.", emoji: "📖" },
+          { id: "game-fruit", kind: "game", title: "Mevalarni top", description: "Savolga to‘g‘ri javobni tanla.", emoji: "🍎", question: "Qaysi biri meva?", options: ["Olma", "Stol", "Kitob"], answer: "Olma" },
+          { id: "game-math", kind: "game", title: "Tezkor hisob", description: "Oddiy misolni yechib ko‘r.", emoji: "⭐", question: "8 + 5 nechaga teng?", options: ["12", "13", "14"], answer: "13" },
+          { id: "game-english", kind: "game", title: "Inglizcha so‘z", description: "Inglizcha so‘zning o‘zbekcha ma’nosini top.", emoji: "🔤", question: "“Cat” so‘zining ma’nosi nima?", options: ["It", "Mushuk", "Qush"], answer: "Mushuk" }
+        ];
+        const allActivities = [...builtInActivities, ...activityItems];
+        return (
+          <div className="w-full min-h-full rounded-[28px] bg-gradient-to-br from-sky-100 via-white to-violet-100 p-5 md:p-8 space-y-5">
+            <div><h2 className="text-2xl md:text-3xl font-black text-slate-900">📚 Mashg‘ulotlar</h2><p className="text-slate-600 font-semibold">Darslarni o‘rgan, savollarga javob ber va o‘yinlarda yulduz to‘pla!</p></div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {allActivities.map(item => (
+                <article key={item.id} className="overflow-hidden rounded-2xl bg-white shadow-lg border border-slate-100">
+                  <div className="h-28 bg-gradient-to-br from-indigo-100 to-amber-100 flex items-center justify-center text-5xl">{item.emoji || (item.kind === "game" ? "🎮" : item.kind === "image" ? "🖼️" : "📘")}</div>
+                  <div className="p-4">
+                    <div className="text-xs font-black text-indigo-500">{item.kind === "lesson" ? "📘 MASHG‘ULOT" : item.kind === "image" ? "🖼️ RASM" : "🎮 O‘YIN"}</div>
+                    <h3 className="font-black text-lg text-slate-900 mt-1">{item.title}</h3>
+                    <p className="text-sm text-slate-600 mt-2">{item.description}</p>
+                    {item.kind === "game" && (item.options?.length > 1 || item.content_data?.options?.length > 1) && <div className="mt-3 space-y-2"><p className="font-black text-slate-800">{item.question || item.content_data?.question}</p><div className="grid grid-cols-1 gap-2">{(item.options || item.content_data?.options || []).map(option => <button key={option} onClick={() => { const answer = item.answer || item.content_data?.answer; const right = option === answer; setActivityFeedback(prev => ({ ...prev, [item.id]: right ? "Barakalla! To‘g‘ri javob! 🎉" : "Yana urinib ko‘r! 💡" })); if (right) setStars(value => value + 5); }} className="rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-slate-800 p-2 text-sm font-black">{option}</button>)}</div>{activityFeedback[item.id] && <p className="text-sm font-black text-emerald-700">{activityFeedback[item.id]}</p>}</div>}
+                    {item.kind === "lesson" && <button onClick={() => setActivityFeedback(prev => ({ ...prev, [item.id]: "Mashg‘ulot boshlandi! Diqqat bilan o‘rgan. 🌟" }))} className="mt-3 rounded-xl bg-indigo-600 text-white px-4 py-2 text-sm font-black">Boshlash ▶</button>}
+                    {item.kind === "image" && item.image_url && <img src={item.image_url} alt={item.title} className="w-full h-36 object-cover rounded-xl mt-3"/>}
+                    {activityFeedback[item.id] && item.kind === "lesson" && <p className="mt-2 text-sm font-black text-emerald-700">{activityFeedback[item.id]}</p>}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        );
+      };
 
 
       return (
@@ -2150,8 +2206,8 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
           {/* AI SOZLAMALARI */}
           {showApiModal && <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4"><div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-cyan-300/30 space-y-4">
             <div className="flex items-center justify-between"><div><h3 className="font-black text-xl text-cyan-200">⚡ AI sozlamalari</h3><p className="text-xs text-slate-400">Tezkor javob va ovoz holati</p></div><button onClick={() => setShowApiModal(false)} className="px-3 py-2 rounded-xl bg-white/10">✕</button></div>
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-4 space-y-3"><div className="flex items-center justify-between gap-3"><span className="text-sm text-slate-300">Gemini AI</span><span className={'rounded-full px-3 py-1 text-xs font-black '+(aiStatus?.configured?'bg-emerald-400/15 text-emerald-300':'bg-rose-400/15 text-rose-300')}>{aiStatusLoading?'Tekshirilmoqda...':aiStatus?.configured?'Kalit sozlangan':'Ulanmagan'}</span></div><div className="flex items-center justify-between gap-3"><span className="text-sm text-slate-300">Ovoz modeli</span><span className="text-xs font-bold text-cyan-200">{aiStatus?.liveModel || 'Gemini Live'}</span></div><div className="flex items-center justify-between gap-3"><span className="text-sm text-slate-300">Javob rejimi</span><span className="text-xs font-black text-emerald-300">Tezkor</span></div>{aiStatus?.model && <p className="text-xs text-slate-400">Model: {aiStatus.model}</p>}{aiStatus?.error && <p className="text-xs text-rose-300">{aiStatus.error}</p>}</div>
-            <p className="text-sm text-slate-300">Gemini kaliti serverda saqlanadi. Javob tezligi uchun qisqa suhbat tarixi va ixcham javob rejimi ishlaydi.</p><div className="grid grid-cols-2 gap-2"><button onClick={refreshAiStatus} className="rounded-xl bg-white/10 border border-white/10 px-3 py-3 text-sm font-black">↻ Qayta tekshirish</button><button onClick={() => setShowApiModal(false)} className="rounded-xl bg-cyan-400 px-3 py-3 text-sm font-black text-slate-950">Yopish</button></div>
+            <div className="rounded-2xl bg-white/5 border border-white/10 p-4 space-y-3"><div className="flex items-center justify-between gap-3"><span className="text-sm text-slate-300">BILIMDON KIDS AI</span><span className={'rounded-full px-3 py-1 text-xs font-black '+(aiStatus?.configured?'bg-emerald-400/15 text-emerald-300':'bg-rose-400/15 text-rose-300')}>{aiStatusLoading?'Tekshirilmoqda...':aiStatus?.configured?'Kalit sozlangan':'Ulanmagan'}</span></div><div className="flex items-center justify-between gap-3"><span className="text-sm text-slate-300">Ovoz modeli</span><span className="text-xs font-bold text-cyan-200">AI Ustoz</span></div><div className="flex items-center justify-between gap-3"><span className="text-sm text-slate-300">Javob rejimi</span><span className="text-xs font-black text-emerald-300">Tezkor</span></div>{aiStatus?.error && <p className="text-xs text-rose-300">{aiStatus.error}</p>}</div>
+            <p className="text-sm text-slate-300">AI Ustoz tezkor ovozli suhbat va qisqa javoblar rejimida ishlaydi.</p><div className="grid grid-cols-2 gap-2"><button onClick={refreshAiStatus} className="rounded-xl bg-white/10 border border-white/10 px-3 py-3 text-sm font-black">↻ Qayta tekshirish</button><button onClick={() => setShowApiModal(false)} className="rounded-xl bg-cyan-400 px-3 py-3 text-sm font-black text-slate-950">Yopish</button></div>
           </div></div>}
           {/* PROFIL MA’LUMOTLARINI TAHRIRLASH */}
           {showProfileModal && <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"><div className="bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 text-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-emerald-300/30 space-y-4">
