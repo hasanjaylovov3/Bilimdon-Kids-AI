@@ -606,7 +606,7 @@
           const audioContext = new AudioContext({ sampleRate: 16000 });
           await audioContext.resume();
           const client = new GoogleGenAI({ apiKey: tokenData.token, httpOptions: { apiVersion: "v1alpha" } });
-          const live = { running: false, audioContext, session: null, stream: null, source: null, processor: null, nextAudioTime: audioContext.currentTime, playingCount: 0 };
+          const live = { running: false, audioContext, session: null, stream: null, source: null, processor: null, nextAudioTime: audioContext.currentTime, playingCount: 0, turnComplete: false };
           liveVoiceRef.current = live;
           live.session = await client.live.connect({
             model: tokenData.model,
@@ -622,6 +622,7 @@
                 if (Array.isArray(parts)) for (const part of parts) {
                   const audioData = part?.inlineData?.data;
                   if (!audioData) continue;
+                  live.turnComplete = false;
                   try {
                     if (!live.speechStarted) { live.speechStarted = true; live.onSpeechStart?.(); }
                     const binary = atob(audioData);
@@ -639,10 +640,11 @@
                     live.nextAudioTime = startAt + buffer.duration / 1.15;
                     live.playingCount++;
                     setIsAiSpeaking(true);
-                    source.onended = () => { live.playingCount = Math.max(0, live.playingCount - 1); if (!live.playingCount) { setIsAiSpeaking(false); live.onSpeechEnd?.(); live.onSpeechEnd = null; live.speechStarted = false; } };
+                    source.onended = () => { live.playingCount = Math.max(0, live.playingCount - 1); if (!live.playingCount) { setIsAiSpeaking(false); if (live.turnComplete) { live.onSpeechEnd?.(); live.onSpeechEnd = null; live.speechStarted = false; } } };
                     source.start(startAt);
                   } catch (audioError) { console.error("AI ovoz ijrosi:", audioError); }
                 }
+                if (message?.serverContent?.turnComplete) { live.turnComplete = true; if (!live.playingCount) { live.onSpeechEnd?.(); live.onSpeechEnd = null; live.speechStarted = false; } }
               },
               onerror: error => { console.error("AI ovozli aloqa xatosi:", error); setTutorReply("Ovozli AI bilan aloqa uzildi. Mikrofon tugmasini qayta bosing."); },
               onclose: () => { if (liveVoiceRef.current === live) { live.running = false; liveConnectingRef.current = false; try { live.processor?.disconnect(); live.source?.disconnect(); live.stream?.getTracks()?.forEach(track => track.stop()); live.audioContext?.close(); } catch {} liveVoiceRef.current = null; setIsVoiceRec(false); setIsAiSpeaking(false); } }
