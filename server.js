@@ -19,7 +19,7 @@ const pool = process.env.DATABASE_URL ? new Pool({
 const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash-lite";
-const TTS_MODEL = process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-lite-tts";
+const LIVE_MODEL = process.env.GEMINI_LIVE_MODEL || "gemini-3.1-flash-live-preview";
 async function generateTutorContent({ input, systemInstruction = tutorInstruction, temperature = 0.25, maxOutputTokens = 180 }) {
   if (!ai) throw new Error("GEMINI_API_KEY serverda sozlanmagan.");
   const models = [...new Set([MODEL, FALLBACK_MODEL].filter(Boolean))];
@@ -38,39 +38,6 @@ async function generateTutorContent({ input, systemInstruction = tutorInstructio
     }
   }
   throw lastError || new Error("AI modeli vaqtincha javob bermayapti.");
-}
-
-async function generateTutorSpeech(input) {
-  if (!ai) throw new Error("GEMINI_API_KEY serverda sozlanmagan.");
-  const models = [...new Set([TTS_MODEL, "gemini-3.8-flash-tts"])];
-  let lastError;
-  for (const model of models) {
-    try {
-      return await ai.interactions.create({
-        model,
-        input: [{
-          type: "user_input",
-          content: [{
-            type: "text",
-            text: input,
-            annotations: [{
-              type: "speech_metadata",
-              style: "Fluent natural Northern Uzbek, warm friendly teacher, clear articulation, lively but unhurried pace, no breathy ending, finish cleanly"
-            }]
-          }]
-        }],
-        response_format: { type: "audio" },
-        generation_config: { speech_config: [{ voice: "Leda" }] },
-        store: false
-      });
-    } catch (error) {
-      lastError = error;
-      const message = String(error?.message || "");
-      const transient = /429|503|500|502|504|UNAVAILABLE|high demand|overloaded|RESOURCE_EXHAUSTED/i.test(message) || [429,500,502,503,504].includes(Number(error?.status || error?.code));
-      if (!transient) throw error;
-    }
-  }
-  throw lastError || new Error("Ovoz modellari vaqtincha javob bermayapti.");
 }
 
 const SESSION_DAYS = Math.min(30, Math.max(1, Number(process.env.SESSION_DAYS || 14)));
@@ -177,7 +144,7 @@ app.post("/api/auth/login", requireDb, authLimiter, async (req, res, next) => {
 
 app.get("/api/ai/status", (_req, res) => {
   res.set("Cache-Control", "no-store");
-  res.json({ configured: Boolean(ai), model: MODEL, speechModel: TTS_MODEL, database: Boolean(pool), mode: "fast" });
+  res.json({ configured: Boolean(ai), model: MODEL, liveModel: LIVE_MODEL, database: Boolean(pool), mode: "realtime" });
 });
 app.get("/api/auth/me", requireDb, auth, async (req, res, next) => {
   try {
@@ -252,54 +219,36 @@ Javob yuborishdan oldin ichingda o‘zbekcha imlo, qo‘shimcha va gap tuzilishi
 Shaxsiy ma’lumot, manzil, telefon, parol yoki maktab nomini so‘rama. Xavfli vaziyatlarda ishonchli kattaga murojaat qilishni ayt.
 Tibbiy, moliyaviy yoki xavfli ko‘rsatmalar bermagin. O‘zingni sun’iy intellekt yordamchisi ekaningni yashirma.`;
 
-app.post("/api/ai/speech", aiLimiter, async (req, res, next) => {
+app.get("/api/live-token", aiLimiter, async (_req, res, next) => {
   try {
-    if (!ai) return res.status(503).json({ error: "Ovozli AI hozircha sozlanmagan." });
-    const text = clean(req.body?.text);
-    if (!text || text.length > 1200) {
-      return res.status(400).json({ error: "Ovozga aylantiriladigan matn 1–1200 belgi bo‘lishi kerak." });
-    }
-    const interaction = await generateTutorSpeech(text);
-    const audioData = interaction.output_audio?.data;
-    if (!audioData) return res.status(502).json({ error: "Gemini ovoz qaytara olmadi. Qayta urinib ko‘ring." });
-    const wav = Buffer.from(audioData, "base64");
-    if (wav.length < 48 || wav.toString("ascii", 0, 4) !== "RIFF") {
-      return res.status(502).json({ error: "Gemini audio formati noto‘g‘ri qaytdi." });
-    }
-    // WAV ichidagi oxirgi 240 ms oxirgi shovqin qismini olib tashlab, 100 ms yumshoq yakunlaymiz.
-    const dataMarker = wav.indexOf("data", 12, "ascii");
-    if (dataMarker > 0) {
-      const dataStart = dataMarker + 8;
-      const sampleRate = wav.readUInt32LE(24);
-      const channels = wav.readUInt16LE(22);
-      const bytesPerSample = wav.readUInt16LE(34) / 8;
-      const frameBytes = channels * bytesPerSample;
-      const dataLength = wav.readUInt32LE(dataMarker + 4);
-      const originalEnd = Math.min(wav.length, dataStart + dataLength);
-      const trimFrames = Math.floor(sampleRate * 0.24);
-      const trimBytes = Math.min(Math.max(0, originalEnd - dataStart - frameBytes * 8), trimFrames * frameBytes);
-      const cleanEnd = originalEnd - trimBytes;
-      const fadeBytes = Math.min(cleanEnd - dataStart, Math.floor(sampleRate * 0.10) * frameBytes);
-      for (let offset = cleanEnd - fadeBytes; offset + 1 < cleanEnd; offset += 2) {
-        const progress = (offset - (cleanEnd - fadeBytes)) / Math.max(1, fadeBytes - 2);
-        const gain = Math.cos(progress * Math.PI / 2);
-        wav.writeInt16LE(Math.round(wav.readInt16LE(offset) * gain), offset);
+    if (!ai) return res.status(503).json({ error: "Gemini API kaliti sozlanmagan." });
+    const expireTime = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+    const newSessionExpireTime = new Date(Date.now() + 60 * 1000).toISOString();
+    const token = await ai.authTokens.create({
+      config: {
+        uses: 1,
+        expireTime,
+        newSessionExpireTime,
+        liveConnectConstraints: {
+          model: LIVE_MODEL,
+          config: {
+            responseModalities: ["AUDIO"],
+            inputAudioTranscription: {},
+            outputAudioTranscription: {},
+            realtimeInputConfig: { automaticActivityDetection: { disabled: true } },
+            systemInstruction: tutorInstruction
+          }
+        }
       }
-      const cleanWav = Buffer.concat([wav.subarray(0, cleanEnd)]);
-      cleanWav.writeUInt32LE(cleanWav.length - 8, 4);
-      cleanWav.writeUInt32LE(cleanEnd - dataStart, dataMarker + 4);
-      res.set("Content-Type", "audio/wav");
-      res.set("Cache-Control", "no-store");
-      return res.json({ audio: cleanWav.toString("base64"), mimeType: "audio/wav" });
-    }
-    res.json({ audio: audioData, mimeType: "audio/wav" });
+    });
+    res.set("Cache-Control", "no-store");
+    res.json({ token: token.name, model: LIVE_MODEL });
   } catch (error) {
-    const message = String(error?.message || "");
-    if (/429|quota|resource_exhausted/i.test(message)) return res.status(429).json({ error: "Ovoz yaratish limiti vaqtincha tugadi. Birozdan keyin yana urinib ko‘ring." });
-    console.error("Gemini TTS interaction error:", message);
+    console.error("Gemini Live token error:", error?.message || error);
     next(error);
   }
 });
+
 app.post("/api/ai/guest-tutor", aiLimiter, async (req, res, next) => {
   try {
     if (!ai) return res.status(503).json({ error: "AI kaliti serverda sozlanmagan. Administrator Render Environment sozlamasini tekshirishi kerak." });
