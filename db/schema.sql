@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS parents (
   email TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
   full_name TEXT NOT NULL,
+  is_blocked BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -45,3 +46,14 @@ CREATE TABLE IF NOT EXISTS ai_conversations (
 );
 CREATE INDEX IF NOT EXISTS ai_conversations_child_date_idx
   ON ai_conversations(child_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS learning_content (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  kind TEXT NOT NULL CHECK (kind IN ('lesson','image','game')),
+  title TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  image_url TEXT,
+  content_data JSONB NOT NULL DEFAULT '{}'::jsonb,
+  is_published BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
