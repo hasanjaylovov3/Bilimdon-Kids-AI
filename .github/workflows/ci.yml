@@ -17,8 +17,10 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install --ignore-scripts
-      - name: Check server syntax
-        run: node --check server.js
+      - name: Check server and Android permission script syntax
+        run: |
+          node --check server.js
+          node --check scripts/patch-android-permissions.js
       - name: Check browser script syntax
         run: node scripts/check-client.js
       - name: Check required files
