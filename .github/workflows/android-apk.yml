@@ -73,7 +73,7 @@ jobs:
             } catch {}
             await wait(10000);
           }
-          if (!health?.gemini) throw new Error("Live server/Gemini health check failed");
+          if (!health?.aiConfigured) throw new Error("Live server/AI health check failed");
           console.log("Health check: OK");
           const tutorStart = Date.now();
           const tutorResponse = await fetch(base + "/api/ai/guest-tutor", {
