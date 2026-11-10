@@ -187,9 +187,11 @@
         window.addEventListener('pointermove', updatePointer, { passive: true });
         window.addEventListener('touchmove', updatePointer, { passive: true });
         let stopped = false, frame = 0, lastUpdate = 0;
-        const stream = window.__bilimdonMediaStream;
-        if (stream?.getVideoTracks?.().some(track => track.readyState === 'live') && window.__bilimdonFaceTrackerPromise) {
-          const video = document.createElement('video'); video.muted = true; video.playsInline = true; video.srcObject = stream;
+        let video = null;
+        const startFaceTracking = () => {
+          const stream = window.__bilimdonMediaStream;
+          if (!stream?.getVideoTracks?.().some(track => track.readyState === 'live') || !window.__bilimdonFaceTrackerPromise || video) return;
+          video = document.createElement('video'); video.muted = true; video.playsInline = true; video.srcObject = stream;
           (async () => {
             const landmarker = await window.__bilimdonFaceTrackerPromise;
             if (!landmarker || stopped) return;
@@ -207,8 +209,10 @@
             };
             frame = requestAnimationFrame(detect);
           })();
-        }
-        return () => { stopped = true; cancelAnimationFrame(frame); window.removeEventListener('pointermove', updatePointer); window.removeEventListener('touchmove', updatePointer); };
+        };
+        window.addEventListener('bilimdon-media-ready', startFaceTracking);
+        startFaceTracking();
+        return () => { stopped = true; cancelAnimationFrame(frame); window.removeEventListener('bilimdon-media-ready', startFaceTracking); window.removeEventListener('pointermove', updatePointer); window.removeEventListener('touchmove', updatePointer); };
       }, []);
       const faceStyle = { '--gaze-x': (gaze.x * 3.5) + 'px', '--gaze-y': (gaze.y * 2.5) + 'px', transform: 'translateX(-50%) rotateY(' + (gaze.x * 4) + 'deg)' };
       return (
@@ -324,6 +328,7 @@
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
           window.__bilimdonMediaStream = stream;
+          window.dispatchEvent(new Event('bilimdon-media-ready'));
           localStorage.setItem('bilimdon-media-permissions', 'granted');
           setMediaPermissionMessage('Kamera va mikrofon ruxsatlari yoqildi.');
           setShowMediaPermissionPrompt(false);
