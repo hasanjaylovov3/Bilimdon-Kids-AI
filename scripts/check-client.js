@@ -5,7 +5,7 @@ const { spawnSync } = require("node:child_process");
 
 const htmlPath = path.join(__dirname, "..", "public", "index.html");
 const html = fs.readFileSync(htmlPath, "utf8");
-const match = html.match(/<script>([\\s\\S]*?)<\\/script>/i);
+const match = html.match(/<script>([\s\S]*?)<\/script>/i);
 if (!match) {
   console.error("Inline application script was not found in public/index.html");
   process.exit(1);
