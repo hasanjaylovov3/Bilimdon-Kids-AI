@@ -139,9 +139,13 @@
       try {
         window.speechSynthesis.cancel();
         const utter = new SpeechSynthesisUtterance(text);
-        utter.lang = lang;
-        utter.rate = 0.96;
-        utter.pitch = 1.15;
+        const voices = window.speechSynthesis.getVoices();
+        const uzVoice = voices.find((voice) => /^uz([-_]|$)/i.test(voice.lang)) ||
+          voices.find((voice) => /uzbek|o‘zbek|uzbekcha/i.test(voice.name));
+        utter.lang = uzVoice?.lang || lang;
+        if (uzVoice) utter.voice = uzVoice;
+        utter.rate = 0.91;
+        utter.pitch = 1.08;
         utter.onstart = () => onStart && onStart();
         utter.onend = () => onEnd && onEnd();
         utter.onerror = () => onEnd && onEnd();
@@ -154,14 +158,18 @@
     // ==========================================
     // GEMINI SUN'IY INTELLEKT API INTEGRATSIYASI
     // ==========================================
-    async function askGeminiKidsTutor(promptText, customApiKey, childName = 'Ali') {
-      const res = await fetch('/api/ai/guest-tutor', {
+    async function askGeminiKidsTutor(promptText, _customApiKey, childName = 'Ali', childId = '') {
+      const signedIn = Boolean(childId);
+      const res = await fetch(signedIn ? '/api/ai/tutor' : '/api/ai/guest-tutor', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ promptText, childName })
+        body: JSON.stringify(signedIn
+          ? { message: promptText, childId, subject: 'general' }
+          : { promptText, childName, childAge: 7 })
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "AI bilan bog'lanib bo'lmadi.");
+      if (!res.ok) throw new Error(data.error || "AI ustoz bilan bog‘lanib bo‘lmadi.");
       return data.answer;
     }
 
@@ -528,9 +536,17 @@
       const [viewMode, setViewMode] = useState('single');
 
       const [childName, setChildName] = useState('Ali');
-      const [loginInput, setLoginInput] = useState('Ali');
-      const [passwordInput, setPasswordInput] = useState('12345');
+      const [loginInput, setLoginInput] = useState('');
+      const [passwordInput, setPasswordInput] = useState('');
       const [authTab, setAuthTab] = useState('login');
+      const [registerFullName, setRegisterFullName] = useState('');
+      const [registerEmail, setRegisterEmail] = useState('');
+      const [registerChildName, setRegisterChildName] = useState('');
+      const [registerAge, setRegisterAge] = useState('7');
+      const [authUser, setAuthUser] = useState(null);
+      const [selectedChildId, setSelectedChildId] = useState('');
+      const [authError, setAuthError] = useState('');
+      const [authLoading, setAuthLoading] = useState(false);
 
       const [stars, setStars] = useState(1250);
       const [muted, setMuted] = useState(false);
@@ -558,16 +574,7 @@
       const [isAiSpeaking, setIsAiSpeaking] = useState(false);
       const [isVoiceRec, setIsVoiceRec] = useState(false);
 
-      const [customApiKey, setCustomApiKey] = useState(() => {
-        try {
-          return localStorage.getItem('BILIMDON_KIDS_GEMINI_KEY') || '';
-        } catch {
-          return '';
-        }
-      });
       const [showApiModal, setShowApiModal] = useState(false);
-      const [apiKeyDraft, setApiKeyDraft] = useState(customApiKey);
-      const [apiSaved, setApiSaved] = useState(false);
 
       const [showGithubApkModal, setShowGithubApkModal] = useState(false);
       const [apkModalTab, setApkModalTab] = useState('zip');
@@ -584,6 +591,24 @@
         };
         window.addEventListener('beforeinstallprompt', handler);
         return () => window.removeEventListener('beforeinstallprompt', handler);
+      }, []);
+
+      useEffect(() => {
+        let alive = true;
+        fetch('/api/auth/me', { credentials: 'same-origin' })
+          .then(async (res) => res.ok ? res.json() : null)
+          .then((data) => {
+            if (!alive || !data?.parent) return;
+            setAuthUser(data.parent);
+            const firstChild = data.children?.[0];
+            if (firstChild) {
+              setChildName(firstChild.display_name);
+              setSelectedChildId(firstChild.id);
+            }
+            setActiveScreen('dashboard');
+          })
+          .catch(() => {});
+        return () => { alive = false; };
       }, []);
 
       const toggleFullScreenApp = () => {
@@ -611,6 +636,60 @@
       const goScreen = (screenName) => {
         playSound('click', muted);
         setActiveScreen(screenName);
+      };
+
+      const handleAuthSubmit = async () => {
+        if (authLoading) return;
+        setAuthError('');
+        const isRegister = authTab === 'register';
+        const email = (isRegister ? registerEmail : loginInput).trim().toLowerCase();
+        if (!email || !passwordInput) {
+          setAuthError("Email va parolni kiriting.");
+          return;
+        }
+        if (isRegister && (!registerFullName.trim() || !registerChildName.trim() || passwordInput.length < 10)) {
+          setAuthError("Ismingiz, bolaning ismi va kamida 10 belgili parolni kiriting.");
+          return;
+        }
+        setAuthLoading(true);
+        try {
+          const response = await fetch(isRegister ? '/api/auth/register' : '/api/auth/login', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(isRegister
+              ? { fullName: registerFullName.trim(), email, password: passwordInput, childName: registerChildName.trim(), age: Number(registerAge) }
+              : { email, password: passwordInput })
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || "Hisobga kirishda xatolik yuz berdi.");
+          const child = isRegister ? data.child : data.children?.[0];
+          setAuthUser(data.parent);
+          if (child) {
+            setChildName(child.display_name);
+            setSelectedChildId(child.id);
+          }
+          setPasswordInput('');
+          setAuthError('');
+          setActiveScreen('dashboard');
+          playSound('success', muted);
+        } catch (error) {
+          setAuthError(error.message || "Server bilan bog‘lanib bo‘lmadi. Keyinroq urinib ko‘ring.");
+        } finally {
+          setAuthLoading(false);
+        }
+      };
+
+      const handleLogout = async () => {
+        try {
+          await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+        } catch {}
+        setAuthUser(null);
+        setSelectedChildId('');
+        setChildName('Ali');
+        setActiveScreen('login');
+        setAuthTab('login');
+        setAuthError('');
       };
 
       // ==========================================
@@ -900,10 +979,10 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
         if (!text || isAiLoading) return;
         setChatInput('');
         setIsAiLoading(true);
-        setTutorReply('O‘ylayapman... 🤔');
+        setTutorReply('O‘ylab ko‘rayapman, hozir javob beraman! 🤔');
         playSound('click', muted);
         try {
-          const reply = await askGeminiKidsTutor(text, '', childName);
+          const reply = await askGeminiKidsTutor(text, '', childName, selectedChildId);
           setTutorReply(reply);
           playSound('success', muted);
           speakText(reply, 'uz-UZ', muted,
@@ -911,7 +990,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
             () => setIsAiSpeaking(false)
           );
         } catch (error) {
-          setTutorReply(error?.message || "AI ustoz bilan bog‘lanib bo‘lmadi. Birozdan keyin yana urinib ko‘ring.");
+          setTutorReply(error?.message || "AI ustoz bilan bog‘lanib bo‘lmadi. Birozdan keyin yana urinib ko‘r.");
         } finally {
           setIsAiLoading(false);
         }
@@ -920,25 +999,33 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
       const handleVoiceMic = () => {
         const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRec) {
-          handleSendToGemini('Menga ingliz tilida quvnoq qo‘shiq o‘rgat!');
+          setTutorReply("Bu brauzerda ovoz orqali yozib olish qo‘llab-quvvatlanmaydi. Savolingni yozuv maydoniga kiritishing mumkin. 😊");
           return;
         }
         try {
           const rec = new SpeechRec();
           rec.lang = 'uz-UZ';
+          rec.continuous = false;
+          rec.interimResults = false;
+          rec.maxAlternatives = 3;
           setIsVoiceRec(true);
           rec.onresult = (e) => {
-            const transcript = e.results?.[0]?.[0]?.transcript || '';
+            const transcript = e.results?.[0]?.[0]?.transcript?.trim() || '';
             setIsVoiceRec(false);
-            if (transcript) {
-              handleSendToGemini(transcript);
-            }
+            if (transcript) handleSendToGemini(transcript);
+            else setTutorReply("Ovozingni aniq eshita olmadim. Yana bir marta urinib ko‘r! 🎤");
           };
-          rec.onerror = () => setIsVoiceRec(false);
+          rec.onerror = (e) => {
+            setIsVoiceRec(false);
+            setTutorReply(e?.error === 'not-allowed'
+              ? "Mikrofondan foydalanishga ruxsat berilmadi. Brauzer sozlamasidan mikrofonga ruxsat ber."
+              : "Ovozni aniqlashda kichik xatolik bo‘ldi. Yana urinib ko‘r!");
+          };
           rec.onend = () => setIsVoiceRec(false);
           rec.start();
         } catch {
           setIsVoiceRec(false);
+          setTutorReply("Mikrofonni ishga tushira olmadim. Sahifani HTTPS orqali ochib, yana urinib ko‘r.");
         }
       };
 
@@ -1063,67 +1150,44 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                   </button>
                 </div>
 
+                {authTab === 'register' && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 bg-slate-50 border-2 border-slate-200/80 rounded-2xl px-4 py-3">
+                      <span className="text-blue-600 font-bold">👨‍👩‍👧</span>
+                      <input type="text" value={registerFullName} onChange={(e) => setRegisterFullName(e.target.value)} placeholder="Ota-ona / vasiy to‘liq ismi" autoComplete="name" className="w-full bg-transparent outline-none font-bold text-slate-700 text-sm" />
+                    </div>
+                    <div className="flex items-center gap-3 bg-slate-50 border-2 border-slate-200/80 rounded-2xl px-4 py-3">
+                      <span className="text-blue-600 font-bold">🧒</span>
+                      <input type="text" value={registerChildName} onChange={(e) => setRegisterChildName(e.target.value)} placeholder="Bolaning ismi" autoComplete="off" className="w-full bg-transparent outline-none font-bold text-slate-700 text-sm" />
+                    </div>
+                    <div className="flex items-center gap-3 bg-slate-50 border-2 border-slate-200/80 rounded-2xl px-4 py-3">
+                      <span className="text-blue-600 font-bold">🎂</span>
+                      <select value={registerAge} onChange={(e) => setRegisterAge(e.target.value)} className="w-full bg-transparent outline-none font-bold text-slate-700 text-sm">
+                        {[5,6,7,8,9,10,11,12].map((age) => <option key={age} value={age}>{age} yosh</option>)}
+                      </select>
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 bg-slate-50 border-2 border-slate-200/80 rounded-2xl px-4 py-3">
-                    <span className="text-blue-600 font-bold">👤</span>
-                    <input
-                      type="text"
-                      value={loginInput}
-                      onChange={(e) => setLoginInput(e.target.value)}
-                      placeholder="Foydalanuvchi ismi"
-                      className="w-full bg-transparent outline-none font-bold text-slate-700 text-sm"
-                    />
+                    <span className="text-blue-600 font-bold">✉️</span>
+                    <input type="email" value={authTab === 'login' ? loginInput : registerEmail} onChange={(e) => authTab === 'login' ? setLoginInput(e.target.value) : setRegisterEmail(e.target.value)} placeholder="Elektron pochta (email)" autoComplete="email" className="w-full bg-transparent outline-none font-bold text-slate-700 text-sm" />
                   </div>
                   <div className="flex items-center gap-3 bg-slate-50 border-2 border-slate-200/80 rounded-2xl px-4 py-3">
                     <span className="text-blue-600 font-bold">🔒</span>
-                    <input
-                      type="password"
-                      value={passwordInput}
-                      onChange={(e) => setPasswordInput(e.target.value)}
-                      placeholder="Parol"
-                      className="w-full bg-transparent outline-none font-bold text-slate-700 text-sm"
-                    />
+                    <input type="password" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} placeholder={authTab === 'register' ? 'Parol (kamida 10 belgi)' : 'Parol'} autoComplete={authTab === 'login' ? 'current-password' : 'new-password'} className="w-full bg-transparent outline-none font-bold text-slate-700 text-sm" />
                   </div>
                 </div>
-
-                <button
-                  onClick={() => {
-                    if (loginInput.trim()) setChildName(loginInput.trim());
-                    playSound('success', muted);
-                    goScreen('dashboard');
-                  }}
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-base shadow-lg shadow-blue-500/30 transition transform active:scale-95"
-                >
-                  Kirish 🚀
+                {authError && <p role="alert" className="rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold px-3 py-2">{authError}</p>}
+                <button disabled={authLoading} onClick={handleAuthSubmit} className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60 text-white font-black text-base shadow-lg shadow-blue-500/30 transition transform active:scale-95">
+                  {authLoading ? 'Tekshirilmoqda...' : authTab === 'login' ? 'Kirish 🚀' : 'Hisob yaratish ✨'}
                 </button>
-
-                <div className="text-center text-xs font-bold text-slate-400">Yoki</div>
-
-                <div className="flex justify-center gap-4">
-                  <button
-                    onClick={() => goScreen('dashboard')}
-                    className="w-11 h-11 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center font-black text-lg text-rose-500 hover:scale-105 transition"
-                  >
-                    G
-                  </button>
-                  <button
-                    onClick={() => goScreen('dashboard')}
-                    className="w-11 h-11 rounded-full bg-sky-500 text-white shadow-md flex items-center justify-center hover:scale-105 transition font-bold"
-                  >
-                    ✈️
-                  </button>
-                </div>
-
                 <p className="text-center text-xs text-slate-500 font-semibold">
-                  Hisobingiz yo‘qmi?{' '}
-                  <button
-                    onClick={() => setAuthTab('register')}
-                    className="text-blue-600 font-extrabold hover:underline"
-                  >
-                    Ro‘yxatdan o‘tish
+                  {authTab === 'login' ? 'Hisobingiz yo‘qmi? ' : 'Hisobingiz bormi? '}
+                  <button onClick={() => { setAuthTab(authTab === 'login' ? 'register' : 'login'); setAuthError(''); }} className="text-blue-600 font-extrabold hover:underline">
+                    {authTab === 'login' ? 'Ro‘yxatdan o‘tish' : 'Kirish'}
                   </button>
                 </p>
-              </div>
             </div>
           </div>
         </div>
@@ -1146,6 +1210,13 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
               </div>
             </div>
 
+            <div className="flex items-center gap-2 rounded-2xl bg-white/85 px-3 py-2 shadow-lg border border-white/80">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center text-xl shadow">🎓</div>
+              <div className="leading-none">
+                <div className="font-black text-blue-800 text-sm tracking-wide">BILIMDON</div>
+                <div className="font-black text-indigo-600 text-[11px] tracking-[0.18em]">KID AI</div>
+              </div>
+            </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowAuthorModal(true)}
@@ -1161,6 +1232,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                 <span>👑</span>
                 <span>Premium</span>
               </button>
+              {authUser && <button onClick={handleLogout} title="Hisobdan chiqish" className="px-3 py-2 rounded-full bg-rose-500 text-white font-black text-xs shadow">Chiqish ↗</button>}
               <button
                 onClick={() => setShowApiModal(true)}
                 title="Gemini API Key Sozlamalari"
