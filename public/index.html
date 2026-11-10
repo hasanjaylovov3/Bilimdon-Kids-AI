@@ -131,92 +131,7 @@
       } catch (e) {}
     };
 
-    let activeSpeechAudio = null;
-    let activeSpeechUrl = null;
-    let speechRequestId = 0;
-    const speakText = async (text, lang = 'uz-UZ', muted = false, onStart, onEnd) => {
-      const requestId = ++speechRequestId;
-      if (activeSpeechAudio) {
-        activeSpeechAudio.pause();
-        activeSpeechAudio = null;
-      }
-      if (activeSpeechUrl) {
-        URL.revokeObjectURL(activeSpeechUrl);
-        activeSpeechUrl = null;
-      }
-      if (muted || typeof window === 'undefined') {
-        if (onEnd) onEnd();
-        return;
-      }
-      try {
-        if (lang === 'uz-UZ') {
-          const response = await fetch('/api/ai/speech', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text })
-          });
-          const data = await response.json().catch(() => ({}));
-          if (!response.ok || !data.audio) {
-            throw new Error(data.error || "O‘zbekcha ovozni tayyorlab bo‘lmadi.");
-          }
-          if (requestId !== speechRequestId) return;
-          const binary = atob(data.audio);
-          const bytes = new Uint8Array(binary.length);
-          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-          const blob = new Blob([bytes], { type: 'audio/wav' });
-          const url = URL.createObjectURL(blob);
-          const audio = new Audio(url);
-          audio.preload = "auto";
-          audio.volume = 1;
-          activeSpeechAudio = audio;
-          activeSpeechUrl = url;
-          const finish = () => {
-            if (activeSpeechAudio === audio) activeSpeechAudio = null;
-            if (activeSpeechUrl === url) {
-              URL.revokeObjectURL(url);
-              activeSpeechUrl = null;
-            }
-            if (onEnd) onEnd();
-          };
-          audio.onplay = () => { if (onStart) onStart(); };
-          audio.onended = finish;
-          audio.onerror = finish;
-          await audio.play();
-          return;
-        }
-
-        if (!('speechSynthesis' in window)) {
-          if (onEnd) onEnd();
-          return;
-        }
-        window.speechSynthesis.cancel();
-        const utter = new SpeechSynthesisUtterance(text);
-        utter.lang = lang;
-        utter.rate = 0.94;
-        utter.pitch = 1.05;
-        utter.onstart = () => onStart && onStart();
-        utter.onend = () => onEnd && onEnd();
-        utter.onerror = () => onEnd && onEnd();
-        window.speechSynthesis.speak(utter);
-      } catch (error) {
-        console.error('Bilimdon Kids speech error:', error);
-        if ('speechSynthesis' in window) {
-          try {
-            window.speechSynthesis.cancel();
-            const utter = new SpeechSynthesisUtterance(text);
-            utter.lang = lang; utter.rate = 0.96; utter.pitch = 1.04;
-            utter.onstart = () => onStart && onStart();
-            utter.onend = () => onEnd && onEnd();
-            utter.onerror = () => onEnd && onEnd();
-            window.speechSynthesis.speak(utter);
-            return;
-          } catch {}
-        }
-        if (onEnd) onEnd();
-      }
-    };
-
+    // Ovozli javob faqat Gemini Live orqali; browser Speech API va alohida TTS o'chirilgan.
     // ==========================================
     // GEMINI SUN'IY INTELLEKT API INTEGRATSIYASI
     // ==========================================
@@ -645,6 +560,121 @@
       const [isAiLoading, setIsAiLoading] = useState(false);
       const [isAiSpeaking, setIsAiSpeaking] = useState(false);
       const [isVoiceRec, setIsVoiceRec] = useState(false);
+
+      const liveVoiceRef = useRef(null);
+      const stopLiveTutor = () => {
+        const live = liveVoiceRef.current;
+        if (!live) { setIsVoiceRec(false); setIsAiSpeaking(false); return; }
+        live.running = false;
+        try { live.processor?.disconnect(); } catch {}
+        try { live.source?.disconnect(); } catch {}
+        try { live.stream?.getTracks()?.forEach(track => track.stop()); } catch {}
+        try { live.session?.close(); } catch {}
+        try { live.audioContext?.close(); } catch {}
+        liveVoiceRef.current = null;
+        setIsVoiceRec(false);
+        setIsAiSpeaking(false);
+      };
+      const startLiveTutor = async () => {
+        if (liveVoiceRef.current?.running) return;
+        setIsVoiceRec(true);
+        setTutorReply("Gemini Live ulanmoqda. Mikrofonni yoqing va savolingizni ayting...");
+        try {
+          if (!navigator.mediaDevices?.getUserMedia) throw new Error("Mikrofon uchun HTTPS va ruxsat kerak.");
+          const { GoogleGenAI } = await import("https://esm.sh/@google/genai");
+          const tokenResponse = await fetch("/api/live-token", { credentials: "same-origin", cache: "no-store" });
+          const tokenData = await tokenResponse.json().catch(() => ({}));
+          if (!tokenResponse.ok || !tokenData.token) throw new Error(tokenData.error || "Gemini Live token olinmadi.");
+          const audioContext = new AudioContext({ sampleRate: 16000 });
+          await audioContext.resume();
+          const client = new GoogleGenAI({ apiKey: tokenData.token, httpOptions: { apiVersion: "v1alpha" } });
+          const live = { running: false, audioContext, session: null, stream: null, source: null, processor: null, nextAudioTime: audioContext.currentTime, playingCount: 0 };
+          liveVoiceRef.current = live;
+          live.session = await client.live.connect({
+            model: tokenData.model,
+            config: { responseModalities: ["AUDIO"], inputAudioTranscription: {}, outputAudioTranscription: {}, realtimeInputConfig: { automaticActivityDetection: { disabled: true } } },
+            callbacks: {
+              onopen: () => console.info("Bilimdon Kids Gemini Live ulandi"),
+              onmessage: message => {
+                const inputText = message?.serverContent?.inputTranscription?.text;
+                if (inputText) setChatInput(inputText);
+                const outputText = message?.serverContent?.outputTranscription?.text;
+                if (outputText) setTutorReply(prev => prev.startsWith("Siz:") || prev.includes("ulanmoqda") || prev.includes("Tinglayapman") ? outputText : prev + outputText);
+                const parts = message?.serverContent?.modelTurn?.parts;
+                if (Array.isArray(parts)) for (const part of parts) {
+                  const audioData = part?.inlineData?.data;
+                  if (!audioData || !live.running) continue;
+                  try {
+                    const binary = atob(audioData);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                    const samples = new Int16Array(bytes.buffer, bytes.byteOffset, Math.floor(bytes.byteLength / 2));
+                    const buffer = audioContext.createBuffer(1, samples.length, 24000);
+                    const channel = buffer.getChannelData(0);
+                    for (let i = 0; i < samples.length; i++) channel[i] = samples[i] / 32768;
+                    const source = audioContext.createBufferSource();
+                    source.buffer = buffer;
+                    source.connect(audioContext.destination);
+                    const startAt = Math.max(audioContext.currentTime, live.nextAudioTime);
+                    live.nextAudioTime = startAt + buffer.duration;
+                    live.playingCount++;
+                    setIsAiSpeaking(true);
+                    source.onended = () => { live.playingCount = Math.max(0, live.playingCount - 1); if (!live.playingCount) setIsAiSpeaking(false); };
+                    source.start(startAt);
+                  } catch (audioError) { console.error("Gemini Live audio playback:", audioError); }
+                }
+              },
+              onerror: error => { console.error("Gemini Live error:", error); setTutorReply("Ovozli AI bilan aloqa uzildi. Mikrofon tugmasini qayta bosing."); },
+              onclose: () => { if (liveVoiceRef.current === live) { live.running = false; setIsVoiceRec(false); } }
+            }
+          });
+          live.stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+          live.source = audioContext.createMediaStreamSource(live.stream);
+          live.processor = audioContext.createScriptProcessor(4096, 1, 1);
+          let turnActive = false;
+          let silentFrames = 0;
+          live.processor.onaudioprocess = event => {
+            if (!live.running || !live.session || audioContext.currentTime < live.nextAudioTime) return;
+            const input = event.inputBuffer.getChannelData(0);
+            let energy = 0;
+            for (let i = 0; i < input.length; i++) energy += input[i] * input[i];
+            const speaking = Math.sqrt(energy / input.length) >= 0.015;
+            if (speaking && !turnActive) { turnActive = true; silentFrames = 0; live.session.sendRealtimeInput({ activityStart: {} }); }
+            if (!turnActive) return;
+            const pcm = new Int16Array(input.length);
+            for (let i = 0; i < input.length; i++) { const sample = Math.max(-1, Math.min(1, input[i])); pcm[i] = sample < 0 ? sample * 0x8000 : sample * 0x7fff; }
+            const raw = new Uint8Array(pcm.buffer);
+            let binary = "";
+            for (let i = 0; i < raw.length; i += 0x8000) binary += String.fromCharCode(...raw.subarray(i, Math.min(i + 0x8000, raw.length)));
+            live.session.sendRealtimeInput({ audio: { data: btoa(binary), mimeType: "audio/pcm;rate=16000" } });
+            if (speaking) silentFrames = 0;
+            else if (++silentFrames >= 12) { live.session.sendRealtimeInput({ activityEnd: {} }); turnActive = false; silentFrames = 0; }
+          };
+          const silentGain = audioContext.createGain();
+          silentGain.gain.value = 0;
+          live.source.connect(live.processor);
+          live.processor.connect(silentGain);
+          silentGain.connect(audioContext.destination);
+          live.running = true;
+          setIsVoiceRec(true);
+          setTutorReply("Tinglayapman! Savolingizni ayting. Tugatganingizdan keyin javob beraman.");
+        } catch (error) {
+          console.error("Bilimdon Kids Live start error:", error);
+          stopLiveTutor();
+          setTutorReply(error?.message || "Gemini Live ishga tushmadi. Mikrofon ruxsatini tekshiring.");
+        }
+      };
+      const speakTutorText = async (text) => {
+        const spokenText = String(text || "").trim();
+        if (!spokenText) return;
+        if (!liveVoiceRef.current?.running) await startLiveTutor();
+        const session = liveVoiceRef.current?.session;
+        if (session) {
+          try { session.sendClientContent({ turns: [{ role: "user", parts: [{ text: "Quyidagi matnni o'zbek tilida aynan o'qib bering, qo'shimcha izoh qo'shmang: " + spokenText }] }], turnComplete: true }); }
+          catch (error) { setTutorReply(error?.message || "Matnni ovozga uzatib bo‘lmadi."); }
+        }
+      };
+
 
       const [showApiModal, setShowApiModal] = useState(false);
 
@@ -1085,7 +1115,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
           playSound('success', muted);
           setMathFeedback('Ajoyib! To‘g‘ri javob! 🎉');
           setStars((s) => s + 10);
-          speakText('Ajoyib! To‘g‘ri javob!', 'uz-UZ', muted);
+          speakTutorText('Ajoyib! To‘g‘ri javob!', 'uz-UZ', muted);
           setTimeout(() => {
             const next = (mathIdx + 1) % MATH_QUESTIONS.length;
             setMathIdx(next);
@@ -1101,7 +1131,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
         const item = ENGLISH_WORDS[engIdx];
         setIsListeningEng(true);
         playSound('click', muted);
-        speakText(
+        speakTutorText(
           `${item.word}. Very good!`,
           'en-US',
           muted,
@@ -1139,11 +1169,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
           const reply = await askGeminiKidsTutor(text, '', childName, selectedChildId);
           setTutorReply(reply);
           playSound('success', muted);
-          speakText(reply, 'uz-UZ', muted,
-            () => setIsAiSpeaking(true),
-            () => setIsAiSpeaking(false)
-          );
-        } catch (error) {
+} catch (error) {
           setTutorReply(error?.message || "AI ustoz bilan bog‘lanib bo‘lmadi. Birozdan keyin yana urinib ko‘r.");
         } finally {
           setIsAiLoading(false);
@@ -1151,36 +1177,8 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
       };
 
       const handleVoiceMic = () => {
-        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRec) {
-          setTutorReply("Bu brauzerda ovoz orqali yozib olish qo‘llab-quvvatlanmaydi. Savolingni yozuv maydoniga kiritishing mumkin. 😊");
-          return;
-        }
-        try {
-          const rec = new SpeechRec();
-          rec.lang = 'uz-UZ';
-          rec.continuous = false;
-          rec.interimResults = false;
-          rec.maxAlternatives = 3;
-          setIsVoiceRec(true);
-          rec.onresult = (e) => {
-            const transcript = e.results?.[0]?.[0]?.transcript?.trim() || '';
-            setIsVoiceRec(false);
-            if (transcript) handleSendToGemini(transcript);
-            else setTutorReply("Ovozingni aniq eshita olmadim. Yana bir marta urinib ko‘r! 🎤");
-          };
-          rec.onerror = (e) => {
-            setIsVoiceRec(false);
-            setTutorReply(e?.error === 'not-allowed'
-              ? "Mikrofondan foydalanishga ruxsat berilmadi. Brauzer sozlamasidan mikrofonga ruxsat ber."
-              : "Ovozni aniqlashda kichik xatolik bo‘ldi. Yana urinib ko‘r!");
-          };
-          rec.onend = () => setIsVoiceRec(false);
-          rec.start();
-        } catch {
-          setIsVoiceRec(false);
-          setTutorReply("Mikrofonni ishga tushira olmadim. Sahifani HTTPS orqali ochib, yana urinib ko‘r.");
-        }
+        if (liveVoiceRef.current?.running) stopLiveTutor();
+        else startLiveTutor();
       };
 
       // ==========================================
@@ -1545,7 +1543,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
 
               <div className="lg:col-span-4">
                 <div
-                  onClick={() => speakText(story.sentence, 'en-US', muted)}
+                  onClick={() => speakTutorText(story.sentence, 'en-US', muted)}
                   className="cursor-pointer bg-[#fffbeb] rounded-[28px] p-6 text-center shadow-xl border-4 border-white space-y-3 hover:scale-[1.02] transition"
                 >
                   <div className="text-6xl">📖🐱</div>
@@ -1817,7 +1815,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
               <div className="flex items-center gap-3 bg-indigo-950/80 border border-indigo-400/40 rounded-2xl p-3">
                 <button
                   onClick={() =>
-                    speakText(
+                    speakTutorText(
                       tutorReply,
                       'uz-UZ',
                       muted,
@@ -2123,7 +2121,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                 <div className="flex justify-end gap-3">
                   <button
                     onClick={() =>
-                      speakText(
+                      speakTutorText(
                         "Ushbu Bilimdon Kids dasturi Termiz davlat pedagogika instituti Boshlang'ich ta'lim fakulteti talabasi Saparova Matluba tomonidan yaratilgan.",
                         'uz-UZ',
                         muted
@@ -2147,7 +2145,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
           {/* AI SOZLAMALARI */}
           {showApiModal && <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4"><div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-cyan-300/30 space-y-4">
             <div className="flex items-center justify-between"><div><h3 className="font-black text-xl text-cyan-200">⚡ AI sozlamalari</h3><p className="text-xs text-slate-400">Tezkor javob va ovoz holati</p></div><button onClick={() => setShowApiModal(false)} className="px-3 py-2 rounded-xl bg-white/10">✕</button></div>
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-4 space-y-3"><div className="flex items-center justify-between gap-3"><span className="text-sm text-slate-300">Gemini AI</span><span className={'rounded-full px-3 py-1 text-xs font-black '+(aiStatus?.configured?'bg-emerald-400/15 text-emerald-300':'bg-rose-400/15 text-rose-300')}>{aiStatusLoading?'Tekshirilmoqda...':aiStatus?.configured?'Kalit sozlangan':'Ulanmagan'}</span></div><div className="flex items-center justify-between gap-3"><span className="text-sm text-slate-300">Ovoz modeli</span><span className="text-xs font-bold text-cyan-200">{aiStatus?.speechModel || 'Tekshirilmoqda'}</span></div><div className="flex items-center justify-between gap-3"><span className="text-sm text-slate-300">Javob rejimi</span><span className="text-xs font-black text-emerald-300">Tezkor</span></div>{aiStatus?.model && <p className="text-xs text-slate-400">Model: {aiStatus.model}</p>}{aiStatus?.error && <p className="text-xs text-rose-300">{aiStatus.error}</p>}</div>
+            <div className="rounded-2xl bg-white/5 border border-white/10 p-4 space-y-3"><div className="flex items-center justify-between gap-3"><span className="text-sm text-slate-300">Gemini AI</span><span className={'rounded-full px-3 py-1 text-xs font-black '+(aiStatus?.configured?'bg-emerald-400/15 text-emerald-300':'bg-rose-400/15 text-rose-300')}>{aiStatusLoading?'Tekshirilmoqda...':aiStatus?.configured?'Kalit sozlangan':'Ulanmagan'}</span></div><div className="flex items-center justify-between gap-3"><span className="text-sm text-slate-300">Ovoz modeli</span><span className="text-xs font-bold text-cyan-200">{aiStatus?.liveModel || 'Gemini Live'}</span></div><div className="flex items-center justify-between gap-3"><span className="text-sm text-slate-300">Javob rejimi</span><span className="text-xs font-black text-emerald-300">Tezkor</span></div>{aiStatus?.model && <p className="text-xs text-slate-400">Model: {aiStatus.model}</p>}{aiStatus?.error && <p className="text-xs text-rose-300">{aiStatus.error}</p>}</div>
             <p className="text-sm text-slate-300">Gemini kaliti serverda saqlanadi. Javob tezligi uchun qisqa suhbat tarixi va ixcham javob rejimi ishlaydi.</p><div className="grid grid-cols-2 gap-2"><button onClick={refreshAiStatus} className="rounded-xl bg-white/10 border border-white/10 px-3 py-3 text-sm font-black">↻ Qayta tekshirish</button><button onClick={() => setShowApiModal(false)} className="rounded-xl bg-cyan-400 px-3 py-3 text-sm font-black text-slate-950">Yopish</button></div>
           </div></div>}
           {/* PROFIL MA’LUMOTLARINI TAHRIRLASH */}
