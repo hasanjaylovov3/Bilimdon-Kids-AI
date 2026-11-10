@@ -18,6 +18,23 @@ const pool = process.env.DATABASE_URL ? new Pool({
 }) : null;
 const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+const FALLBACK_MODELS = (process.env.GEMINI_FALLBACK_MODELS || "gemini-2.5-flash,gemini-2.0-flash").split(",").map(value => value.trim()).filter(Boolean);
+async function generateTutorContent(args) {
+  const models = [MODEL].concat(FALLBACK_MODELS.filter(model => model !== MODEL));
+  let lastError;
+  for (const model of models) {
+    try { return await ai.models.generateContent(Object.assign({}, args, { model })); }
+    catch (error) {
+      lastError = error;
+      const status = Number(error && (error.status || error.code || error.httpStatusCode) || 0);
+      const message = String(error && error.message || "");
+      const transient = [429, 500, 502, 503].includes(status) || /429|500|502|503|UNAVAILABLE|high demand|overloaded|temporar/i.test(message);
+      if (!transient || model === models[models.length - 1]) throw error;
+      console.warn("Gemini model " + model + " unavailable; trying fallback model.");
+    }
+  }
+  throw lastError;
+}
 const SESSION_DAYS = Math.min(30, Math.max(1, Number(process.env.SESSION_DAYS || 14)));
 
 app.disable("x-powered-by");
@@ -172,8 +189,17 @@ app.post("/api/ai/speech", aiLimiter, async (req, res, next) => {
       return res.status(502).json({ error: "Gemini o‘zbekcha ovoz qaytara olmadi. Qayta urinib ko‘ring." });
     }
     const pcm = Buffer.from(audioPart.inlineData.data, "base64");
-    const wavHeader = Buffer.alloc(44);
     const sampleRate = 24000;
+    // Fade out the final 180 ms to suppress the short TTS end-click/noise.
+    const fadeSamples = Math.min(Math.floor(sampleRate * 0.18), Math.floor(pcm.length / 2));
+    const totalSamples = Math.floor(pcm.length / 2);
+    for (let i = 0; i < fadeSamples; i++) {
+      const sampleIndex = totalSamples - fadeSamples + i;
+      const gain = Math.cos((i / Math.max(1, fadeSamples - 1)) * Math.PI / 2);
+      const offset = sampleIndex * 2;
+      pcm.writeInt16LE(Math.round(pcm.readInt16LE(offset) * gain), offset);
+    }
+    const wavHeader = Buffer.alloc(44);
     wavHeader.write("RIFF", 0);
     wavHeader.writeUInt32LE(36 + pcm.length, 4);
     wavHeader.write("WAVE", 8);
@@ -206,8 +232,7 @@ app.post("/api/ai/guest-tutor", aiLimiter, async (req, res, next) => {
     const childName = clean(req.body?.childName).slice(0, 40) || "Do‘stim";
     const childAge = Math.min(12, Math.max(5, Number(req.body?.childAge) || 7));
     if (!prompt || prompt.length > 2000) return res.status(400).json({ error: "Savol 1–2000 belgi oralig'ida bo'lishi kerak." });
-    const response = await ai.models.generateContent({
-      model: MODEL,
+    const response = await generateTutorContent({
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       config: {
         systemInstruction: tutorInstruction + ` Sen hozir ${childName} ismli ${childAge} yoshli bola bilan suhbatlashyapsan. Doimo adabiy, ravon va grammatik jihatdan to‘g‘ri o‘zbek tilida gapir. Iliq, quvnoq, mehribon ustoz ohangidan foydalan; murakkab atamalarni sodda misollar bilan tushuntir. Javoblaring tabiiy og‘zaki nutqqa mos, talaffuz qilishga qulay bo‘lsin. Odatda 2–4 qisqa gap yoz, bitta savol bilan bolani fikrlashga unda. Emoji me’yorida ishlat.`,
@@ -243,8 +268,7 @@ app.post("/api/ai/tutor", requireDb, auth, aiLimiter, async (req, res, next) => 
     );
     const contents = history.rows.reverse().map(row => ({ role: row.role, parts: [{ text: row.message }] }));
     contents.push({ role: "user", parts: [{ text: `Fan: ${subject}. O'quvchi: ${child.display_name}, yoshi: ${child.age}. Savol: ${message}` }] });
-    const response = await ai.models.generateContent({
-      model: MODEL,
+    const response = await generateTutorContent({
       contents,
       config: { systemInstruction: tutorInstruction + " Faqat o‘zbek lotin yozuvida, ona tilidek tabiiy va xatosiz javob ber. Javobni yuborishdan oldin grammatikasini tekshir. Bola boshqa tilni mashq qilishni aniq so‘rasa, faqat mashq misollarini o‘sha tilda ber, izohni o‘zbekcha qil.", temperature: 0.35, maxOutputTokens: 420 }
     });
