@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#1e3a8a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Bilimdon Kids" />
+  <meta name="apple-mobile-web-app-title" content="BILIMDON KIDS AI" />
   <meta name="author" content="Saparova Matluba — Termiz davlat pedagogika instituti Boshlang'ich ta'lim fakulteti talabasi" />
   <meta name="description" content="Bilimdon Kids — O'rgan, o'yna, rivojlan! Sun'iy intellekt bilan bolalar ta'lim dasturi. Muallif: Saparova Matluba (TDPI)" />
-  <title>Bilimdon Kids — Saparova Matluba | TDPI (To'liq 3D AI Dastur + APK)</title>
+  <title>BILIMDON KIDS AI — Interaktiv ta’lim platformasi</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -131,11 +131,11 @@
       } catch (e) {}
     };
 
-    // Ovozli javob faqat Gemini Live orqali; browser Speech API va alohida TTS o'chirilgan.
+    // Ovozli javob bitta real-time AI tizimi orqali uzatiladi.
     // ==========================================
-    // GEMINI SUN'IY INTELLEKT API INTEGRATSIYASI
+    // BILIMDON KIDS AI INTEGRATSIYASI
     // ==========================================
-    async function askGeminiKidsTutor(promptText, _customApiKey, childName = 'Ali', childId = '') {
+    async function askBilimdonTutor(promptText, _customApiKey, childName = 'Ali', childId = '') {
       const signedIn = Boolean(childId);
       const res = await fetch(signedIn ? '/api/ai/tutor' : '/api/ai/guest-tutor', {
         method: 'POST',
@@ -625,7 +625,7 @@
                     setIsAiSpeaking(true);
                     source.onended = () => { live.playingCount = Math.max(0, live.playingCount - 1); if (!live.playingCount) setIsAiSpeaking(false); };
                     source.start(startAt);
-                  } catch (audioError) { console.error("Gemini Live audio playback:", audioError); }
+                  } catch (audioError) { console.error("AI ovoz ijrosi:", audioError); }
                 }
               },
               onerror: error => { console.error("AI ovozli aloqa xatosi:", error); setTutorReply("Ovozli AI bilan aloqa uzildi. Mikrofon tugmasini qayta bosing."); },
@@ -1171,7 +1171,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
         setTutorReply('O‘ylab ko‘rayapman, hozir javob beraman! 🤔');
         playSound('click', muted);
         try {
-          const reply = await askGeminiKidsTutor(text, '', childName, selectedChildId);
+          const reply = await askBilimdonTutor(text, '', childName, selectedChildId);
           setTutorReply(reply);
           playSound('success', muted);
 } catch (error) {
@@ -1812,7 +1812,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
       );
 
       // ==========================================
-      // 8-EKRAN: AI O'QITUVCHI BILAN SUHBAT (GEMINI LIVE)
+      // 8-EKRAN: AI USTOZ BILAN SUHBAT
       // ==========================================
       const renderAiTutorScreen = () => (
         <div className="relative w-full rounded-[34px] overflow-hidden shadow-2xl border-4 border-indigo-400/70 bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#311042] p-6 md:p-8 min-h-[500px] flex flex-col justify-between text-white">
@@ -1895,7 +1895,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                 ].map((q) => (
                   <button
                     key={q}
-                    onClick={() => handleSendToGemini(q)}
+                    onClick={() => handleSendToAiTutor(q)}
                     className="text-xs font-bold bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-full transition"
                   >
                     {q}
@@ -1909,14 +1909,14 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                     type="text"
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSendToGemini()}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendToAiTutor()}
                     placeholder="AI Ustozga savolingizni yozing..."
                     className="w-full bg-transparent outline-none text-sm font-bold text-white placeholder-indigo-300"
                   />
                   <span className="text-amber-300">✨</span>
                 </div>
                 <button
-                  onClick={() => handleSendToGemini()}
+                  onClick={() => handleSendToAiTutor()}
                   className="w-12 h-12 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 flex items-center justify-center shadow-xl border-2 border-white/40 shrink-0 font-black"
                 >
                   ➤
