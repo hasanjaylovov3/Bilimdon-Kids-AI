@@ -1,8 +1,10 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const htmlPath = path.join(__dirname, "..", "public", "index.html");
 const html = fs.readFileSync(htmlPath, "utf8");
 const match = html.match(/<script>([\s\S]*?)<\/script>/i);
