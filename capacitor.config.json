@@ -1,0 +1,13 @@
+{
+  "appId": "uz.tdpi.saparovamatluba.bilimdonkids",
+  "appName": "Bilimdon Kids",
+  "webDir": "public",
+  "server": {
+    "url": "https://bilimdon-kids-ai-xjd1.onrender.com",
+    "cleartext": false,
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}
