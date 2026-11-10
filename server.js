@@ -17,10 +17,11 @@ const pool = process.env.DATABASE_URL ? new Pool({
   ssl: isProd ? { rejectUnauthorized: false } : undefined
 }) : null;
 const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 const SESSION_DAYS = Math.min(30, Math.max(1, Number(process.env.SESSION_DAYS || 14)));
 
 app.disable("x-powered-by");
+app.set("trust proxy", 1);
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json({ limit: "32kb" }));
 app.use(cookieParser());
@@ -139,6 +140,31 @@ Matematika, o'qish, yozish va ingliz tilini kichik bosqichlarda o'rgat. Javoblar
 Javobni darhol aytib qo'ymasdan, imkon bo'lsa bolani fikrlashga undaydigan bitta sodda savol ber. Xatolarni muloyim tuzat, hech qachon uyaltirma.
 Shaxsiy ma'lumot, manzil, telefon, parol yoki maktab nomini so'rama. Kattalar bilan bog'liq xavfli vaziyatlarda ishonchli kattaga murojaat qilishni ayt.
 Tibbiy, moliyaviy yoki xavfli ko'rsatmalar bermagin. O'zingni sun'iy intellekt yordamchisi ekaningni yashirma.`;
+
+app.post("/api/ai/guest-tutor", aiLimiter, async (req, res, next) => {
+  try {
+    if (!ai) return res.status(503).json({ error: "AI hozircha sozlanmagan. Gemini API kalitini Render Environment bo'limida tekshiring." });
+    const prompt = clean(req.body?.promptText);
+    const childName = clean(req.body?.childName).slice(0, 40) || "Ali";
+    if (!prompt || prompt.length > 2000) return res.status(400).json({ error: "Savol 1–2000 belgi oralig'ida bo'lishi kerak." });
+    const response = await ai.models.generateContent({
+      model: MODEL,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: {
+        systemInstruction: `Sen Bilimdon Kids dasturidagi 7 yoshli ${childName} ismli bolaning mehribon AI ustozisan. O'zbek tilida sodda, quvnoq va yoshga mos javob ber. Javob 1–3 qisqa gapdan oshmasin, bolani ruhlantir.`,
+        temperature: 0.75,
+        maxOutputTokens: 220
+      }
+    });
+    const answer = clean(response.text);
+    if (!answer) return res.status(502).json({ error: "AI bo'sh javob qaytardi. Yana urinib ko'ring." });
+    res.json({ answer });
+  } catch (error) {
+    const message = String(error?.message || "");
+    if (/429|quota|resource_exhausted/i.test(message)) return res.status(429).json({ error: "AI savollari limiti vaqtincha tugadi. Birozdan keyin urinib ko'ring." });
+    next(error);
+  }
+});
 
 app.post("/api/ai/tutor", requireDb, auth, aiLimiter, async (req, res, next) => {
   try {
