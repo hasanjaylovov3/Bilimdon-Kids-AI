@@ -664,9 +664,9 @@
           setTutorReply(error?.message || "Gemini Live ishga tushmadi. Mikrofon ruxsatini tekshiring.");
         }
       };
-      const speakTutorText = async (text) => {
+      const speakTutorText = async (text, lang = 'uz-UZ', muted = false) => {
         const spokenText = String(text || "").trim();
-        if (!spokenText) return;
+        if (!spokenText || muted) return;
         if (!liveVoiceRef.current?.running) await startLiveTutor();
         const session = liveVoiceRef.current?.session;
         if (session) {
