@@ -4,21 +4,37 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const htmlPath = path.join(__dirname, "..", "public", "index.html");
-const html = fs.readFileSync(htmlPath, "utf8");
-const match = html.match(/<script>([\s\S]*?)<\/script>/i);
-if (!match) {
-  console.error("Inline application script was not found in public/index.html");
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const html = fs.readFileSync(path.join(root, "public/index.html"), "utf8");
+const scripts = [...html.matchAll(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script>/gi)];
+if (!scripts.length) {
+  console.error("No inline scripts found in public/index.html");
   process.exit(1);
 }
 
-const tempPath = path.join(os.tmpdir(), "bilimdon-kids-client-check.js");
+const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "bilimdon-client-check-"));
+let failed = false;
 try {
-  fs.writeFileSync(tempPath, match[1], "utf8");
-  const result = spawnSync(process.execPath, ["--check", tempPath], { stdio: "inherit" });
-  if (result.error) throw result.error;
-  process.exitCode = result.status ?? 1;
+  for (let index = 0; index < scripts.length; index++) {
+    const [, attributes, source] = scripts[index];
+    if (/\\bsrc\\s*=/.test(attributes) || !source.trim()) continue;
+    const type = attributes.match(/\\btype\\s*=\\s*["']([^"']+)["']/i)?.[1]?.toLowerCase() || "text/javascript";
+    if (!["text/javascript", "application/javascript", "module", "text/babel", "application/babel"].includes(type)) continue;
+    const isJsx = type.includes("babel") || /<\\/?[A-Z][A-Za-z0-9.]*(?:\\s|\\/?>)/.test(source);
+    const tempFile = path.join(tempDir, `inline-${index}.${isJsx ? "jsx" : type === "module" ? "mjs" : "js"}`);
+    fs.writeFileSync(tempFile, source, "utf8");
+    const result = isJsx
+      ? spawnSync("npx", ["--yes", "esbuild@0.25.0", tempFile, "--loader=jsx", "--outfile=" + tempFile + ".js", "--log-level=warning"], { cwd: root, stdio: "inherit" })
+      : spawnSync(process.execPath, ["--check", tempFile], { cwd: root, stdio: "inherit" });
+    if (result.error) throw result.error;
+    if (result.status !== 0) {
+      console.error(`Inline script #${index + 1} failed syntax validation.`);
+      failed = true;
+    } else {
+      console.log(`Inline script #${index + 1}: syntax OK (${isJsx ? "JSX" : type})`);
+    }
+  }
 } finally {
-  fs.rmSync(tempPath, { force: true });
+  fs.rmSync(tempDir, { recursive: true, force: true });
 }
+if (failed) process.exit(1);
