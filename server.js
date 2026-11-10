@@ -377,9 +377,23 @@ app.post("/api/admin/content", requireDb, auth, requireAdmin, async (req, res, n
     const description = clean(req.body?.description).slice(0, 1200);
     const imageUrl = clean(req.body?.imageUrl);
     const contentData = req.body?.contentData && typeof req.body.contentData === "object" ? req.body.contentData : {};
-    if (!["lesson","image","game"].includes(kind) || title.length < 2 || title.length > 100 ||
+    if (!["lesson","image","game","video"].includes(kind) || title.length < 2 || title.length > 100 ||
         imageUrl.length > 1000 || (imageUrl && !imageUrl.startsWith("https://"))) {
       return res.status(400).json({ error: "Tur, sarlavha yoki HTTPS rasm havolasini tekshiring." });
+    }
+    if (kind === "video") {
+      const videoUrl = clean(contentData.videoUrl);
+      let parsedUrl;
+      try { parsedUrl = new URL(videoUrl); } catch {}
+      const host = parsedUrl?.hostname?.toLowerCase().replace(/^www\./, "");
+      let videoId = "";
+      if (host === "youtu.be") videoId = parsedUrl.pathname.split("/").filter(Boolean)[0] || "";
+      if (host === "youtube.com" || host === "m.youtube.com" || host === "youtube-nocookie.com") {
+        videoId = parsedUrl.searchParams.get("v") || parsedUrl.pathname.match(/\/(?:embed|shorts)\/([\w-]{11})/)?.[1] || "";
+      }
+      if (!/^[\w-]{11}$/.test(videoId)) return res.status(400).json({ error: "YouTube video havolasini to‘g‘ri kiriting." });
+      contentData.videoId = videoId;
+      delete contentData.videoUrl;
     }
     if (kind === "game") {
       const options = Array.isArray(contentData.options) ? contentData.options.map(clean).filter(Boolean).slice(0, 6) : [];
