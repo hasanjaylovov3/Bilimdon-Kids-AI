@@ -344,7 +344,7 @@ app.post("/api/ai/tutor", requireDb, auth, aiLimiter, async (req, res, next) => 
       input: `O‘quvchi: ${child.display_name}, yoshi: ${child.age}. Fan: ${subject}.\n${transcript ? "Oldingi suhbat:\n" + transcript + "\n" : ""}Bolaning yangi savoli: ${message}`,
       systemInstruction: tutorInstruction,
       temperature: 0.35,
-      maxOutputTokens: 300
+      maxOutputTokens: 220
     });
     const answer = clean(response.output_text);
     if (!answer) throw new Error("Gemini bo‘sh javob qaytardi.");
