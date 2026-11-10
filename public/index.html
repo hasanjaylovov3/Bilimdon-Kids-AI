@@ -545,6 +545,7 @@
       const [aiStatusLoading, setAiStatusLoading] = useState(false);
 
       const [stars, setStars] = useState(1250);
+      const [selectedVideo, setSelectedVideo] = useState(null);
       const [muted, setMuted] = useState(false);
 
       const [mathIdx, setMathIdx] = useState(0);
@@ -2146,12 +2147,19 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
           { id: "game-reading", kind: "game", title: "So‘zni top", description: "Rasmga mos so‘zni tanla.", emoji: "🐱", question: "🐱 Bu nima?", options: ["Cat", "Sun", "Book"], answer: "Cat" }
         ];
         const allActivities = [...builtInActivities, ...activityItems.filter(item => item.kind !== 'video')];
-        const learningVideos = [
-          { subject: "Ingliz tili", title: "ABC Alphabet Song — Super Simple Songs", description: "Ingliz alifbosi va talaffuzini qo‘shiq orqali o‘rganish", emoji: "🇬🇧", url: "https://www.youtube.com/results?search_query=Super+Simple+Songs+ABC+Alphabet+Song+official", color: "from-sky-500 to-blue-600" },
-          { subject: "Matematika", title: "Numberblocks & Alphablocks", description: "Rangli animatsiya orqali sanash, sonlar va oddiy matematik tushunchalar", emoji: "🔢", url: "https://www.youtube.com/watch?v=I4EtoQ7BXSw", color: "from-amber-400 to-orange-500" },
-          { subject: "O‘qish", title: "Alphablocks — Learn to Read", description: "Harflar tovushlardan so‘z yasab, bolalarga o‘qishni o‘rgatadi", emoji: "📚", url: "https://www.youtube.com/watch?v=xJSVrq-6-jc", color: "from-violet-500 to-fuchsia-600" },
-          { subject: "Yozish", title: "Alphablocks — Writing Made Easy", description: "Harflar va sodda so‘zlarni yozishni animatsiya orqali mashq qilish", emoji: "✏️", url: "https://www.youtube.com/watch?v=YrzMazkqRzY", color: "from-emerald-500 to-teal-600" }
+        const builtInVideos = [
+          { subject: "Ingliz tili", title: "ABC Alphabet Song — Super Simple Songs", description: "Ingliz alifbosi va talaffuzini qo‘shiq orqali o‘rganish", emoji: "🇬🇧", videoId: "7nlf9zpj13k", color: "from-sky-500 to-blue-600" },
+          { subject: "Matematika", title: "Numberblocks — Sonlarni o‘rganamiz", description: "Rangli animatsiya orqali sanash, sonlar va oddiy matematik tushunchalar", emoji: "🔢", videoId: "I4EtoQ7BXSw", color: "from-amber-400 to-orange-500" },
+          { subject: "O‘qish", title: "Alphablocks — Learn to Read", description: "Harflar tovushlardan so‘z yasab, bolalarga o‘qishni o‘rgatadi", emoji: "📚", videoId: "xJSVrq-6-jc", color: "from-violet-500 to-fuchsia-600" },
+          { subject: "Yozish", title: "Alphablocks — Writing Made Easy", description: "Harflar va sodda so‘zlarni yozishni animatsiya orqali mashq qilish", emoji: "✏️", videoId: "YrzMazkqRzY", color: "from-emerald-500 to-teal-600" }
         ];
+        const adminVideos = activityItems.filter(item => item.kind === "video").map(item => {
+          const data = item.content_data || item.contentData || {};
+          const rawUrl = data.videoUrl || item.video_url || "";
+          const match = rawUrl.match(/(?:youtu\\.be\\/|youtube(?:-nocookie)?\\.com\\/(?:watch\\?.*v=|embed\\/|shorts\\/))([A-Za-z0-9_-]{11})/);
+          return { subject: "Admin qo‘shgan video", title: item.title, description: item.description || "Ta’limiy video", emoji: "🎬", videoId: data.videoId || (match && match[1]), color: "from-fuchsia-500 to-violet-600" };
+        }).filter(video => video.videoId);
+        const learningVideos = [...builtInVideos, ...adminVideos];
         return (
           <div className="w-full min-h-full rounded-[28px] bg-gradient-to-br from-sky-100 via-white to-violet-100 p-4 md:p-7 space-y-6">
             <div><h2 className="text-2xl md:text-3xl font-black text-slate-900">📚 Mashg‘ulotlar</h2><p className="text-slate-600 font-semibold">Ingliz tili, matematika, o‘qish va yozishni o‘yinlar bilan o‘rgan!</p></div>
@@ -2174,10 +2182,10 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
             <section className="space-y-3">
               <div><h3 className="text-xl md:text-2xl font-black text-slate-900">🎬 Bolalar uchun animatsion videolar</h3><p className="text-sm text-slate-600 font-semibold">YouTube’dagi ta’limiy videolar — mavzuni tanlab tomosha qil.</p></div>
               <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                {learningVideos.map(video => (
-                  <article key={video.subject} className="overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-lg">
+                {learningVideos.map((video, index) => (
+                  <article key={video.videoId + "-" + index} className="overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-lg">
                     <div className={"h-28 bg-gradient-to-br "+video.color+" flex items-center justify-center text-6xl"}>{video.emoji}</div>
-                    <div className="p-4"><div className="text-xs font-black text-indigo-600">{video.subject.toUpperCase()}</div><h4 className="font-black text-slate-900 mt-1">{video.title}</h4><p className="text-xs text-slate-600 mt-2 min-h-10">{video.description}</p><a href={video.url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 text-white px-3 py-2.5 text-sm font-black">▶ YouTube’da ko‘rish</a></div>
+                    <div className="p-4"><div className="text-xs font-black text-indigo-600">{video.subject.toUpperCase()}</div><h4 className="font-black text-slate-900 mt-1">{video.title}</h4><p className="text-xs text-slate-600 mt-2 min-h-10">{video.description}</p><button type="button" onClick={() => setSelectedVideo(video)} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 text-white px-3 py-2.5 text-sm font-black">▶ Ilova ichida ko‘rish</button></div>
                   </article>
                 ))}
               </div>
