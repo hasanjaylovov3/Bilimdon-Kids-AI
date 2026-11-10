@@ -27,11 +27,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
 
   <style>
+    html, body, #root {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
     body {
+      min-height: 100dvh;
       font-family: 'Nunito', sans-serif;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
-      overflow-x: hidden;
+      overflow: hidden;
+      overscroll-behavior: none;
     }
     @keyframes floatSlow {
       0%, 100% { transform: translateY(0px); }
@@ -72,7 +79,7 @@
     })();
   </script>
 </head>
-<body class="bg-slate-950 min-h-screen text-slate-800 m-0 p-0">
+<body class="bg-slate-950 h-full text-slate-800 m-0 p-0">
   <div id="root"></div>
 
   <script type="text/babel">
@@ -1916,7 +1923,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
             </div>
 
             <div className="order-2 lg:order-2 lg:col-span-7 flex flex-col gap-2 min-h-0 min-w-0 overflow-hidden">
-              <div ref={chatScrollRef} className="h-[clamp(88px,18vh,132px)] lg:flex-1 lg:h-auto min-h-0 max-h-full overflow-y-auto overscroll-contain rounded-2xl bg-indigo-950/45 border border-indigo-400/25 p-2.5 space-y-2 scroll-smooth shrink-0">
+              <div ref={chatScrollRef} className="flex-1 min-h-0 max-h-full overflow-y-auto overscroll-contain rounded-2xl bg-indigo-950/45 border border-indigo-400/25 p-2.5 space-y-2 scroll-smooth">
                 {chatMessages.map((message) => (
                   <div key={message.id} className={"flex " + (message.role === "user" ? "justify-end" : "justify-start")}>
                     <div className={"max-w-[92%] whitespace-pre-wrap break-words [overflow-wrap:anywhere] rounded-2xl px-4 py-3 shadow-lg text-sm md:text-base leading-relaxed " + (message.role === "user" ? "bg-indigo-600 text-white rounded-br-md" : "bg-white text-slate-900 rounded-bl-md font-extrabold")}>
