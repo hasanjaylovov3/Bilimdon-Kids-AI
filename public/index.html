@@ -131,26 +131,74 @@
       } catch (e) {}
     };
 
-    const speakText = (text, lang = 'uz-UZ', muted = false, onStart, onEnd) => {
-      if (muted || typeof window === 'undefined' || !('speechSynthesis' in window)) {
+    let activeSpeechAudio = null;
+    let activeSpeechUrl = null;
+    let speechRequestId = 0;
+    const speakText = async (text, lang = 'uz-UZ', muted = false, onStart, onEnd) => {
+      const requestId = ++speechRequestId;
+      if (activeSpeechAudio) {
+        activeSpeechAudio.pause();
+        activeSpeechAudio = null;
+      }
+      if (activeSpeechUrl) {
+        URL.revokeObjectURL(activeSpeechUrl);
+        activeSpeechUrl = null;
+      }
+      if (muted || typeof window === 'undefined') {
         if (onEnd) onEnd();
         return;
       }
       try {
+        if (lang === 'uz-UZ') {
+          const response = await fetch('/api/ai/speech', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text })
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || !data.audio) {
+            throw new Error(data.error || "O‘zbekcha ovozni tayyorlab bo‘lmadi.");
+          }
+          if (requestId !== speechRequestId) return;
+          const binary = atob(data.audio);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+          const blob = new Blob([bytes], { type: 'audio/wav' });
+          const url = URL.createObjectURL(blob);
+          const audio = new Audio(url);
+          activeSpeechAudio = audio;
+          activeSpeechUrl = url;
+          const finish = () => {
+            if (activeSpeechAudio === audio) activeSpeechAudio = null;
+            if (activeSpeechUrl === url) {
+              URL.revokeObjectURL(url);
+              activeSpeechUrl = null;
+            }
+            if (onEnd) onEnd();
+          };
+          audio.onplay = () => { if (onStart) onStart(); };
+          audio.onended = finish;
+          audio.onerror = finish;
+          await audio.play();
+          return;
+        }
+
+        if (!('speechSynthesis' in window)) {
+          if (onEnd) onEnd();
+          return;
+        }
         window.speechSynthesis.cancel();
         const utter = new SpeechSynthesisUtterance(text);
-        const voices = window.speechSynthesis.getVoices();
-        const uzVoice = voices.find((voice) => /^uz([-_]|$)/i.test(voice.lang)) ||
-          voices.find((voice) => /uzbek|o‘zbek|uzbekcha/i.test(voice.name));
-        utter.lang = uzVoice?.lang || lang;
-        if (uzVoice) utter.voice = uzVoice;
-        utter.rate = 0.91;
-        utter.pitch = 1.08;
+        utter.lang = lang;
+        utter.rate = 0.94;
+        utter.pitch = 1.05;
         utter.onstart = () => onStart && onStart();
         utter.onend = () => onEnd && onEnd();
         utter.onerror = () => onEnd && onEnd();
         window.speechSynthesis.speak(utter);
-      } catch (e) {
+      } catch (error) {
+        console.error('Bilimdon Kids speech error:', error);
         if (onEnd) onEnd();
       }
     };
@@ -1211,13 +1259,6 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
               </div>
             </div>
 
-            <div className="flex items-center gap-2 rounded-2xl bg-white/85 px-3 py-2 shadow-lg border border-white/80">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center text-xl shadow">🎓</div>
-              <div className="leading-none">
-                <div className="font-black text-blue-800 text-sm tracking-wide">BILIMDON</div>
-                <div className="font-black text-indigo-600 text-[11px] tracking-[0.18em]">KID AI</div>
-              </div>
-            </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowAuthorModal(true)}
@@ -1936,7 +1977,21 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
         <div className="min-h-screen w-screen bg-slate-950 text-slate-800 flex flex-col justify-between overflow-x-hidden relative">
           {/* HAQIQIY ILOVA EKRANI (To'liq ekranli Native App ko'rinishi, hech qanday ortiqcha web-preview satrlarisiz) */}
           <div className="w-full min-h-screen flex-1 flex items-stretch justify-center p-0 sm:p-2 md:p-4">
-            <div className="w-full max-w-7xl mx-auto flex items-stretch">
+            <div className="w-full max-w-7xl mx-auto flex flex-col items-stretch">
+              {activeScreen !== 'login' && (
+                <div className="w-full flex items-center justify-start px-5 py-3 md:px-8">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-2xl bg-blue-600/90 border-2 border-cyan-300 shadow-lg flex items-center justify-center -rotate-6">
+                      <span className="text-3xl">🎓</span>
+                    </div>
+                    <div>
+                      <div className="text-3xl md:text-4xl font-black tracking-tight text-white drop-shadow-[0_4px_0_rgba(30,58,138,0.9)]" style={{ WebkitTextStroke: '1px #1e3a8a' }}>Bilimdon</div>
+                      <div className="text-3xl md:text-4xl font-black tracking-tight text-amber-300 -mt-1 drop-shadow-[0_4px_0_rgba(146,64,14,0.95)]" style={{ WebkitTextStroke: '1px #78350f' }}>Kids</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div className="w-full flex-1 flex items-stretch">
               {activeScreen === 'login' && renderLoginScreen()}
               {activeScreen === 'dashboard' && renderDashboardScreen()}
               {activeScreen === 'math' && renderMathScreen()}
@@ -1946,6 +2001,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
               {activeScreen === 'results' && renderResultsScreen()}
               {activeScreen === 'aitutor' && renderAiTutorScreen()}
               {activeScreen === 'gifts' && renderGiftsScreen()}
+              </div>
             </div>
           </div>
 
