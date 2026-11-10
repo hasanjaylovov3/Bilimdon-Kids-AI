@@ -623,6 +623,7 @@
                   const audioData = part?.inlineData?.data;
                   if (!audioData) continue;
                   try {
+                    if (!live.speechStarted) { live.speechStarted = true; live.onSpeechStart?.(); }
                     const binary = atob(audioData);
                     const bytes = new Uint8Array(binary.length);
                     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -638,7 +639,7 @@
                     live.nextAudioTime = startAt + buffer.duration / 1.15;
                     live.playingCount++;
                     setIsAiSpeaking(true);
-                    source.onended = () => { live.playingCount = Math.max(0, live.playingCount - 1); if (!live.playingCount) setIsAiSpeaking(false); };
+                    source.onended = () => { live.playingCount = Math.max(0, live.playingCount - 1); if (!live.playingCount) { setIsAiSpeaking(false); live.onSpeechEnd?.(); live.onSpeechEnd = null; live.speechStarted = false; } };
                     source.start(startAt);
                   } catch (audioError) { console.error("AI ovoz ijrosi:", audioError); }
                 }
@@ -685,13 +686,13 @@
           setTutorReply(error?.message || "AI Ustoz ishga tushmadi. Mikrofon ruxsatini tekshiring.");
         }
       };
-      const speakTutorText = async (text, lang = 'uz-UZ', muted = false) => {
+      const speakTutorText = async (text, lang = 'uz-UZ', muted = false, onStart = null, onEnd = null) => {
         const spokenText = String(text || "").trim();
         if (!spokenText || muted) return;
         if (!liveVoiceRef.current?.running) await startLiveTutor();
         const session = liveVoiceRef.current?.session;
         if (session) {
-          try { session.sendClientContent({ turns: [{ role: "user", parts: [{ text: "Quyidagi matnni o'zbek tilida aynan o'qib bering, qo'shimcha izoh qo'shmang: " + spokenText }] }], turnComplete: true }); }
+          try { liveVoiceRef.current.onSpeechStart = onStart; liveVoiceRef.current.onSpeechEnd = onEnd; liveVoiceRef.current.speechStarted = false; session.sendClientContent({ turns: [{ role: "user", parts: [{ text: "Quyidagi matnni o'zbek tilida aynan o'qib bering, qo'shimcha izoh qo'shmang: " + spokenText }] }], turnComplete: true }); }
           catch (error) { setTutorReply(error?.message || "Matnni ovozga uzatib bo‘lmadi."); }
         }
       };
