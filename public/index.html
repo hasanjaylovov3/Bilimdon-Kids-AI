@@ -15,7 +15,13 @@
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- React 18 va Babel (hech qanday server talab qilmaydi, brauzerning o'zida va GitHub Pages-da 100% ishlaydi) -->
-  <script type="module">window.__bilimdonAiSdkPromise = import("https://esm.sh/@google/genai").then(module => module.GoogleGenAI);</script>
+  <script type="module">
+    window.__bilimdonAiSdkPromise = import("https://esm.sh/@google/genai").then(module => module.GoogleGenAI);
+    window.__bilimdonFaceTrackerPromise = import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/+esm").then(async module => {
+      const vision = await module.FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm");
+      return module.FaceLandmarker.createFromOptions(vision, { baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task", delegate: "GPU" }, runningMode: "VIDEO", numFaces: 1 });
+    }).catch(error => { console.info("Yuzni kuzatish modeli yuklanmadi:", error); return null; });
+  </script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -44,9 +50,18 @@
       0%, 100% { transform: translateY(0px); }
       50% { transform: translateY(-8px); }
     }
-    .animate-float {
-      animation: floatSlow 3.4s ease-in-out infinite;
-    }
+    .animate-float { animation: floatSlow 3.4s ease-in-out infinite; }
+    .boy-face-overlay { position:absolute; z-index:20; left:50%; top:17%; width:38%; height:22%; transform:translateX(-50%); pointer-events:none; }
+    .boy-eye { position:absolute; top:34%; width:15%; height:19%; border-radius:999px; background:#fff; box-shadow:0 1px 3px #0005; overflow:hidden; }
+    .boy-eye.left { left:19%; } .boy-eye.right { right:19%; }
+    .boy-pupil { position:absolute; left:50%; top:50%; width:58%; height:65%; border-radius:50%; background:#26354c; transform:translate(calc(-50% + var(--gaze-x, 0px)),calc(-50% + var(--gaze-y, 0px))); }
+    .boy-pupil:after { content:''; position:absolute; width:30%; height:30%; left:20%; top:12%; border-radius:50%; background:white; }
+    .boy-eyelid { position:absolute; inset:0; border-radius:inherit; background:#e9b58f; transform:scaleY(0); transform-origin:top; animation:boyBlink 4.6s infinite; }
+    @keyframes boyBlink { 0%,43%,47%,100%{transform:scaleY(0)} 45%{transform:scaleY(1)} 72%{transform:scaleY(0)} 73%{transform:scaleY(1)} 74%{transform:scaleY(0)} }
+    .boy-mouth { position:absolute; left:50%; top:76%; width:20%; height:8%; border-radius:45% 45% 55% 55%; background:#6f2732; border:1.5px solid #4a1825; transform:translateX(-50%) scaleY(.35); transform-origin:center; }
+    .boy-mouth.speaking { animation:boyTalk .19s ease-in-out infinite alternate; }
+    @keyframes boyTalk { from{transform:translateX(-50%) scaleY(.35)} to{transform:translateX(-50%) scaleY(1.35)} }
+    .app-scroll-area { min-height:0; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; touch-action:pan-y; scrollbar-width:thin; }
   </style>
   <script>
     // Haqiqiy PWA / Mobil va Kompyuter Ilovasi (Standalone App) Manifestini avtomatik ulash
@@ -161,26 +176,49 @@
     // ==========================================
     // 3D ANIMATSION BOLAKAY OBRAZI (PIXAR 3D STYLE)
     // ==========================================
-    const Boy3DCharacter = ({
-      outfit = 'blue',
-      pose = 'neutral',
-      size = 'md',
-      isSpeaking = false
-    }) => {
-      const sizeMap = {
-        sm: 'w-28 h-32',
-        md: 'w-44 h-52',
-        lg: 'w-60 h-72',
-        xl: 'w-68 h-80'
-      };
+    const Boy3DCharacter = ({ outfit = 'blue', pose = 'neutral', size = 'md', isSpeaking = false }) => {
+      const sizeMap = { sm: 'w-28 h-32', md: 'w-44 h-52', lg: 'w-60 h-72', xl: 'w-68 h-80' };
+      const [gaze, setGaze] = useState({ x: 0, y: 0 });
+      useEffect(() => {
+        const updatePointer = event => {
+          const point = event.touches?.[0] || event;
+          setGaze({ x: Math.max(-1, Math.min(1, (point.clientX / window.innerWidth - .5) * 2)), y: Math.max(-1, Math.min(1, (point.clientY / window.innerHeight - .45) * 2)) });
+        };
+        window.addEventListener('pointermove', updatePointer, { passive: true });
+        window.addEventListener('touchmove', updatePointer, { passive: true });
+        let stopped = false, frame = 0, lastUpdate = 0;
+        const stream = window.__bilimdonMediaStream;
+        if (stream?.getVideoTracks?.().some(track => track.readyState === 'live') && window.__bilimdonFaceTrackerPromise) {
+          const video = document.createElement('video'); video.muted = true; video.playsInline = true; video.srcObject = stream;
+          (async () => {
+            const landmarker = await window.__bilimdonFaceTrackerPromise;
+            if (!landmarker || stopped) return;
+            await video.play().catch(() => {});
+            const detect = now => {
+              if (stopped) return;
+              if (video.readyState >= 2 && now - lastUpdate > 75) {
+                lastUpdate = now;
+                try {
+                  const nose = landmarker.detectForVideo(video, now).faceLandmarks?.[0]?.[1];
+                  if (nose) setGaze({ x: Math.max(-1, Math.min(1, (nose.x - .5) * 2.2)), y: Math.max(-1, Math.min(1, (nose.y - .43) * 2.0)) });
+                } catch {}
+              }
+              frame = requestAnimationFrame(detect);
+            };
+            frame = requestAnimationFrame(detect);
+          })();
+        }
+        return () => { stopped = true; cancelAnimationFrame(frame); window.removeEventListener('pointermove', updatePointer); window.removeEventListener('touchmove', updatePointer); };
+      }, []);
+      const faceStyle = { '--gaze-x': (gaze.x * 3.5) + 'px', '--gaze-y': (gaze.y * 2.5) + 'px', transform: 'translateX(-50%) rotateY(' + (gaze.x * 4) + 'deg)' };
       return (
-        <div className={`relative select-none flex items-center justify-center animate-float ${sizeMap[size] || sizeMap.md} transition-transform duration-500`}>
-          <img
-            src="/images/bilimdon-boy-avatar.webp"
-            alt="Bilimdon Kids 3D bolakay"
-            draggable="false"
-            className="relative z-10 w-full h-full object-contain drop-shadow-[0_18px_22px_rgba(15,23,42,0.35)]"
-          />
+        <div className={`relative select-none flex items-center justify-center animate-float ${sizeMap[size] || sizeMap.md} transition-transform duration-300`}>
+          <img src="/images/bilimdon-boy-avatar.webp" alt="Bilimdon Kids 3D bolakay" draggable="false" className="relative z-10 w-full h-full object-contain drop-shadow-[0_18px_22px_rgba(15,23,42,0.35)]" />
+          <div className="boy-face-overlay" style={faceStyle} aria-hidden="true">
+            <span className="boy-eye left"><i className="boy-pupil block" /><i className="boy-eyelid block" /></span>
+            <span className="boy-eye right"><i className="boy-pupil block" /><i className="boy-eyelid block" /></span>
+            <span className={"boy-mouth" + (isSpeaking ? " speaking" : "")} />
+          </div>
         </div>
       );
     };
@@ -279,6 +317,33 @@
     function App() {
       const requestedAdminPanel = new URLSearchParams(window.location.search).get('admin') === '1';
       const [activeScreen, setActiveScreen] = useState('login');
+      const [showMediaPermissionPrompt, setShowMediaPermissionPrompt] = useState(() => Boolean(window.Capacitor?.isNativePlatform?.() && localStorage.getItem('bilimdon-media-permissions') !== 'granted'));
+      const [mediaPermissionMessage, setMediaPermissionMessage] = useState('');
+      const requestAppMediaPermissions = async () => {
+        if (!navigator.mediaDevices?.getUserMedia) { setMediaPermissionMessage('Kamera va mikrofon uchun HTTPS hamda Android ilova ruxsati kerak.'); return; }
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
+          window.__bilimdonMediaStream = stream;
+          localStorage.setItem('bilimdon-media-permissions', 'granted');
+          setMediaPermissionMessage('Kamera va mikrofon ruxsatlari yoqildi.');
+          setShowMediaPermissionPrompt(false);
+        } catch (combinedError) {
+          try {
+            const audioStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+            window.__bilimdonMediaStream = audioStream;
+            localStorage.removeItem('bilimdon-media-permissions');
+            setMediaPermissionMessage('Mikrofon yoqildi. Yuzni kuzatish uchun kamera ruxsatini ham bering.');
+            setShowMediaPermissionPrompt(false);
+          } catch (audioError) {
+            setMediaPermissionMessage('Ruxsat berilmadi. Telefon Sozlamalari → Ilovalar → Bilimdon Kids → Ruxsatlar bo‘limidan Kamera va Mikrofonni yoqing, so‘ng qayta urinib ko‘ring.');
+          }
+        }
+      };
+      useEffect(() => {
+        const cleanup = () => window.__bilimdonMediaStream?.getTracks?.().forEach(track => track.stop());
+        window.addEventListener('beforeunload', cleanup);
+        return () => window.removeEventListener('beforeunload', cleanup);
+      }, []);
       const [viewMode, setViewMode] = useState('single');
 
       const [childName, setChildName] = useState('Ali');
@@ -357,7 +422,7 @@
         liveConnectingRef.current = false;
         try { live.processor?.disconnect(); } catch {}
         try { live.source?.disconnect(); } catch {}
-        try { live.stream?.getTracks()?.forEach(track => track.stop()); } catch {}
+        try { live.stream?.getTracks()?.forEach(track => { if (track !== window.__bilimdonMediaStream?.getAudioTracks?.()[0]) track.stop(); }); } catch {}
         try { live.session?.close(); } catch {}
         try { live.audioContext?.close(); } catch {}
         liveVoiceRef.current = null;
@@ -428,10 +493,11 @@
                 if (message?.serverContent?.turnComplete) { live.turnComplete = true; live.chatMessageId = null; setIsAiLoading(false); live.outputTranscript = ''; if (!live.playingCount) { live.onSpeechEnd?.(); live.onSpeechEnd = null; live.speechStarted = false; } }
               },
               onerror: error => { console.error("AI ovozli aloqa xatosi:", error); setTutorReply("Ovozli AI bilan aloqa uzildi. Mikrofon tugmasini qayta bosing."); },
-              onclose: () => { if (liveVoiceRef.current === live) { live.running = false; liveConnectingRef.current = false; try { live.processor?.disconnect(); live.source?.disconnect(); live.stream?.getTracks()?.forEach(track => track.stop()); live.audioContext?.close(); } catch {} liveVoiceRef.current = null; setIsVoiceRec(false); setIsAiSpeaking(false); } }
+              onclose: () => { if (liveVoiceRef.current === live) { live.running = false; liveConnectingRef.current = false; try { live.processor?.disconnect(); live.source?.disconnect(); live.stream?.getTracks()?.forEach(track => { if (track !== window.__bilimdonMediaStream?.getAudioTracks?.()[0]) track.stop(); }); live.audioContext?.close(); } catch {} liveVoiceRef.current = null; setIsVoiceRec(false); setIsAiSpeaking(false); } }
             }
           });
-          live.stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+          const sharedAudioTrack = window.__bilimdonMediaStream?.getAudioTracks?.().find(track => track.readyState === 'live');
+          live.stream = sharedAudioTrack ? new MediaStream([sharedAudioTrack.clone()]) : await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
           live.source = audioContext.createMediaStreamSource(live.stream);
           live.processor = audioContext.createScriptProcessor(2048, 1, 1);
           let turnActive = false;
@@ -1977,7 +2043,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
           {/* HAQIQIY ILOVA EKRANI (To'liq ekranli Native App ko'rinishi, hech qanday ortiqcha web-preview satrlarisiz) */}
           <div className="w-full min-h-0 flex-1 flex items-stretch justify-center p-0 sm:p-2 md:p-4 pt-16 pb-24">
             <div className="w-full max-w-7xl mx-auto flex flex-col flex-1 min-h-0 items-stretch">
-              <div className={"w-full flex-1 min-h-0 flex items-stretch " + (activeScreen === "aitutor" ? "overflow-hidden" : "overflow-y-auto overscroll-contain")}>
+              <div className="app-scroll-area w-full h-full flex-1 min-h-0 flex items-stretch overflow-x-hidden overflow-y-auto overscroll-y-contain touch-pan-y">
               {activeScreen === 'login' && renderLoginScreen()}
               {activeScreen === 'dashboard' && renderDashboardScreen()}
               {activeScreen === 'math' && renderMathScreen()}
@@ -2016,6 +2082,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
 
           </div>
 
+          {showMediaPermissionPrompt && <div className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-5"><div className="w-full max-w-md rounded-3xl bg-slate-900 text-white border border-cyan-300/40 p-6 shadow-2xl space-y-4"><div className="text-4xl text-center">🎙️ 📷</div><h2 className="text-xl font-black text-center text-cyan-200">Kamera va mikrofon ruxsati</h2><p className="text-sm text-slate-200 text-center">AI Ustoz bilan ovozli suhbat va bolakayning sizni kuzatishi uchun kamera hamda mikrofon kerak. Kamera tasviri qurilmaning o‘zida qayta ishlanadi va serverga yuborilmaydi.</p>{mediaPermissionMessage && <p className="rounded-xl bg-amber-400/10 border border-amber-300/30 p-3 text-xs text-amber-100">{mediaPermissionMessage}</p>}<button onClick={requestAppMediaPermissions} className="w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 p-3 font-black">Ruxsat berish va davom etish</button><button onClick={() => setShowMediaPermissionPrompt(false)} className="w-full rounded-xl bg-white/10 p-2 text-sm font-bold">Hozir emas</button></div></div>}
           {/* MUALLIF HAQIDA MAXSUS MODAL OYNA */}
           {showAuthorModal && (
             <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
