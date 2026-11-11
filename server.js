@@ -253,6 +253,61 @@ app.get("/api/live-token", aiLimiter, async (_req, res, next) => {
   }
 });
 
+app.post("/api/ai/speech", aiLimiter, async (req, res, next) => {
+  try {
+    if (!ai) return res.status(503).json({ error: "Gemini ovoz xizmati sozlanmagan." });
+    const text = clean(req.body?.text);
+    if (!text || text.length > 4000) {
+      return res.status(400).json({ error: "O‘qiladigan matn 1–4000 belgi oralig‘ida bo‘lishi kerak." });
+    }
+    const response = await ai.models.generateContent({
+      model: process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-lite-tts",
+      contents: [{
+        parts: [{
+          text: "[Speak warmly, gently, clearly and naturally, like a kind native Uzbek-speaking teacher speaking to a child. Use one consistent voice and a calm, affectionate, encouraging tone. Read only the exact text after the instruction. For English vocabulary, pronounce the English word clearly, then continue naturally in Uzbek for the Uzbek meaning. Do not add explanations.]\\n\\nTEXT TO READ:\\n" + text
+        }]
+      }],
+      config: {
+        responseModalities: ["AUDIO"],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: "Vindemiatrix" }
+          }
+        }
+      }
+    });
+    const audioPart = response.candidates?.[0]?.content?.parts?.find(part => part.inlineData?.data);
+    if (!audioPart?.inlineData?.data) {
+      throw new Error("Gemini TTS audio qaytarmadi.");
+    }
+    const pcm = Buffer.from(audioPart.inlineData.data, "base64");
+    const wavHeader = Buffer.alloc(44);
+    wavHeader.write("RIFF", 0);
+    wavHeader.writeUInt32LE(36 + pcm.length, 4);
+    wavHeader.write("WAVE", 8);
+    wavHeader.write("fmt ", 12);
+    wavHeader.writeUInt32LE(16, 16);
+    wavHeader.writeUInt16LE(1, 20);
+    wavHeader.writeUInt16LE(1, 22);
+    wavHeader.writeUInt32LE(24000, 24);
+    wavHeader.writeUInt32LE(48000, 28);
+    wavHeader.writeUInt16LE(2, 32);
+    wavHeader.writeUInt16LE(16, 34);
+    wavHeader.write("data", 36);
+    wavHeader.writeUInt32LE(pcm.length, 40);
+    const wav = Buffer.concat([wavHeader, pcm]);
+    res.set("Cache-Control", "no-store");
+    res.json({ audioBase64: wav.toString("base64"), mimeType: "audio/wav", voice: "Vindemiatrix", model: process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-lite-tts" });
+  } catch (error) {
+    console.error("Gemini TTS error:", error?.message || error);
+    const message = String(error?.message || "");
+    if (/429|quota|resource_exhausted/i.test(message)) {
+      return res.status(429).json({ error: "Gemini ovoz limiti vaqtincha tugadi. Birozdan keyin urinib ko‘ring." });
+    }
+    next(error);
+  }
+});
+
 app.post("/api/ai/guest-tutor", aiLimiter, async (req, res, next) => {
   try {
     if (!ai) return res.status(503).json({ error: "AI kaliti serverda sozlanmagan. Administrator Render Environment sozlamasini tekshirishi kerak." });
