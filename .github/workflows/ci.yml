@@ -1,7 +1,7 @@
 name: Validate Bilimdon Kids
 on:
   push:
-    branches: [main]
+    branches: [main, feature/integrate-legacy-kids-ui]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -17,7 +17,11 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install --ignore-scripts
-      - name: Check server syntax
-        run: node --check server.js
+      - name: Check server and Android permission script syntax
+        run: |
+          node --check server.js
+          node --check scripts/patch-android-permissions.js
+      - name: Check browser script syntax
+        run: node scripts/check-client.js
       - name: Check required files
         run: test -s public/index.html && test -s db/schema.sql && test -s .env.example
