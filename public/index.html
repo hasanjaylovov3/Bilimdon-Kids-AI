@@ -566,10 +566,11 @@
         try {
           const previous = window.__bilimdonGeminiSpeech;
           if (previous) {
-            previous.pause();
-            previous.onended = null;
-            previous.onerror = null;
-            if (previous.__bilimdonObjectUrl) URL.revokeObjectURL(previous.__bilimdonObjectUrl);
+            if (previous.__bilimdonFinish) previous.__bilimdonFinish();
+            else {
+              previous.pause();
+              if (previous.__bilimdonObjectUrl) URL.revokeObjectURL(previous.__bilimdonObjectUrl);
+            }
           }
           const response = await fetch('/api/ai/speech', {
             method: 'POST',
@@ -589,6 +590,7 @@
           const audio = new Audio(objectUrl);
           audio.preload = 'auto';
           audio.__bilimdonObjectUrl = objectUrl;
+          audio.__bilimdonFinish = finish;
           window.__bilimdonGeminiSpeech = audio;
           audio.onended = finish;
           audio.onerror = finish;
@@ -767,7 +769,11 @@
         playSound('click', muted);
         // Live conversation belongs exclusively to the AI Ustoz screen.
         if (screenName !== 'aitutor' && (liveVoiceRef.current?.running || liveConnectingRef.current)) stopLiveTutor();
-        if (screenName !== 'english' && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+        if (screenName !== 'english' && window.__bilimdonGeminiSpeech) {
+          window.__bilimdonGeminiSpeech.__bilimdonFinish?.();
+          window.__bilimdonGeminiSpeech.pause();
+          window.__bilimdonGeminiSpeech = null;
+        }
         setActiveScreen(screenName);
       };
 
