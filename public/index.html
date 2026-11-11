@@ -2,7 +2,7 @@
 <html lang="uz">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#1e3a8a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -32,23 +32,32 @@
     html, body, #root {
       width: 100%;
       height: 100%;
+      min-height: 0;
+      margin: 0;
       overflow: hidden;
     }
     body {
-      min-height: 100dvh;
+      height: 100%;
+      min-height: 0;
       font-family: 'Nunito', sans-serif;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
-      overflow: hidden;
       overscroll-behavior: none;
     }
+    #root { display: flex; flex-direction: column; }
+    .app-shell { width: 100%; height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .app-main-area { flex: 1 1 0%; height: 0; min-height: 0; min-width: 0; overflow: hidden; box-sizing: border-box; padding-top: calc(4rem + env(safe-area-inset-top)) !important; padding-bottom: calc(5.25rem + env(safe-area-inset-bottom)) !important; }
+    .app-main-area.is-login { padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)) !important; }
+    .app-main-inner { display: flex; flex: 1 1 0%; width: 100%; height: 100%; min-height: 0; min-width: 0; overflow: hidden; }
+    .app-scroll-area { display: block; flex: 1 1 0%; width: 100%; height: 0; min-height: 0; min-width: 0; overflow-x: hidden !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch; overscroll-behavior-y: auto; touch-action: pan-y !important; scrollbar-width: thin; }
+    .app-scroll-area > * { min-width: 0; }
+    .app-topbar { top: env(safe-area-inset-top) !important; }
+    .app-bottomnav { bottom: env(safe-area-inset-bottom) !important; padding-bottom: calc(.5rem + env(safe-area-inset-bottom)); }
     @keyframes floatSlow {
       0%, 100% { transform: translateY(0px); }
       50% { transform: translateY(-8px); }
     }
     .animate-float { animation: floatSlow 3.4s ease-in-out infinite; }
-    .app-scroll-area { flex:1 1 0%; height:100%; min-height:0; min-width:0; overflow-x:hidden; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; touch-action:pan-y; scrollbar-width:thin; }
-    .app-main-area { flex:1 1 0%; height:0; min-height:0; min-width:0; }
     #app-loading { min-height:100%; display:flex; align-items:center; justify-content:center; padding:24px; background:radial-gradient(circle at top,#1e40af 0%,#0f172a 65%); color:white; text-align:center; }
     #app-loading .loading-logo { width:64px; height:64px; border-radius:18px; background:rgba(37,99,235,.95); border:2px solid #67e8f9; display:flex; align-items:center; justify-content:center; box-shadow:0 12px 28px rgba(0,0,0,.3); transform:rotate(-6deg); margin:0 auto 16px; }
     #app-loading .loading-title { font-size:28px; line-height:.95; font-weight:900; letter-spacing:-.04em; }
@@ -99,8 +108,8 @@
     // ==========================================
     const AUTHOR_INFO = {
       fullName: 'Saparova Matluba',
-      university: 'Termiz davlat pedagogika instituti',
-      faculty: "Boshlang'ich ta'lim fakulteti talabasi",
+      university: 'Termiz Davlat Pedagogika Instituti',
+      faculty: "Maktabgacha va Boshlang‘ich ta’lim fakulteti, Boshlang‘ich ta’lim yo‘nalishi",
       projectTitle: '«Bilimdon Kids» — Sun’iy intellektga asoslangan interaktiv bolalar ta’lim platformasi',
       year: '2026'
     };
@@ -213,11 +222,26 @@
     // MA'LUMOTLAR BAZASI (SAVOLLAR VA MASHQLAR)
     // ==========================================
     const MATH_QUESTIONS = [
-      { q: '7 + 5 = ?', options: [10, 11, 12, 13], answer: 12 },
+      { q: '7 + 5 = ?', options: [11, 12, 13, 14], answer: 12 },
       { q: '9 + 6 = ?', options: [13, 14, 15, 16], answer: 15 },
       { q: '14 - 5 = ?', options: [7, 8, 9, 10], answer: 9 },
       { q: '4 × 3 = ?', options: [10, 12, 14, 16], answer: 12 },
-      { q: '8 + 7 = ?', options: [14, 15, 16, 17], answer: 15 }
+      { q: '8 + 7 = ?', options: [14, 15, 16, 17], answer: 15 },
+      { q: '16 - 7 = ?', options: [8, 9, 10, 11], answer: 9 },
+      { q: '6 × 4 = ?', options: [20, 22, 24, 26], answer: 24 },
+      { q: '20 ÷ 5 = ?', options: [3, 4, 5, 6], answer: 4 },
+      { q: '35 + 12 = ?', options: [45, 46, 47, 48], answer: 47 },
+      { q: '50 - 18 = ?', options: [30, 31, 32, 33], answer: 32 },
+      { q: '7 × 3 = ?', options: [18, 20, 21, 24], answer: 21 },
+      { q: '36 ÷ 6 = ?', options: [5, 6, 7, 8], answer: 6 },
+      { q: '25 + 25 = ?', options: [40, 45, 50, 55], answer: 50 },
+      { q: '100 - 45 = ?', options: [45, 50, 55, 60], answer: 55 },
+      { q: '9 × 5 = ?', options: [40, 45, 50, 55], answer: 45 },
+      { q: '42 ÷ 7 = ?', options: [5, 6, 7, 8], answer: 6 },
+      { q: '18 + 24 = ?', options: [40, 41, 42, 43], answer: 42 },
+      { q: '63 - 27 = ?', options: [34, 35, 36, 37], answer: 36 },
+      { q: '8 × 8 = ?', options: [56, 60, 64, 72], answer: 64 },
+      { q: '81 ÷ 9 = ?', options: [7, 8, 9, 10], answer: 9 }
     ];
 
     const ENGLISH_WORDS = [
@@ -225,46 +249,38 @@
       { word: 'Cat', uz: 'Mushuk', emoji: '🐱' },
       { word: 'Book', uz: 'Kitob', emoji: '📘' },
       { word: 'Sun', uz: 'Quyosh', emoji: '☀️' },
-      { word: 'Star', uz: 'Yulduz', emoji: '⭐' }
+      { word: 'Star', uz: 'Yulduz', emoji: '⭐' },
+      { word: 'Dog', uz: 'It', emoji: '🐶' },
+      { word: 'House', uz: 'Uy', emoji: '🏠' },
+      { word: 'Water', uz: 'Suv', emoji: '💧' },
+      { word: 'Flower', uz: 'Gul', emoji: '🌸' },
+      { word: 'School', uz: 'Maktab', emoji: '🏫' },
+      { word: 'Friend', uz: 'Do‘st', emoji: '🧑‍🤝‍🧑' },
+      { word: 'Family', uz: 'Oila', emoji: '👨‍👩‍👧' },
+      { word: 'Bird', uz: 'Qush', emoji: '🐦' },
+      { word: 'Tree', uz: 'Daraxt', emoji: '🌳' },
+      { word: 'Milk', uz: 'Sut', emoji: '🥛' },
+      { word: 'Bread', uz: 'Non', emoji: '🍞' },
+      { word: 'Red', uz: 'Qizil', emoji: '🟥' },
+      { word: 'Blue', uz: 'Ko‘k', emoji: '🟦' },
+      { word: 'Green', uz: 'Yashil', emoji: '🟩' },
+      { word: 'Yellow', uz: 'Sariq', emoji: '🟨' }
     ];
 
     const READING_STORIES = [
-      {
-        sentence: 'The cat is on the bed.',
-        uzHint: 'Mushuk karavot ustida turibdi.',
-        question: 'Savol: Rasmda nima bor?',
-        options: [
-          { id: 'A', text: 'It' },
-          { id: 'B', text: 'A cat' },
-          { id: 'C', text: 'A dog' }
-        ],
-        correct: 'B'
-      },
-      {
-        sentence: 'Ali has a red apple.',
-        uzHint: 'Alida qizil olma bor.',
-        question: 'Savol: Olmaning rangi qanaqa?',
-        options: [
-          { id: 'A', text: 'Red (Qizil)' },
-          { id: 'B', text: 'Blue (Ko‘k)' },
-          { id: 'C', text: 'Green (Yashil)' }
-        ],
-        correct: 'A'
-      },
-      {
-        sentence: 'The sun is bright today.',
-        uzHint: 'Bugun quyosh charaqlab turibdi.',
-        question: 'Savol: Osmonda nima charaqlayapti?',
-        options: [
-          { id: 'A', text: 'The moon' },
-          { id: 'B', text: 'A car' },
-          { id: 'C', text: 'The sun' }
-        ],
-        correct: 'C'
-      }
+      { sentence: 'The cat is on the bed.', uzHint: 'Mushuk karavot ustida turibdi.', question: 'Qaysi hayvon karavot ustida?', options: [{ id: 'A', text: 'It' }, { id: 'B', text: 'Mushuk' }, { id: 'C', text: 'Qush' }], correct: 'B' },
+      { sentence: 'Ali has a red apple.', uzHint: 'Alida qizil olma bor.', question: 'Olmaning rangi qanday?', options: [{ id: 'A', text: 'Qizil' }, { id: 'B', text: 'Ko‘k' }, { id: 'C', text: 'Yashil' }], correct: 'A' },
+      { sentence: 'The sun is bright today.', uzHint: 'Bugun quyosh charaqlab turibdi.', question: 'Bugun osmonda nima charaqlayapti?', options: [{ id: 'A', text: 'Oy' }, { id: 'B', text: 'Yulduz' }, { id: 'C', text: 'Quyosh' }], correct: 'C' },
+      { sentence: 'Malika has two blue pencils.', uzHint: 'Malikada ikkita ko‘k qalam bor.', question: 'Malikada nechta qalam bor?', options: [{ id: 'A', text: 'Bitta' }, { id: 'B', text: 'Ikkita' }, { id: 'C', text: 'Uchta' }], correct: 'B' },
+      { sentence: 'A bird can fly in the sky.', uzHint: 'Qush osmonda ucha oladi.', question: 'Nima ucha oladi?', options: [{ id: 'A', text: 'Baliq' }, { id: 'B', text: 'Mushuk' }, { id: 'C', text: 'Qush' }], correct: 'C' },
+      { sentence: 'We read books at school.', uzHint: 'Biz maktabda kitob o‘qiymiz.', question: 'Biz maktabda nima qilamiz?', options: [{ id: 'A', text: 'Kitob o‘qiymiz' }, { id: 'B', text: 'Uxlaymiz' }, { id: 'C', text: 'Suzamiz' }], correct: 'A' },
+      { sentence: 'The little fish swims in water.', uzHint: 'Kichkina baliq suvda suzadi.', question: 'Baliq qayerda suzadi?', options: [{ id: 'A', text: 'Daraxtda' }, { id: 'B', text: 'Suvda' }, { id: 'C', text: 'Uyda' }], correct: 'B' },
+      { sentence: 'My mother gives me a warm hug.', uzHint: 'Onam meni mehr bilan quchoqlaydi.', question: 'Kim quchoqlaydi?', options: [{ id: 'A', text: 'Do‘stim' }, { id: 'B', text: 'Ustozim' }, { id: 'C', text: 'Onam' }], correct: 'C' },
+      { sentence: 'We plant a tree in spring.', uzHint: 'Biz bahorda daraxt ekamiz.', question: 'Biz qachon daraxt ekamiz?', options: [{ id: 'A', text: 'Bahorda' }, { id: 'B', text: 'Qishda' }, { id: 'C', text: 'Kuzda' }], correct: 'A' },
+      { sentence: 'Three birds sit on a green tree.', uzHint: 'Yashil daraxtda uchta qush o‘tiribdi.', question: 'Daraxtda nechta qush bor?', options: [{ id: 'A', text: 'Ikkita' }, { id: 'B', text: 'Uchta' }, { id: 'C', text: 'To‘rtta' }], correct: 'B' }
     ];
 
-    const LETTERS_LIST = ['A', 'B', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'O', 'S', 'T', 'U', 'Z'];
+    const LETTERS_LIST = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
     // ==========================================
     // ASOSIY DASTUR KOMPONENTI
@@ -1132,7 +1148,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                     {AUTHOR_INFO.fullName}
                   </p>
                   <p className="text-[11px] font-semibold text-sky-100">
-                    {AUTHOR_INFO.university} • {AUTHOR_INFO.faculty}
+                    {AUTHOR_INFO.university} {AUTHOR_INFO.faculty}
                   </p>
                 </div>
               </div>
@@ -1911,17 +1927,33 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
       const renderActivitiesScreen = () => {
         const builtInActivities = [
           { id: "starter-math", kind: "lesson", title: "Qo‘shish va ayirish", description: "1 dan 20 gacha sonlarni qo‘shish va ayirishni misollar orqali mashq qil.", emoji: "🧮", screen: "math" },
-          { id: "starter-addition", kind: "lesson", title: "Sonlarni sanash", description: "Rasmlardagi buyumlarni sanab, sonlar bilan bog‘la.", emoji: "🔢", screen: "math" },
+          { id: "starter-addition", kind: "lesson", title: "Sonlarni sanash", description: "1–100 oralig‘ida sonlar, taqqoslash va miqdorni aniqlash.", emoji: "🔢", screen: "math" },
+          { id: "starter-multiplication", kind: "lesson", title: "Ko‘paytirish va bo‘lish", description: "Jadval asosida ko‘paytirish va teng taqsimlashni mashq qil.", emoji: "✖️", screen: "math" },
+          { id: "starter-word-problems", kind: "lesson", title: "Matnli masalalar", description: "Masalani o‘qi, kerakli amalni tanla va javobni hisobla.", emoji: "🧩", screen: "math" },
           { id: "starter-english", kind: "lesson", title: "Inglizcha ilk so‘zlar", description: "Apple — olma, Cat — mushuk, Book — kitob. So‘zlarni yodlab, ma’nosini top.", emoji: "🇬🇧", screen: "english" },
           { id: "starter-colors", kind: "lesson", title: "Colors — ranglar", description: "Red, blue, yellow va green ranglarini ingliz tilida o‘rgan.", emoji: "🎨", screen: "english" },
+          { id: "starter-english-numbers", kind: "lesson", title: "English numbers", description: "One dan twenty gacha sonlarni talaffuz va tarjima bilan o‘rgan.", emoji: "🔢", screen: "english" },
+          { id: "starter-english-family", kind: "lesson", title: "My family", description: "Oila a’zolari va kundalik hayotga oid inglizcha so‘zlar.", emoji: "👨‍👩‍👧", screen: "english" },
           { id: "starter-reading", kind: "lesson", title: "O‘qish va tushunish", description: "Qisqa gapni o‘qi, undagi qahramon va predmetlarni top.", emoji: "📖", screen: "reading" },
+          { id: "starter-reading-comprehension", kind: "lesson", title: "Matn bo‘yicha savollar", description: "10 ta qisqa matnni o‘qib, mazmuniga oid savollarga javob ber.", emoji: "🧠", screen: "reading" },
           { id: "starter-phonics", kind: "lesson", title: "Harflar va tovushlar", description: "A, B, C harflarini tanib, ularning tovushlarini mashq qil.", emoji: "🔤", screen: "reading" },
           { id: "starter-writing", kind: "lesson", title: "Harf yozishni mashq qil", description: "Harflarni to‘g‘ri yozish va so‘zlarni ko‘chirib yozishni mashq qil.", emoji: "✏️", screen: "writing" },
           { id: "starter-sentences", kind: "lesson", title: "So‘zlardan gap tuzish", description: "So‘zlarni tartibga solib, sodda va mazmunli gaplar tuz.", emoji: "📝", screen: "writing" },
-          { id: "game-fruit", kind: "game", title: "Mevalarni top", description: "Savolga to‘g‘ri javobni tanla.", emoji: "🍎", question: "Qaysi biri meva?", options: ["Olma", "Stol", "Kitob"], answer: "Olma" },
-          { id: "game-math", kind: "game", title: "Tezkor hisob", description: "Oddiy misolni yechib ko‘r.", emoji: "⭐", question: "8 + 5 nechaga teng?", options: ["12", "13", "14"], answer: "13" },
-          { id: "game-english", kind: "game", title: "Inglizcha so‘z", description: "Inglizcha so‘zning o‘zbekcha ma’nosini top.", emoji: "🔤", question: "“Cat” so‘zining ma’nosi nima?", options: ["It", "Mushuk", "Qush"], answer: "Mushuk" },
-          { id: "game-reading", kind: "game", title: "So‘zni top", description: "Rasmga mos so‘zni tanla.", emoji: "🐱", question: "🐱 Bu nima?", options: ["Cat", "Sun", "Book"], answer: "Cat" }
+          { id: "game-fruit", kind: "game", title: "Mevalarni top", description: "Meva va boshqa buyumlarni farqlash.", emoji: "🍎", question: "Qaysi biri meva?", options: ["Olma", "Stol", "Kitob"], answer: "Olma" },
+          { id: "game-math", kind: "game", title: "Tezkor hisob", description: "Qo‘shish amalini yech.", emoji: "⭐", question: "8 + 5 nechaga teng?", options: ["12", "13", "14"], answer: "13" },
+          { id: "game-english", kind: "game", title: "Inglizcha so‘z", description: "So‘zning o‘zbekcha ma’nosini top.", emoji: "🔤", question: "“Cat” so‘zining ma’nosi nima?", options: ["It", "Mushuk", "Qush"], answer: "Mushuk" },
+          { id: "game-reading", kind: "game", title: "So‘zni top", description: "Rasmga mos inglizcha so‘zni tanla.", emoji: "🐱", question: "🐱 Bu nima?", options: ["Cat", "Sun", "Book"], answer: "Cat" },
+          { id: "game-colors", kind: "game", title: "Ranglar olami", description: "Rang nomlarini ingliz tilida mustahkamla.", emoji: "🎨", question: "“Green” qaysi rang?", options: ["Qizil", "Yashil", "Sariq"], answer: "Yashil" },
+          { id: "game-shapes", kind: "game", title: "Shakllarni tani", description: "Oddiy geometrik shakllarni ajrat.", emoji: "🔺", question: "Uchta tomoni bor shakl qaysi?", options: ["Doira", "Kvadrat", "Uchburchak"], answer: "Uchburchak" },
+          { id: "game-nature", kind: "game", title: "Tabiat bilimdoni", description: "Tabiat va jonivorlar haqidagi savollar.", emoji: "🌿", question: "O‘simlik o‘sishi uchun nima kerak?", options: ["Suv va quyosh", "Faqat tosh", "Qorong‘ilik"], answer: "Suv va quyosh" },
+          { id: "game-time", kind: "game", title: "Vaqtni bil", description: "Kun tartibi va vaqt tushunchalarini o‘rgan.", emoji: "⏰", question: "Bir soatda necha daqiqa bor?", options: ["30", "60", "100"], answer: "60" },
+          { id: "game-money", kind: "game", title: "Hisob-kitob", description: "Oddiy pul hisobini mashq qil.", emoji: "🪙", question: "2 ta 1 000 so‘mlik jami qancha?", options: ["1 000 so‘m", "2 000 so‘m", "3 000 so‘m"], answer: "2 000 so‘m" },
+          { id: "game-geometry", kind: "game", title: "Sanash ustasi", description: "Buyumlar sonini aniqlashni mashq qil.", emoji: "🔢", question: "⭐ ⭐ ⭐ ⭐ — nechta yulduz?", options: ["3 ta", "4 ta", "5 ta"], answer: "4 ta" },
+          { id: "game-safety", kind: "game", title: "Xavfsiz yo‘l", description: "Yo‘l harakati xavfsizligini o‘rgan.", emoji: "🚦", question: "Yo‘lni qayerdan kesib o‘tish kerak?", options: ["Piyodalar o‘tish joyidan", "Istalgan joydan", "Mashinalar orasidan"], answer: "Piyodalar o‘tish joyidan" },
+          { id: "game-logic", kind: "game", title: "Mantiqiy ketma-ketlik", description: "Ketma-ketlikdagi keyingi sonni top.", emoji: "🧠", question: "2, 4, 6, 8, ... Keyingi son?", options: ["9", "10", "12"], answer: "10" },
+          { id: "game-spelling", kind: "game", title: "Imlo bilimdoni", description: "To‘g‘ri yozilgan so‘zni tanla.", emoji: "✍️", question: "Qaysi so‘z to‘g‘ri yozilgan?", options: ["Maktab", "Maktap", "Maktabь"], answer: "Maktab" },
+          { id: "game-english2", kind: "game", title: "English numbers", description: "Inglizcha sonlarni takrorla.", emoji: "🔢", question: "“Five” nechani bildiradi?", options: ["4", "5", "6"], answer: "5" },
+          { id: "game-reading2", kind: "game", title: "Matnni tushun", description: "Qisqa matn mazmunini anglash.", emoji: "📖", question: "“Ali kitob o‘qidi.” Ali nima qildi?", options: ["Rasm chizdi", "Kitob o‘qidi", "Futbol o‘ynadi"], answer: "Kitob o‘qidi" }
         ];
         const allActivities = [...builtInActivities, ...activityItems.filter(item => item.kind !== 'video')];
         const builtInVideos = [
@@ -1955,7 +1987,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                     <div className="text-xs font-black text-indigo-500">{item.kind === "lesson" ? "📘 MASHG‘ULOT" : item.kind === "image" ? "🖼️ RASM" : "🎮 O‘YIN"}</div>
                     <h3 className="font-black text-lg text-slate-900 mt-1">{item.title}</h3>
                     <p className="text-sm text-slate-600 mt-2">{item.description}</p>
-                    {item.kind === "game" && (item.options?.length > 1 || item.content_data?.options?.length > 1) && <div className="mt-3 space-y-2"><p className="font-black text-slate-800">{item.question || item.content_data?.question}</p><div className="grid grid-cols-1 gap-2">{(item.options || item.content_data?.options || []).map(option => <button key={option} onClick={() => { const answer = item.answer || item.content_data?.answer; const right = option === answer; setActivityFeedback(prev => ({ ...prev, [item.id]: right ? "Barakalla! To‘g‘ri javob! 🎉" : "Yana urinib ko‘r! 💡" })); if (right) setStars(value => value + 5); }} className="rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-slate-800 p-2 text-sm font-black">{option}</button>)}</div>{activityFeedback[item.id] && <p className="text-sm font-black text-emerald-700">{activityFeedback[item.id]}</p>}</div>}
+                    {item.kind === "game" && (item.options?.length > 1 || item.content_data?.options?.length > 1) && <div className="mt-3 space-y-2"><p className="font-black text-slate-800">{item.question || item.content_data?.question}</p><div className="grid grid-cols-1 gap-2">{(item.options || item.content_data?.options || []).map(option => <button key={option} onClick={() => { if (activityFeedback[item.id]?.startsWith("Barakalla!")) return; const answer = item.answer || item.content_data?.answer; const right = option === answer; setActivityFeedback(prev => ({ ...prev, [item.id]: right ? "Barakalla! To‘g‘ri javob! 🎉" : "Yana urinib ko‘r! 💡" })); if (right) { setStars(value => value + 5); playSound("success", muted); } else playSound("wrong", muted); }} disabled={activityFeedback[item.id]?.startsWith("Barakalla!")} className="rounded-xl bg-amber-50 hover:bg-amber-100 disabled:bg-emerald-100 disabled:border-emerald-300 border border-amber-200 text-slate-800 disabled:text-emerald-800 p-2 text-sm font-black">{option}</button>)}</div>{activityFeedback[item.id] && <p className="text-sm font-black text-emerald-700">{activityFeedback[item.id]}</p>}</div>}
                     {item.kind === "lesson" && <button onClick={() => goScreen(item.screen || (item.id === "starter-math" ? "math" : item.id === "starter-english" ? "english" : "reading"))} className="mt-3 rounded-xl bg-indigo-600 text-white px-4 py-2 text-sm font-black">Boshlash ▶</button>}
                     {item.kind === "image" && item.image_url && <img src={item.image_url} alt={item.title} className="w-full h-36 object-cover rounded-xl mt-3"/>}
                     {activityFeedback[item.id] && item.kind === "lesson" && <p className="mt-2 text-sm font-black text-emerald-700">{activityFeedback[item.id]}</p>}
@@ -1981,18 +2013,18 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
 
 
       return (
-        <div className="h-[100dvh] w-screen bg-slate-950 text-slate-800 flex flex-col overflow-hidden relative">
-          {activeScreen !== 'login' && <header className="fixed top-0 inset-x-0 z-40 h-16 px-4 md:px-8 bg-slate-950/95 backdrop-blur-xl border-b border-white/10 flex items-center justify-between text-white">
+        <div className="app-shell bg-slate-950 text-slate-800 relative">
+          {activeScreen !== 'login' && <header className="app-topbar fixed top-0 inset-x-0 z-40 h-16 px-4 md:px-8 bg-slate-950/95 backdrop-blur-xl border-b border-white/10 flex items-center justify-between text-white">
             <div className="flex items-center gap-2.5 min-w-0"><div className="w-10 h-10 rounded-xl bg-blue-600/90 border-2 border-cyan-300 shadow-lg flex items-center justify-center shrink-0 -rotate-6"><span className="text-2xl">🎓</span></div><div className="leading-[0.9]"><div className="font-black text-[17px] tracking-tight text-white" style={{WebkitTextStroke:'0.35px #1e3a8a'}}>Bilimdon</div><div className="font-black text-[17px] tracking-tight text-amber-300" style={{WebkitTextStroke:'0.35px #78350f'}}>Kids AI</div><div className="text-[8px] text-slate-300 font-extrabold mt-1">O‘rgan, o‘yna, rivojlan!</div></div></div>
             <div className="flex items-center gap-2 min-w-0"><div className="min-w-0 text-right leading-tight"><span className="block font-black text-sm max-w-32 truncate">{childName}</span><span className="block text-[10px] font-extrabold text-amber-300 whitespace-nowrap">⭐ {stars} · {starRank}</span></div><button onClick={()=>goScreen('settings')} className="w-10 h-10 rounded-xl bg-white/10 border border-white/10" aria-label="Sozlamalar">⚙️</button></div>
           </header>}
-          {activeScreen !== 'login' && <nav className="fixed bottom-0 inset-x-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 px-2 py-2 grid grid-cols-5 gap-1">
+          {activeScreen !== 'login' && <nav className="app-bottomnav fixed bottom-0 inset-x-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 px-2 py-2 grid grid-cols-5 gap-1">
             {[{id:'dashboard',label:'Bosh menyu',icon:'🏠'},{id:'activities',label:'Mashg‘ulot',icon:'📚'},{id:'aitutor',label:'AI Ustoz',icon:'✨'},{id:'results',label:'Natijalar',icon:'🏆'},{id:'settings',label:'Sozlama',icon:'⚙️'}].map(tab=><button key={tab.id} onClick={()=>goScreen(tab.id)} className={'rounded-xl py-1.5 flex flex-col items-center gap-0.5 text-[10px] sm:text-xs font-black '+(activeScreen===tab.id?'bg-cyan-400/15 text-cyan-300':'text-slate-300')}><span className="text-lg">{tab.icon}</span><span>{tab.label}</span></button>)}
           </nav>}
 
           {/* HAQIQIY ILOVA EKRANI (To'liq ekranli Native App ko'rinishi, hech qanday ortiqcha web-preview satrlarisiz) */}
-          <div className="app-main-area w-full flex items-stretch justify-center p-0 sm:p-2 md:p-4 pt-16 pb-24">
-            <div className="w-full max-w-7xl mx-auto flex flex-col flex-1 min-h-0 min-w-0 items-stretch">
+          <div className={"app-main-area w-full flex items-stretch justify-center p-0 sm:p-2 md:p-4 " + (activeScreen === "login" ? "is-login" : "")}>
+            <div className="app-main-inner w-full max-w-7xl mx-auto min-h-0 min-w-0 items-stretch">
               <div className="app-scroll-area w-full flex items-stretch overscroll-y-contain touch-pan-y">
               {activeScreen === 'login' && renderLoginScreen()}
               {activeScreen === 'dashboard' && renderDashboardScreen()}
