@@ -578,14 +578,11 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: value })
           });
-          const result = await response.json().catch(() => ({}));
-          if (!response.ok || !result.audioBase64) {
-            throw new Error(result.error || 'Gemini ovozini yaratib bo‘lmadi.');
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Gemini ovozini yaratib bo‘lmadi.');
           }
-          const binary = atob(result.audioBase64);
-          const bytes = new Uint8Array(binary.length);
-          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-          const audioBlob = new Blob([bytes], { type: result.mimeType || 'audio/wav' });
+          const audioBlob = await response.blob();
           objectUrl = URL.createObjectURL(audioBlob);
           const audio = new Audio(objectUrl);
           audio.preload = 'auto';
