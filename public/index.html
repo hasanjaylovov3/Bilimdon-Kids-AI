@@ -606,7 +606,7 @@
       const speakLessonText = (englishText, uzbekText = '', muted = false, onStart = null, onEnd = null) => {
         const en = String(englishText || '').trim();
         const uz = String(uzbekText || '').trim();
-        const narration = [en, uz ? 'O‘zbekchasi: ' + uz : ''].filter(Boolean).join('. ');
+        const narration = [en, uz].filter(Boolean).join('. ');
         speakGeminiText(narration, muted, onStart, onEnd);
       };
 
