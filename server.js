@@ -253,6 +253,39 @@ app.get("/api/live-token", aiLimiter, async (_req, res, next) => {
   }
 });
 
+const lessonVoiceInstruction = "Sen Bilimdon Kids AI ilovasining ovozli o‘qituvchisisan. Foydalanuvchi yuborgan matnni aynan, to‘liq va ravon ovoz chiqarib o‘qi. Inglizcha so‘z va gaplarni tabiiy inglizcha talaffuzda, o‘zbekcha matnni ravon adabiy o‘zbek tilida o‘qi. Avval inglizcha matn, keyin o‘zbekcha tarjimasini o‘qi. Hech qanday salomlashuv, izoh, qo‘shimcha so‘z yoki savol qo‘shma. Faqat berilgan matnni o‘qi.";
+app.get("/api/lesson-live-token", aiLimiter, async (_req, res, next) => {
+  try {
+    if (!liveAi) return res.status(503).json({ error: "Dars ovozi xizmati sozlanmagan." });
+    const expireTime = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+    const newSessionExpireTime = new Date(Date.now() + 60 * 1000).toISOString();
+    const token = await liveAi.authTokens.create({
+      config: {
+        uses: 1,
+        expireTime,
+        newSessionExpireTime,
+        liveConnectConstraints: {
+          model: LIVE_MODEL,
+          config: {
+            responseModalities: ["AUDIO"],
+            inputAudioTranscription: {},
+            outputAudioTranscription: {},
+            realtimeInputConfig: { automaticActivityDetection: { disabled: true } },
+            systemInstruction: lessonVoiceInstruction,
+            sessionResumption: {},
+            thinkingConfig: { thinkingLevel: "minimal" }
+          }
+        }
+      }
+    });
+    res.set("Cache-Control", "no-store");
+    res.json({ token: token.name, model: LIVE_MODEL });
+  } catch (error) {
+    console.error("Lesson Live token error:", error?.message || error);
+    next(error);
+  }
+});
+
 const ttsAudioCache = new Map();
 
 app.post("/api/ai/speech", aiLimiter, async (req, res, next) => {
