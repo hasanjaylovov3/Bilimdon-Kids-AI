@@ -568,7 +568,7 @@
       // AudioContext foydalanuvchi bosgan zahoti uyg‘otiladi: Android WebView gesture ruxsati yo‘qolmaydi.
       const speakGeminiText = async (text, muted = false, onStart = null, onEnd = null) => {
         const value = String(text || '').trim();
-        if (muted || !value) { onEnd?.(); return; }
+        if (muted || !value) { onEnd?.(null); return; }
         const previous = speechLiveRef.current;
         if (previous) {
           previous.cancelled = true;
@@ -1163,7 +1163,8 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
           () => setIsListeningEng(true),
           (spoken) => {
             setIsListeningEng(false);
-            if (!spoken) {
+            if (spoken === null) return;
+            if (spoken === false) {
               setEngPrompt('Ovoz hozir ishlamadi. Internet aloqasini tekshirib, qayta bosing.');
               return;
             }
