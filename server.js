@@ -253,6 +253,8 @@ app.get("/api/live-token", aiLimiter, async (_req, res, next) => {
   }
 });
 
+const ttsAudioCache = new Map();
+
 app.post("/api/ai/speech", aiLimiter, async (req, res, next) => {
   try {
     if (!ai) return res.status(503).json({ error: "Gemini ovoz xizmati sozlanmagan." });
@@ -260,13 +262,17 @@ app.post("/api/ai/speech", aiLimiter, async (req, res, next) => {
     if (!text || text.length > 4000) {
       return res.status(400).json({ error: "O‘qiladigan matn 1–4000 belgi oralig‘ida bo‘lishi kerak." });
     }
+
+    // Repeated lesson words are served immediately without another Gemini round-trip.
+    const cachedWav = ttsAudioCache.get(text);
+    if (cachedWav) {
+      res.set({ "Content-Type": "audio/wav", "Content-Length": String(cachedWav.length), "Cache-Control": "no-store" });
+      return res.send(cachedWav);
+    }
+
     const response = await ai.models.generateContent({
       model: process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-lite-tts",
-      contents: [{
-        parts: [{
-          text: text
-        }]
-      }],
+      contents: [{ parts: [{ text }] }],
       config: {
         responseModalities: ["AUDIO"],
         speechConfig: {
@@ -277,10 +283,36 @@ app.post("/api/ai/speech", aiLimiter, async (req, res, next) => {
       }
     });
     const audioPart = response.candidates?.[0]?.content?.parts?.find(part => part.inlineData?.data);
-    if (!audioPart?.inlineData?.data) {
-      throw new Error("Gemini TTS audio qaytarmadi.");
+    if (!audioPart?.inlineData?.data) throw new Error("Gemini TTS audio qaytarmadi.");
+
+    // Gemini returns 24 kHz, mono, signed 16-bit PCM. Trim its trailing breath/noise
+    // and fade the last milliseconds to avoid the abrupt 'chsh' sound after speech.
+    const sourcePcm = Buffer.from(audioPart.inlineData.data, "base64");
+    const samples = Math.floor(sourcePcm.length / 2);
+    const frameSamples = 240; // 10 ms at 24 kHz
+    let lastVoiceSample = 0;
+    for (let frameStart = 0; frameStart < samples; frameStart += frameSamples) {
+      const frameEnd = Math.min(samples, frameStart + frameSamples);
+      let sumSquares = 0;
+      let peak = 0;
+      for (let i = frameStart; i < frameEnd; i++) {
+        const sample = sourcePcm.readInt16LE(i * 2);
+        const magnitude = Math.abs(sample);
+        sumSquares += sample * sample;
+        if (magnitude > peak) peak = magnitude;
+      }
+      const rms = Math.sqrt(sumSquares / (frameEnd - frameStart));
+      if (rms > 190 || peak > 700) lastVoiceSample = frameEnd;
     }
-    const pcm = Buffer.from(audioPart.inlineData.data, "base64");
+    const keepSamples = Math.min(samples, Math.max(lastVoiceSample + 2880, 1)); // retain 120 ms after voice
+    const pcm = Buffer.from(sourcePcm.subarray(0, keepSamples * 2));
+    const fadeSamples = Math.min(960, keepSamples); // 40 ms fade-out
+    for (let i = 0; i < fadeSamples; i++) {
+      const sampleIndex = keepSamples - fadeSamples + i;
+      const gain = (fadeSamples - i - 1) / fadeSamples;
+      pcm.writeInt16LE(Math.round(pcm.readInt16LE(sampleIndex * 2) * gain), sampleIndex * 2);
+    }
+
     const wavHeader = Buffer.alloc(44);
     wavHeader.write("RIFF", 0);
     wavHeader.writeUInt32LE(36 + pcm.length, 4);
@@ -296,8 +328,11 @@ app.post("/api/ai/speech", aiLimiter, async (req, res, next) => {
     wavHeader.write("data", 36);
     wavHeader.writeUInt32LE(pcm.length, 40);
     const wav = Buffer.concat([wavHeader, pcm]);
-    res.set("Cache-Control", "no-store");
-    res.json({ audioBase64: wav.toString("base64"), mimeType: "audio/wav", voice: "Vindemiatrix", model: process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-lite-tts" });
+
+    if (ttsAudioCache.size >= 200) ttsAudioCache.delete(ttsAudioCache.keys().next().value);
+    ttsAudioCache.set(text, wav);
+    res.set({ "Content-Type": "audio/wav", "Content-Length": String(wav.length), "Cache-Control": "no-store" });
+    res.send(wav);
   } catch (error) {
     console.error("Gemini TTS error:", error?.message || error);
     const message = String(error?.message || "");
