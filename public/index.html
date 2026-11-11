@@ -579,13 +579,13 @@
         let finished = false;
         let live = null;
         let audioContext = null;
-        const finish = () => {
+        const finish = (success = true) => {
           if (finished) return;
           finished = true;
           if (speechLiveRef.current === live) speechLiveRef.current = null;
           try { live?.session?.close(); } catch {}
           try { audioContext?.close(); } catch {}
-          onEnd?.();
+          onEnd?.(success);
         };
         try {
           // Must happen synchronously in the tap handler, before network/SDK awaits.
@@ -604,7 +604,7 @@
           live = { session: null, audioContext, nextAudioTime: audioContext.currentTime, playingCount: 0, turnComplete: false, cancelled: false, speechStarted: false };
           speechLiveRef.current = live;
           const maybeFinish = () => {
-            if (live && !live.cancelled && live.turnComplete && live.playingCount === 0) finish();
+            if (live && !live.cancelled && live.turnComplete && live.playingCount === 0) finish(live.speechStarted);
           };
           live.session = await client.live.connect({
             model: tokenData.model,
@@ -655,10 +655,10 @@
               },
               onerror: error => {
                 console.error('Gemini Live dars ovozi xatosi:', error);
-                finish();
+                finish(false);
               },
               onclose: () => {
-                if (live && !live.cancelled) finish();
+                if (live && !live.cancelled && !live.turnComplete) finish(false);
               }
             }
           });
@@ -669,7 +669,7 @@
           });
         } catch (error) {
           console.error('Gemini Live dars ovozi xatosi:', error);
-          finish();
+          finish(false);
         }
       };
 
@@ -1161,8 +1161,12 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
           item.uz,
           muted,
           () => setIsListeningEng(true),
-          () => {
+          (spoken) => {
             setIsListeningEng(false);
+            if (!spoken) {
+              setEngPrompt('Ovoz hozir ishlamadi. Internet aloqasini tekshirib, qayta bosing.');
+              return;
+            }
             setEngPrompt('Barakalla! "' + item.word + '" — ' + item.uz + '! 🎉');
             setStars((s) => s + 10);
           }
@@ -1641,7 +1645,9 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
 
               <div className="lg:col-span-4">
                 <div
-                  onClick={() => speakLessonText(story.sentence, story.uzHint, muted)}
+                  onClick={() => speakLessonText(story.sentence, story.uzHint, muted, null, (spoken) => {
+                    if (!spoken) setReadPrompt('Ovoz ishlamadi. Internetni tekshirib, qayta tinglang.');
+                  })}
                   className="cursor-pointer bg-[#fffbeb] rounded-[28px] p-6 text-center shadow-xl border-4 border-white space-y-3 hover:scale-[1.02] transition"
                 >
                   <div className="text-6xl">📖🐱</div>
