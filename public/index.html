@@ -575,58 +575,22 @@
         }
       };
 
-      // English vocabulary is pronounced in English, then its meaning is clearly read in Uzbek.
+      // English words and Uzbek meanings are both spoken by the Uzbek voice.
+      // This is device TTS only: it never connects to Gemini Live or requests microphone access.
       const speakLessonText = (englishText, uzbekText = '', muted = false, onStart = null, onEnd = null) => {
         const en = String(englishText || '').trim();
         const uz = String(uzbekText || '').trim();
-        if (muted || (!en && !uz)) { onEnd?.(); return; }
-        if (!('speechSynthesis' in window)) { onEnd?.(); return; }
-        try {
-          window.speechSynthesis.cancel();
-          const parts = [];
-          if (en) {
-            const word = new SpeechSynthesisUtterance(en);
-            word.lang = 'en-US';
-            word.rate = 0.82;
-            parts.push(word);
-          }
-          if (uz) {
-            const meaning = new SpeechSynthesisUtterance('O‘zbekchasi: ' + uz);
-            meaning.lang = 'uz-UZ';
-            meaning.rate = 0.84;
-            const voices = window.speechSynthesis.getVoices();
-            const uzbekVoice = voices.find(v => /^uz([_-]|$)/i.test(v.lang)) ||
-              voices.find(v => /uzbek|o‘zbek/i.test(v.name));
-            if (uzbekVoice) meaning.voice = uzbekVoice;
-            parts.push(meaning);
-          }
-          parts.forEach((part, index) => {
-            if (index === 0) part.onstart = () => onStart?.();
-            if (index === parts.length - 1) {
-              part.onend = () => onEnd?.();
-              part.onerror = () => onEnd?.();
-            }
-            window.speechSynthesis.speak(part);
-          });
-        } catch (error) {
-          console.error('Dars matnini o‘qish xatosi:', error);
-          onEnd?.();
-        }
+        const narration = [en, uz ? 'O‘zbekchasi: ' + uz : ''].filter(Boolean).join('. ');
+        speakUzbekText(narration, muted, onStart, onEnd);
       };
 
       const speakLocalText = (text, lang = 'uz-UZ', muted = false) => {
         speakUzbekText(text, muted);
       };
 
-      const speakTutorText = async (text, lang = 'uz-UZ', muted = false, onStart = null, onEnd = null) => {
-        const spokenText = String(text || "").trim();
-        if (!spokenText || muted) return;
-        if (!liveVoiceRef.current?.running) await startLiveTutor();
-        const session = liveVoiceRef.current?.session;
-        if (session) {
-          try { liveVoiceRef.current.onSpeechStart = onStart; liveVoiceRef.current.onSpeechEnd = onEnd; liveVoiceRef.current.speechStarted = false; session.sendClientContent({ turns: [{ role: "user", parts: [{ text: "Quyidagi matnni o'zbek tilida aynan o'qib bering, qo'shimcha izoh qo'shmang: " + spokenText }] }], turnComplete: true }); }
-          catch (error) { setTutorReply(error?.message || "Matnni ovozga uzatib bo‘lmadi."); }
-        }
+      // The read-aloud button only uses local Uzbek TTS; it must never start an AI Live session.
+      const speakTutorText = (text, lang = 'uz-UZ', muted = false, onStart = null, onEnd = null) => {
+        speakUzbekText(text, muted, onStart, onEnd);
       };
 
 
