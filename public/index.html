@@ -551,6 +551,40 @@
           setTutorReply(error?.message || "AI Ustoz ishga tushmadi. Mikrofon ruxsatini tekshiring.");
         }
       };
+      // Lesson pronunciation uses the device speech engine only; it never opens an AI Live session.
+      const speakLessonText = (englishText, uzbekText = '', muted = false, onStart = null, onEnd = null) => {
+        const en = String(englishText || '').trim();
+        const uz = String(uzbekText || '').trim();
+        if (muted || (!en && !uz) || !('speechSynthesis' in window)) return;
+        try {
+          window.speechSynthesis.cancel();
+          const utterances = [];
+          if (en) { const u = new SpeechSynthesisUtterance(en); u.lang = 'en-US'; u.rate = 0.88; utterances.push(u); }
+          if (uz) { const u = new SpeechSynthesisUtterance(uz); u.lang = 'uz-UZ'; u.rate = 0.92; utterances.push(u); }
+          utterances.forEach((u, index) => {
+            if (index === 0) u.onstart = () => onStart?.();
+            if (index === utterances.length - 1) u.onend = () => onEnd?.();
+            u.onerror = () => { if (index === utterances.length - 1) onEnd?.(); };
+          });
+          utterances.forEach(u => window.speechSynthesis.speak(u));
+        } catch (error) {
+          console.error('Dars matnini o‘qish xatosi:', error);
+          onEnd?.();
+        }
+      };
+
+      const speakLocalText = (text, lang = 'uz-UZ', muted = false) => {
+        const value = String(text || '').trim();
+        if (muted || !value || !('speechSynthesis' in window)) return;
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(value);
+          utterance.lang = lang;
+          utterance.rate = 0.92;
+          window.speechSynthesis.speak(utterance);
+        } catch (error) { console.error('Matnni o‘qish xatosi:', error); }
+      };
+
       const speakTutorText = async (text, lang = 'uz-UZ', muted = false, onStart = null, onEnd = null) => {
         const spokenText = String(text || "").trim();
         if (!spokenText || muted) return;
@@ -710,6 +744,9 @@
 
       const goScreen = (screenName) => {
         playSound('click', muted);
+        // Live conversation belongs exclusively to the AI Ustoz screen.
+        if (screenName !== 'aitutor' && (liveVoiceRef.current?.running || liveConnectingRef.current)) stopLiveTutor();
+        if (screenName !== 'english' && 'speechSynthesis' in window) window.speechSynthesis.cancel();
         setActiveScreen(screenName);
       };
 
@@ -1019,15 +1056,14 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
         const item = ENGLISH_WORDS[engIdx];
         setIsListeningEng(true);
         playSound('click', muted);
-        speakTutorText(
-          `${item.word}. Very good!`,
-          'en-US',
+        speakLessonText(
+          item.word,
+          item.uz,
           muted,
-          () => setIsAiSpeaking(true),
+          () => setIsListeningEng(true),
           () => {
-            setIsAiSpeaking(false);
             setIsListeningEng(false);
-            setEngPrompt(`Barakalla! "${item.word}" — ${item.uz}! 🎉`);
+            setEngPrompt('Barakalla! "' + item.word + '" — ' + item.uz + '! 🎉');
             setStars((s) => s + 10);
           }
         );
@@ -1505,7 +1541,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
 
               <div className="lg:col-span-4">
                 <div
-                  onClick={() => speakTutorText(story.sentence, 'en-US', muted)}
+                  onClick={() => speakLessonText(story.sentence, story.uzHint, muted)}
                   className="cursor-pointer bg-[#fffbeb] rounded-[28px] p-6 text-center shadow-xl border-4 border-white space-y-3 hover:scale-[1.02] transition"
                 >
                   <div className="text-6xl">📖🐱</div>
@@ -2172,7 +2208,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                 <div className="flex justify-end gap-3">
                   <button
                     onClick={() =>
-                      speakTutorText(
+                      speakLocalText(
                         "Ushbu Bilimdon Kids dasturi Saparova Matluba tomonidan, Termiz Davlat Pedagogika Instituti Maktabgacha va Boshlang‘ich ta’lim fakulteti, Boshlang‘ich ta’lim yo‘nalishida ishlab chiqilgan.",
                         'uz-UZ',
                         muted
