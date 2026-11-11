@@ -92,6 +92,22 @@
       .app-main-area { overscroll-behavior-y: contain; }
       .app-main-inner { max-width: 100%; }
     }
+    /* AI Ustoz fills the actual space between fixed header and bottom navigation. */
+    .aitutor-screen {
+      height: 100% !important;
+      min-height: 100% !important;
+      max-height: none !important;
+      align-self: stretch !important;
+    }
+    @media (max-width: 767px) {
+      .aitutor-screen {
+        min-height: calc(100dvh - 9.25rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+        height: auto !important;
+      }
+      .aitutor-screen > .grid {
+        min-height: 0;
+      }
+    }
     .app-topbar { top: env(safe-area-inset-top) !important; }
     .app-bottomnav { bottom: env(safe-area-inset-bottom) !important; padding-bottom: calc(.5rem + env(safe-area-inset-bottom)); }
     @keyframes floatSlow {
@@ -1730,7 +1746,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
       // 8-EKRAN: AI USTOZ BILAN SUHBAT
       // ==========================================
       const renderAiTutorScreen = () => (
-        <div className="relative w-full max-w-full h-[82%] max-h-[760px] min-h-0 mx-auto self-center rounded-xl sm:rounded-2xl overflow-hidden shadow-lg border border-indigo-400/60 bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#311042] p-1 sm:p-1.5 md:p-2 flex flex-col text-white">
+        <div className="aitutor-screen relative w-full max-w-full h-full min-h-full max-h-none mx-auto self-stretch rounded-xl sm:rounded-2xl overflow-hidden shadow-lg border border-indigo-400/60 bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#311042] p-1 sm:p-1.5 md:p-2 flex flex-col text-white">
           <div className="flex items-center justify-between shrink-0 pb-0.5 scale-[0.94] origin-center">
             <div className="flex items-center gap-2">
               <button
