@@ -7,8 +7,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="BILIMDON KIDS AI" />
-  <meta name="author" content="Saparova Matluba — Termiz davlat pedagogika instituti Boshlang'ich ta'lim fakulteti talabasi" />
-  <meta name="description" content="Bilimdon Kids — O'rgan, o'yna, rivojlan! Sun'iy intellekt bilan bolalar ta'lim dasturi. Muallif: Saparova Matluba (TDPI)" />
+  <meta name="author" content="Saparova Matluba — Termiz Davlat Pedagogika Instituti, Maktabgacha va Boshlang‘ich ta’lim fakulteti, Boshlang‘ich ta’lim yo‘nalishi" />
+  <meta name="description" content="Bilimdon Kids — O'rgan, o'yna, rivojlan! Sun'iy intellekt bilan bolalar ta'lim dasturi. Muallif: Saparova Matluba — Termiz Davlat Pedagogika Instituti, Maktabgacha va Boshlang‘ich ta’lim fakulteti, Boshlang‘ich ta’lim yo‘nalishi" />
   <title>BILIMDON KIDS AI — Interaktiv ta’lim platformasi</title>
 
   <!-- Tailwind CSS -->
@@ -48,7 +48,7 @@
     .app-shell { width: 100%; height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
     .app-main-area { flex: 1 1 0%; height: 0; min-height: 0; min-width: 0; overflow: hidden; box-sizing: border-box; padding-top: calc(4rem + env(safe-area-inset-top)) !important; padding-bottom: calc(5.25rem + env(safe-area-inset-bottom)) !important; }
     .app-main-area.is-login { padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)) !important; }
-    .app-main-inner { display: flex; flex: 1 1 0%; width: 100%; height: 100%; min-height: 0; min-width: 0; overflow: hidden; }
+    .app-main-inner { display: flex; flex-direction: column; flex: 1 1 0%; width: 100%; height: 100%; min-height: 0; min-width: 0; overflow: hidden; }
     .app-scroll-area { display: block; flex: 1 1 0%; width: 100%; height: 0; min-height: 0; min-width: 0; overflow-x: hidden !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch; overscroll-behavior-y: auto; touch-action: pan-y !important; scrollbar-width: thin; }
     .app-scroll-area > * { min-width: 0; }
     .app-topbar { top: env(safe-area-inset-top) !important; }
@@ -70,7 +70,7 @@
     // Haqiqiy PWA / Mobil va Kompyuter Ilovasi (Standalone App) Manifestini avtomatik ulash
     (function() {
       const appManifest = {
-        name: "Bilimdon Kids — Saparova Matluba (TDPI)",
+        name: "Bilimdon Kids — Saparova Matluba — Termiz Davlat Pedagogika Instituti, Maktabgacha va Boshlang‘ich ta’lim fakulteti, Boshlang‘ich ta’lim yo‘nalishi",
         short_name: "Bilimdon Kids",
         description: "Sun'iy intellektga asoslangan interaktiv bolalar ta'lim dasturi. Muallif: Saparova Matluba",
         start_url: window.location.href,
@@ -723,7 +723,7 @@
           const manifestJson = JSON.stringify({
             name: "Bilimdon Kids — O'rgan, o'yna, rivojlan!",
             short_name: "Bilimdon Kids",
-            description: "Sun'iy intellektga asoslangan interaktiv bolalar ta'lim dasturi. Muallif: Saparova Matluba (TDPI)",
+            description: "Sun'iy intellektga asoslangan interaktiv bolalar ta'lim dasturi. Muallif: Saparova Matluba — Termiz Davlat Pedagogika Instituti, Maktabgacha va Boshlang‘ich ta’lim fakulteti, Boshlang‘ich ta’lim yo‘nalishi",
             start_url: "./index.html",
             display: "standalone",
             orientation: "landscape",
@@ -797,7 +797,7 @@ jobs:
 `;
 
           const windowsLauncherBat = `@echo off
-title Bilimdon Kids - Saparova Matluba (TDPI)
+title Bilimdon Kids - Saparova Matluba — Termiz Davlat Pedagogika Instituti, Maktabgacha va Boshlang‘ich ta’lim fakulteti, Boshlang‘ich ta’lim yo‘nalishi
 echo "Bilimdon Kids" dasturi ishga tushirilmoqda...
 start "" chrome --app="%~dp0index.html" --start-maximized || start "" msedge --app="%~dp0index.html" --start-maximized || start "" "%~dp0index.html"
 exit
@@ -2118,7 +2118,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                   <button
                     onClick={() =>
                       speakTutorText(
-                        "Ushbu Bilimdon Kids dasturi Termiz davlat pedagogika instituti Boshlang'ich ta'lim fakulteti talabasi Saparova Matluba tomonidan yaratilgan.",
+                        "Ushbu Bilimdon Kids dasturi Saparova Matluba tomonidan, Termiz Davlat Pedagogika Instituti Maktabgacha va Boshlang‘ich ta’lim fakulteti, Boshlang‘ich ta’lim yo‘nalishida ishlab chiqilgan.",
                         'uz-UZ',
                         muted
                       )
