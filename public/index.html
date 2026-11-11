@@ -92,21 +92,17 @@
       .app-main-area { overscroll-behavior-y: contain; }
       .app-main-inner { max-width: 100%; }
     }
-    /* AI Ustoz fills the actual space between fixed header and bottom navigation. */
-    .aitutor-screen {
-      height: 100% !important;
-      min-height: 100% !important;
-      max-height: none !important;
-      align-self: stretch !important;
-    }
-    @media (max-width: 767px) {
+    /* Desktop only: AI Ustoz uses the full workspace between header and bottom navigation.
+       Phone layout is intentionally left unchanged. */
+    @media (min-width: 768px) {
       .aitutor-screen {
+        height: calc(100dvh - 9.25rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
         min-height: calc(100dvh - 9.25rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
-        height: auto !important;
+        max-height: none !important;
+        align-self: stretch !important;
       }
-      .aitutor-screen > .grid {
-        min-height: 0;
-      }
+      .aitutor-screen > .grid { flex: 1 1 auto; min-height: 0; }
+      .aitutor-screen .aitutor-character { transform: scale(1); }
     }
     .app-topbar { top: env(safe-area-inset-top) !important; }
     .app-bottomnav { bottom: env(safe-area-inset-bottom) !important; padding-bottom: calc(.5rem + env(safe-area-inset-bottom)); }
@@ -1985,19 +1981,19 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
 
       const renderActivitiesScreen = () => {
         const builtInActivities = [
-          { id: "starter-math", kind: "lesson", title: "Qo‘shish va ayirish", description: "1 dan 20 gacha sonlarni qo‘shish va ayirishni misollar orqali mashq qil.", emoji: "🧮", screen: "math" },
-          { id: "starter-addition", kind: "lesson", title: "Sonlarni sanash", description: "1–100 oralig‘ida sonlar, taqqoslash va miqdorni aniqlash.", emoji: "🔢", screen: "math" },
-          { id: "starter-multiplication", kind: "lesson", title: "Ko‘paytirish va bo‘lish", description: "Jadval asosida ko‘paytirish va teng taqsimlashni mashq qil.", emoji: "✖️", screen: "math" },
-          { id: "starter-word-problems", kind: "lesson", title: "Matnli masalalar", description: "Masalani o‘qi, kerakli amalni tanla va javobni hisobla.", emoji: "🧩", screen: "math" },
-          { id: "starter-english", kind: "lesson", title: "Inglizcha ilk so‘zlar", description: "Apple — olma, Cat — mushuk, Book — kitob. So‘zlarni yodlab, ma’nosini top.", emoji: "🇬🇧", screen: "english" },
-          { id: "starter-colors", kind: "lesson", title: "Colors — ranglar", description: "Red, blue, yellow va green ranglarini ingliz tilida o‘rgan.", emoji: "🎨", screen: "english" },
-          { id: "starter-english-numbers", kind: "lesson", title: "English numbers", description: "One dan twenty gacha sonlarni talaffuz va tarjima bilan o‘rgan.", emoji: "🔢", screen: "english" },
-          { id: "starter-english-family", kind: "lesson", title: "My family", description: "Oila a’zolari va kundalik hayotga oid inglizcha so‘zlar.", emoji: "👨‍👩‍👧", screen: "english" },
-          { id: "starter-reading", kind: "lesson", title: "O‘qish va tushunish", description: "Qisqa gapni o‘qi, undagi qahramon va predmetlarni top.", emoji: "📖", screen: "reading" },
-          { id: "starter-reading-comprehension", kind: "lesson", title: "Matn bo‘yicha savollar", description: "10 ta qisqa matnni o‘qib, mazmuniga oid savollarga javob ber.", emoji: "🧠", screen: "reading" },
-          { id: "starter-phonics", kind: "lesson", title: "Harflar va tovushlar", description: "A, B, C harflarini tanib, ularning tovushlarini mashq qil.", emoji: "🔤", screen: "reading" },
-          { id: "starter-writing", kind: "lesson", title: "Harf yozishni mashq qil", description: "Harflarni to‘g‘ri yozish va so‘zlarni ko‘chirib yozishni mashq qil.", emoji: "✏️", screen: "writing" },
-          { id: "starter-sentences", kind: "lesson", title: "So‘zlardan gap tuzish", description: "So‘zlarni tartibga solib, sodda va mazmunli gaplar tuz.", emoji: "📝", screen: "writing" },
+          { id: "starter-math", kind: "lesson", title: "Qo‘shish va ayirish", description: "1 dan 20 gacha sonlarni qo‘shish va ayirishni misollar orqali mashq qil.", emoji: "🧮", question: "9 + 6 nechaga teng?", options: ["14", "15", "16"], answer: "15" },
+          { id: "starter-addition", kind: "lesson", title: "Sonlarni sanash", description: "1–100 oralig‘ida sonlar, taqqoslash va miqdorni aniqlash.", emoji: "🔢", question: "Qaysi son 38 dan keyin keladi?", options: ["37", "39", "40"], answer: "39" },
+          { id: "starter-multiplication", kind: "lesson", title: "Ko‘paytirish va bo‘lish", description: "Jadval asosida ko‘paytirish va teng taqsimlashni mashq qil.", emoji: "✖️", question: "4 × 3 nechaga teng?", options: ["7", "12", "14"], answer: "12" },
+          { id: "starter-word-problems", kind: "lesson", title: "Matnli masalalar", description: "Masalani o‘qi, kerakli amalni tanla va javobni hisobla.", emoji: "🧩", question: "Daraxtda 5 qush bor edi. Yana 2 tasi qo‘ndi. Jami nechta qush bo‘ldi?", options: ["6 ta", "7 ta", "8 ta"], answer: "7 ta" },
+          { id: "starter-english", kind: "lesson", title: "Inglizcha ilk so‘zlar", description: "Apple — olma, Cat — mushuk, Book — kitob. So‘zlarni yodlab, ma’nosini top.", emoji: "🇬🇧", question: "“Apple” so‘zining ma’nosi nima?", options: ["Olma", "Nok", "Uzum"], answer: "Olma" },
+          { id: "starter-colors", kind: "lesson", title: "Colors — ranglar", description: "Red, blue, yellow va green ranglarini ingliz tilida o‘rgan.", emoji: "🎨", question: "“Blue” qaysi rang?", options: ["Yashil", "Ko‘k", "Sariq"], answer: "Ko‘k" },
+          { id: "starter-english-numbers", kind: "lesson", title: "English numbers", description: "One dan twenty gacha sonlarni talaffuz va tarjima bilan o‘rgan.", emoji: "🔢", question: "“Twelve” qaysi son?", options: ["10", "12", "20"], answer: "12" },
+          { id: "starter-english-family", kind: "lesson", title: "My family", description: "Oila a’zolari va kundalik hayotga oid inglizcha so‘zlar.", emoji: "👨‍👩‍👧", question: "“Mother” so‘zi kimni bildiradi?", options: ["Ota", "Ona", "Aka"], answer: "Ona" },
+          { id: "starter-reading", kind: "lesson", title: "O‘qish va tushunish", description: "Qisqa gapni o‘qi, undagi qahramon va predmetlarni top.", emoji: "📖", question: "“Lola gul sug‘ordi.” Gulni kim sug‘ordi?", options: ["Ali", "Lola", "Olim"], answer: "Lola" },
+          { id: "starter-reading-comprehension", kind: "lesson", title: "Matn bo‘yicha savollar", description: "10 ta qisqa matnni o‘qib, mazmuniga oid savollarga javob ber.", emoji: "🧠", question: "Anvar nonushta qildi va maktabga bordi. Anvar qayerga bordi?", options: ["Bog‘ga", "Maktabga", "Do‘konga"], answer: "Maktabga" },
+          { id: "starter-phonics", kind: "lesson", title: "Harflar va tovushlar", description: "A, B, C harflarini tanib, ularning tovushlarini mashq qil.", emoji: "🔤", question: "“B” harfi bilan boshlanadigan so‘zni top.", options: ["Olma", "Bola", "Anor"], answer: "Bola" },
+          { id: "starter-writing", kind: "lesson", title: "Harf yozishni mashq qil", description: "Harflarni to‘g‘ri yozish va so‘zlarni ko‘chirib yozishni mashq qil.", emoji: "✏️", question: "Qaysi so‘z to‘g‘ri yozilgan?", options: ["Maktab", "Maktap", "Maktabь"], answer: "Maktab" },
+          { id: "starter-sentences", kind: "lesson", title: "So‘zlardan gap tuzish", description: "So‘zlarni tartibga solib, sodda va mazmunli gaplar tuz.", emoji: "📝", question: "Qaysi gap to‘g‘ri tuzilgan?", options: ["Kitob o‘qiyman men.", "Men kitob o‘qiyman.", "O‘qiyman kitob men."], answer: "Men kitob o‘qiyman." },
           { id: "game-fruit", kind: "game", title: "Mevalarni top", description: "Meva va boshqa buyumlarni farqlash.", emoji: "🍎", question: "Qaysi biri meva?", options: ["Olma", "Stol", "Kitob"], answer: "Olma" },
           { id: "game-math", kind: "game", title: "Tezkor hisob", description: "Qo‘shish amalini yech.", emoji: "⭐", question: "8 + 5 nechaga teng?", options: ["12", "13", "14"], answer: "13" },
           { id: "game-english", kind: "game", title: "Inglizcha so‘z", description: "So‘zning o‘zbekcha ma’nosini top.", emoji: "🔤", question: "“Cat” so‘zining ma’nosi nima?", options: ["It", "Mushuk", "Qush"], answer: "Mushuk" },
@@ -2046,8 +2042,8 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
                     <div className="text-xs font-black text-indigo-500">{item.kind === "lesson" ? "📘 MASHG‘ULOT" : item.kind === "image" ? "🖼️ RASM" : "🎮 O‘YIN"}</div>
                     <h3 className="font-black text-lg text-slate-900 mt-1">{item.title}</h3>
                     <p className="text-sm text-slate-600 mt-2">{item.description}</p>
-                    {item.kind === "game" && (item.options?.length > 1 || item.content_data?.options?.length > 1) && <div className="mt-3 space-y-2"><p className="font-black text-slate-800">{item.question || item.content_data?.question}</p><div className="grid grid-cols-1 gap-2">{(item.options || item.content_data?.options || []).map(option => <button key={option} onClick={() => { if (activityFeedback[item.id]?.startsWith("Barakalla!")) return; const answer = item.answer || item.content_data?.answer; const right = option === answer; setActivityFeedback(prev => ({ ...prev, [item.id]: right ? "Barakalla! To‘g‘ri javob! 🎉" : "Yana urinib ko‘r! 💡" })); if (right) { setStars(value => value + 5); playSound("success", muted); } else playSound("wrong", muted); }} disabled={activityFeedback[item.id]?.startsWith("Barakalla!")} className="rounded-xl bg-amber-50 hover:bg-amber-100 disabled:bg-emerald-100 disabled:border-emerald-300 border border-amber-200 text-slate-800 disabled:text-emerald-800 p-2 text-sm font-black">{option}</button>)}</div>{activityFeedback[item.id] && <p className="text-sm font-black text-emerald-700">{activityFeedback[item.id]}</p>}</div>}
-                    {item.kind === "lesson" && <button onClick={() => goScreen(item.screen || (item.id === "starter-math" ? "math" : item.id === "starter-english" ? "english" : "reading"))} className="mt-3 rounded-xl bg-indigo-600 text-white px-4 py-2 text-sm font-black">Boshlash ▶</button>}
+                    {(item.kind === "game" || item.kind === "lesson") && (item.options?.length > 1 || item.content_data?.options?.length > 1) && <div className="mt-3 space-y-2 rounded-xl bg-indigo-50 p-3"><p className="font-black text-slate-800">{item.question || item.content_data?.question || "Topshiriqni bajaring:"}</p><div className="grid grid-cols-1 gap-2">{(item.options || item.content_data?.options || []).map(option => <button key={option} onClick={() => { if (activityFeedback[item.id]?.startsWith("Barakalla!")) return; const answer = item.answer || item.content_data?.answer; const right = option === answer; setActivityFeedback(prev => ({ ...prev, [item.id]: right ? "Barakalla! To‘g‘ri javob! 🎉" : "Yana urinib ko‘r! 💡" })); if (right) { setStars(value => value + 5); playSound("success", muted); } else playSound("wrong", muted); }} disabled={activityFeedback[item.id]?.startsWith("Barakalla!")} className="rounded-xl bg-white hover:bg-amber-100 disabled:bg-emerald-100 disabled:border-emerald-300 border border-amber-200 text-slate-800 disabled:text-emerald-800 p-2 text-sm font-black text-left">{option}</button>)}</div>{activityFeedback[item.id] && <p className="text-sm font-black text-emerald-700">{activityFeedback[item.id]}</p>}</div>}
+                    {item.kind === "lesson" && !(item.options?.length > 1 || item.content_data?.options?.length > 1) && <p className="mt-3 text-xs font-bold text-slate-500">Ushbu mavzu uchun topshiriq tez orada qo‘shiladi.</p>}
                     {item.kind === "image" && item.image_url && <img src={item.image_url} alt={item.title} className="w-full h-36 object-cover rounded-xl mt-3"/>}
                     {activityFeedback[item.id] && item.kind === "lesson" && <p className="mt-2 text-sm font-black text-emerald-700">{activityFeedback[item.id]}</p>}
                   </div>
