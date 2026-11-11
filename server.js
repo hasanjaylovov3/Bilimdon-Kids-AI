@@ -264,7 +264,7 @@ app.post("/api/ai/speech", aiLimiter, async (req, res, next) => {
       model: process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-lite-tts",
       contents: [{
         parts: [{
-          text: "[Speak warmly, gently, clearly and naturally, like a kind native Uzbek-speaking teacher speaking to a child. Use one consistent voice and a calm, affectionate, encouraging tone. Read only the exact text after the instruction. For English vocabulary, pronounce the English word clearly, then continue naturally in Uzbek for the Uzbek meaning. Do not add explanations.]\n\nTEXT TO READ:\n" + text
+          text: text
         }]
       }],
       config: {
