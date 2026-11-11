@@ -280,7 +280,7 @@
       { sentence: 'Three birds sit on a green tree.', uzHint: 'Yashil daraxtda uchta qush o‘tiribdi.', question: 'Daraxtda nechta qush bor?', options: [{ id: 'A', text: 'Ikkita' }, { id: 'B', text: 'Uchta' }, { id: 'C', text: 'To‘rtta' }], correct: 'B' }
     ];
 
-    const LETTERS_LIST = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    const LETTERS_LIST = ['A','B','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','X','Y','Z','O‘','G‘','Sh','Ch','Ng'];
 
     // ==========================================
     // ASOSIY DASTUR KOMPONENTI
@@ -346,7 +346,7 @@
       const [isListeningEng, setIsListeningEng] = useState(false);
 
       const [readIdx, setReadIdx] = useState(0);
-      const [selectedRead, setSelectedRead] = useState('B');
+      const [selectedRead, setSelectedRead] = useState(null);
       const [readPrompt, setReadPrompt] = useState('Matnni o‘qing va savolga javob bering.');
 
       const [letterIdx, setLetterIdx] = useState(0);
@@ -807,7 +807,7 @@ exit
 
 **Loyiha muallifi:** Saparova Matluba  
 **Oliygoh:** Termiz davlat pedagogika instituti (TDPI)  
-**Fakultet:** Boshlang'ich ta'lim fakulteti talabasi  
+**Fakultet:** Maktabgacha va Boshlang‘ich ta’lim fakulteti, Boshlang‘ich ta’lim yo‘nalishi  
 
 ---
 
@@ -945,6 +945,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
 
       const handleMathOption = (opt) => {
         const current = MATH_QUESTIONS[mathIdx];
+        if (selectedMath === current.answer) return;
         setSelectedMath(opt);
         if (opt === current.answer) {
           playSound('success', muted);
@@ -981,6 +982,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
 
       const handleReadingAnswer = (optId) => {
         const current = READING_STORIES[readIdx];
+        if (selectedRead === current.correct) return;
         setSelectedRead(optId);
         if (optId === current.correct) {
           playSound('success', muted);
@@ -1360,7 +1362,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
               </div>
               <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-950/75 text-amber-300 font-black border-2 border-white/40 shadow">
                 <span>⭐</span>
-                <span>20</span>
+                <span>{stars}</span>
               </div>
             </div>
 
@@ -1433,7 +1435,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
               </div>
               <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-900/80 text-amber-300 font-black border-2 border-white/40 shadow">
                 <span>⭐</span>
-                <span>15</span>
+                <span>{stars}</span>
               </div>
             </div>
 
@@ -1529,7 +1531,7 @@ Arxiv ichidagi **\`Bilimdon-Kids-Ishga-Tushirish.bat\`** yoki **\`index.html\`**
               </div>
               <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-950/75 text-amber-300 font-black border-2 border-white/40 shadow">
                 <span>⭐</span>
-                <span>15</span>
+                <span>{stars}</span>
               </div>
             </div>
 
